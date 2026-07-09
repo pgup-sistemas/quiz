@@ -1,10 +1,11 @@
 <?php
 function superadminHead(string $title, string $active = ''): void {
     $nav = [
-        'index.php'     => ['fa-table-columns',  'Dashboard',  'index.php'],
-        'companies.php' => ['fa-building',        'Empresas',   'companies.php'],
-        'settings.php'  => ['fa-sliders',         'Config',     'settings.php'],
-        'audit.php'     => ['fa-shield-halved',   'Auditoria',  'audit.php'],
+        'index.php'     => ['fa-table-columns',    'Dashboard',  'index.php'],
+        'companies.php' => ['fa-building',          'Empresas',   'companies.php'],
+        'payments.php'  => ['fa-money-bill-wave',   'Pagamentos', 'payments.php'],
+        'settings.php'  => ['fa-sliders',           'Config',     'settings.php'],
+        'audit.php'     => ['fa-shield-halved',     'Auditoria',  'audit.php'],
     ];
     require_once __DIR__ . '/../includes/superadmin-auth.php';
 ?>

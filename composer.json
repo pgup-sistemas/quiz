@@ -1,0 +1,12 @@
+{
+    "name": "pageupsistemas/pagequiz",
+    "description": "PageQuiz - Plataforma SaaS de treinamento e avaliação corporativa",
+    "type": "project",
+    "require": {
+        "php": ">=8.2",
+        "efipay/sdk-php-apis-efi": "^1.19"
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

@@ -19,8 +19,9 @@ function adminHead(string $title, string $activeNav = ''): void {
         'results.php'  => ['fa-chart-pie',     'Resultados', 'results.php'],
         'live.php'     => ['fa-tower-broadcast','Ao Vivo',    'live.php'],
         'users.php'    => ['fa-users',         'Usuários',   'users.php'],
-        'settings.php' => ['fa-sliders',       'Config',     'settings.php'],
-        'manual.php'   => ['fa-circle-info',   'Manual',     'manual.php'],
+        'billing.php'  => ['fa-receipt',        'Cobrança',   'billing.php'],
+        'settings.php' => ['fa-sliders',        'Config',     'settings.php'],
+        'manual.php'   => ['fa-circle-info',    'Manual',     'manual.php'],
     ];
     if ($plan === 'free') {
         $nav['upgrade.php'] = ['fa-star', 'Upgrade', 'upgrade.php'];

@@ -57,6 +57,35 @@ function initDB(PDO $db): void {
         detail            TEXT    DEFAULT '',
         created_at        TEXT    DEFAULT (datetime('now','localtime'))
     );
+
+    CREATE TABLE IF NOT EXISTS subscriptions (
+        id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+        company_id          INTEGER NOT NULL,
+        efi_subscription_id TEXT    DEFAULT NULL,
+        efi_charge_id       TEXT    DEFAULT NULL,
+        type                TEXT    NOT NULL DEFAULT 'pix',
+        status              TEXT    NOT NULL DEFAULT 'pending',
+        amount              INTEGER NOT NULL DEFAULT 0,
+        next_billing_at     TEXT    DEFAULT NULL,
+        grace_until         TEXT    DEFAULT NULL,
+        pix_txid            TEXT    DEFAULT NULL,
+        pix_qrcode          TEXT    DEFAULT NULL,
+        pix_copiaecola      TEXT    DEFAULT NULL,
+        payment_link_url    TEXT    DEFAULT NULL,
+        created_at          TEXT    DEFAULT (datetime('now','localtime')),
+        updated_at          TEXT    DEFAULT (datetime('now','localtime'))
+    );
+
+    CREATE TABLE IF NOT EXISTS payment_events (
+        id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+        company_id           INTEGER DEFAULT NULL,
+        subscription_id      INTEGER DEFAULT NULL,
+        efi_notification_id  TEXT    UNIQUE,
+        event_type           TEXT    NOT NULL,
+        raw_payload          TEXT    DEFAULT '',
+        processed            INTEGER NOT NULL DEFAULT 0,
+        created_at           TEXT    DEFAULT (datetime('now','localtime'))
+    );
     ");
 
     // Seeds: empresa base (Alphaclin = id 1)
@@ -65,9 +94,17 @@ function initDB(PDO $db): void {
 
     // Seeds: configurações globais
     $settingsSeeds = [
-        ['free_quiz_limit', '12',                      'Limite de quizzes no plano Free'],
-        ['app_name',        'PageQuiz',                'Nome da plataforma'],
-        ['support_email',   'contato@pageup.net.br',   'E-mail de suporte exibido no upgrade'],
+        ['free_quiz_limit',   '12',                       'Limite de quizzes no plano Free'],
+        ['app_name',          'PageQuiz',                 'Nome da plataforma'],
+        ['support_email',     'contato@pageup.net.br',    'E-mail de suporte exibido no upgrade'],
+        // EFI Bank
+        ['pro_price_monthly', '4990',                     'Preço mensal do Pro em centavos (4990 = R$49,90)'],
+        ['efi_client_id',     '',                         'Client ID EFI Bank'],
+        ['efi_client_secret', '',                         'Client Secret EFI Bank'],
+        ['efi_sandbox',       '1',                        '1=sandbox (homologacao), 0=producao'],
+        ['efi_pix_key',       '',                         'Chave PIX da conta EFI (e-mail, CPF, CNPJ ou aleatoria)'],
+        ['efi_cert_path',     'certs/efi-sandbox.p12',   'Caminho do certificado .p12 relativo a raiz do projeto'],
+        ['efi_cert_password', '',                         'Senha do certificado .p12 (deixe vazio se nao tiver)'],
     ];
     $stmt = $db->prepare("INSERT OR IGNORE INTO system_settings (key, value, description) VALUES (?,?,?)");
     foreach ($settingsSeeds as $s) $stmt->execute($s);

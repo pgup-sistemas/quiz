@@ -13,6 +13,15 @@ uploads/
 tmp/*.json
 tmp/sync_*.php
 
+# Composer
+vendor/
+composer.phar
+
+# Certificados EFI Bank (NUNCA commitar)
+certs/*.p12
+certs/*.pem
+certs/*.cer
+
 # XAMPP / sistema
 .htpasswd
 Thumbs.db
