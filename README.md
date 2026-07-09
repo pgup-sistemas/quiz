@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-Plataforma completa de quizzes para o questionários, desenvolvida em **PHP + SQLite**.
+Plataforma completa de questionários para empresas, Rh, palestras e testes de treinamentos em geral, desenvolvida em **PHP + SQLite**.
 Setores podem criar quizzes interativos para apresentações, treinamentos e auditorias (ONA).
 
 ---
