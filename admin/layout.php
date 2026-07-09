@@ -1,15 +1,30 @@
 <?php
+require_once __DIR__ . '/../includes/db.php';
 // Usage: adminHead('Page Title');
 function adminHead(string $title, string $activeNav = ''): void {
+    require_once __DIR__ . '/../includes/auth.php';
+    $companyId = adminCompanyId();
+    $company   = $companyId ? dbRow("SELECT * FROM companies WHERE id=?", [$companyId]) : null;
+    $plan      = $company['plan'] ?? 'free';
+
+    // Uso de quizzes para banner
+    $freeLimit = (int)(dbRow("SELECT value FROM system_settings WHERE key='free_quiz_limit'")['value'] ?? 12);
+    $quizUsed  = (int)(dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE company_id=? AND active=1", [$companyId])['c'] ?? 0);
+    $quizPct   = ($plan === 'free' && $freeLimit > 0) ? (int)round($quizUsed / $freeLimit * 100) : 0;
+
     $nav = [
         'index.php'    => ['fa-table-columns', 'Dashboard',  'index.php'],
         'quizzes.php'  => ['fa-list-check',    'Quizzes',    'quizzes.php'],
         'sectors.php'  => ['fa-sitemap',       'Setores',    'sectors.php'],
         'results.php'  => ['fa-chart-pie',     'Resultados', 'results.php'],
         'live.php'     => ['fa-tower-broadcast','Ao Vivo',    'live.php'],
+        'users.php'    => ['fa-users',         'Usuários',   'users.php'],
         'settings.php' => ['fa-sliders',       'Config',     'settings.php'],
         'manual.php'   => ['fa-circle-info',   'Manual',     'manual.php'],
     ];
+    if ($plan === 'free') {
+        $nav['upgrade.php'] = ['fa-star', 'Upgrade', 'upgrade.php'];
+    }
     $flash = getFlash();
 ?>
 <!DOCTYPE html>
@@ -130,21 +145,59 @@ body { background: var(--gray-100); min-height:100vh; }
         <img src="../assets/logo-white.svg" alt="PageUp"/>
         <div>
             <span class="topbar-logo-text">PageQuiz</span>
-            <span class="topbar-logo-sub">Área Administrativa</span>
+            <span class="topbar-logo-sub"><?= $company ? htmlspecialchars($company['name']) : 'Área Administrativa' ?></span>
         </div>
     </a>
     <div class="topbar-nav">
         <?php foreach ($nav as $key => [$icon, $label, $href]): ?>
-        <a href="<?= $href ?>" class="<?= $activeNav === $key ? 'active' : '' ?>">
+        <a href="<?= $href ?>" class="<?= $activeNav === $key ? 'active' : '' ?>"
+           <?= $key === 'upgrade.php' ? 'style="color:var(--yellow)"' : '' ?>>
             <i class="fa-solid <?= $icon ?>"></i>
             <span><?= $label ?></span>
         </a>
         <?php endforeach; ?>
-        <span class="topbar-user"><i class="fa-solid fa-user-circle" style="margin-right:4px"></i><?= htmlspecialchars(adminName()) ?></span>
+        <span class="topbar-user" style="display:flex;align-items:center;gap:6px">
+            <i class="fa-solid fa-user-circle" style="margin-right:2px"></i><?= htmlspecialchars(adminName()) ?>
+            <?php if ($plan === 'pro'): ?>
+            <span style="background:var(--yellow);color:var(--prussian);font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px">Pro</span>
+            <?php else: ?>
+            <span style="background:rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px">Free</span>
+            <?php endif; ?>
+        </span>
         <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i> <span>Sair</span></a>
     </div>
     </div>
 </nav>
+
+<?php // Banner de impersonation
+if (!empty($_SESSION['impersonating_company_id'])): ?>
+<div style="background:#7c3aed;color:#fff;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600">
+    <span><i class="fa-solid fa-user-secret"></i> Você está visualizando como admin de <strong><?= htmlspecialchars($_SESSION['impersonating_company_name'] ?? 'Empresa') ?></strong></span>
+    <a href="../superadmin/impersonate.php?stop=1" style="color:#fff;background:rgba(255,255,255,.2);padding:4px 12px;border-radius:6px;text-decoration:none">
+        <i class="fa-solid fa-xmark"></i> Encerrar
+    </a>
+</div>
+<?php endif; ?>
+
+<?php // Banner Pro Solicitado (pending_payment)
+if ($company && $company['status'] === 'pending_payment'): ?>
+<div style="background:#fef3c7;color:#92400e;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;font-size:13px">
+    <span><i class="fa-solid fa-hourglass-half"></i> Sua solicitação de <strong>plano Pro</strong> está sendo processada. Entraremos em contato em breve.</span>
+    <a href="upgrade.php" style="color:#92400e;font-weight:700;text-decoration:none">Ver detalhes →</a>
+</div>
+<?php endif; ?>
+
+<?php // Banner de uso (≥80% do limite Free)
+if ($plan === 'free' && $quizPct >= 80): ?>
+<div style="background:<?= $quizPct >= 100 ? '#fee2e2' : '#fef3c7' ?>;color:<?= $quizPct >= 100 ? '#991b1b' : '#92400e' ?>;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;font-size:13px">
+    <?php if ($quizPct >= 100): ?>
+    <span><i class="fa-solid fa-ban"></i> Você atingiu o limite de <strong><?= $freeLimit ?> quizzes</strong> do plano Free. Crie mais com o <strong>Pro</strong>.</span>
+    <?php else: ?>
+    <span><i class="fa-solid fa-triangle-exclamation"></i> Você usou <strong><?= $quizUsed ?>/<?= $freeLimit ?> quizzes</strong> do plano Free (<?= $quizPct ?>%). Que tal fazer upgrade?</span>
+    <?php endif; ?>
+    <a href="upgrade.php" style="color:inherit;font-weight:700;text-decoration:none">Fazer Upgrade →</a>
+</div>
+<?php endif; ?>
 
 <?php if ($flash): ?>
 <div class="admin-wrap" style="padding-bottom:0">

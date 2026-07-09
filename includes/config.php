@@ -5,7 +5,8 @@ define('BASE_URL',   'https://quiz.pageup.net.br');
 define('SITE_NAME',  'PageQuiz');
 define('SITE_BRAND', 'PageUp Sistemas');
 define('PRIMARY',    '#008bcd');
-define('ADMIN_SESS', 'pageup_admin');
+define('ADMIN_SESS',       'pageup_admin');
+define('SUPER_ADMIN_SESS', 'SUPER_ADMIN_SESS');
 
 // Default admin credentials (change after first login via DB)
 define('DEFAULT_ADMIN_USER', 'admin');

@@ -16,6 +16,71 @@ function getDB(): PDO {
 }
 
 function initDB(PDO $db): void {
+    // ── Novas tabelas SaaS ──────────────────────────────────────────────────
+    $db->exec("
+    CREATE TABLE IF NOT EXISTS companies (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        name          TEXT    NOT NULL,
+        slug          TEXT    UNIQUE NOT NULL,
+        cnpj          TEXT    DEFAULT NULL,
+        email         TEXT    NOT NULL,
+        plan          TEXT    NOT NULL DEFAULT 'free',
+        status        TEXT    NOT NULL DEFAULT 'active',
+        primary_color TEXT    NOT NULL DEFAULT '#219EBC',
+        logo_path     TEXT    DEFAULT NULL,
+        created_at    TEXT    DEFAULT (datetime('now','localtime')),
+        updated_at    TEXT    DEFAULT (datetime('now','localtime'))
+    );
+
+    CREATE TABLE IF NOT EXISTS system_settings (
+        key         TEXT PRIMARY KEY,
+        value       TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        updated_at  TEXT DEFAULT (datetime('now','localtime'))
+    );
+
+    CREATE TABLE IF NOT EXISTS super_admins (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        username      TEXT    UNIQUE NOT NULL,
+        password_hash TEXT    NOT NULL,
+        name          TEXT    DEFAULT '',
+        created_at    TEXT    DEFAULT (datetime('now','localtime'))
+    );
+
+    CREATE TABLE IF NOT EXISTS audit_log (
+        id                INTEGER PRIMARY KEY AUTOINCREMENT,
+        actor_type        TEXT    NOT NULL,
+        actor_id          INTEGER NOT NULL DEFAULT 0,
+        action            TEXT    NOT NULL,
+        target_company_id INTEGER DEFAULT NULL,
+        ip                TEXT    DEFAULT '',
+        detail            TEXT    DEFAULT '',
+        created_at        TEXT    DEFAULT (datetime('now','localtime'))
+    );
+    ");
+
+    // Seeds: empresa base (Alphaclin = id 1)
+    $db->exec("INSERT OR IGNORE INTO companies (id, name, slug, email, plan, status)
+               VALUES (1, 'Alphaclin', 'alphaclin', 'comunicacao@alphaclin.net.br', 'pro', 'active')");
+
+    // Seeds: configurações globais
+    $settingsSeeds = [
+        ['free_quiz_limit', '12',                      'Limite de quizzes no plano Free'],
+        ['app_name',        'PageQuiz',                'Nome da plataforma'],
+        ['support_email',   'contato@pageup.net.br',   'E-mail de suporte exibido no upgrade'],
+    ];
+    $stmt = $db->prepare("INSERT OR IGNORE INTO system_settings (key, value, description) VALUES (?,?,?)");
+    foreach ($settingsSeeds as $s) $stmt->execute($s);
+
+    // Seed super-admin
+    $saExists = $db->query("SELECT COUNT(*) FROM super_admins")->fetchColumn();
+    if ($saExists == 0) {
+        $saHash = password_hash('Admin@2026!', PASSWORD_DEFAULT);
+        $db->prepare("INSERT INTO super_admins (username, password_hash, name) VALUES (?,?,?)")
+           ->execute(['pageupsistemas@gmail.com', $saHash, 'PageUp Sistemas']);
+    }
+
+    // ── Tabelas existentes ──────────────────────────────────────────────────
     $db->exec("
     CREATE TABLE IF NOT EXISTS admins (
         id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -118,6 +183,68 @@ function initDB(PDO $db): void {
     }
     if (!in_array('verify_code',   $pCols)) {
         $db->exec("ALTER TABLE participants ADD COLUMN verify_code TEXT DEFAULT NULL");
+    }
+
+    // ── Migrations SaaS: company_id em todas as tabelas de domínio ──────────
+    // Todos os dados existentes pertencem à empresa 1 (Alphaclin)
+    $existingTables = array_column($db->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(), 'name');
+    $domainTables = array_intersect(['quizzes', 'questions', 'participants', 'answers', 'sectors', 'admins', 'contact_messages'], $existingTables);
+    foreach ($domainTables as $tbl) {
+        $tc = array_column($db->query("PRAGMA table_info($tbl)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+        if (!in_array('company_id', $tc)) {
+            $db->exec("ALTER TABLE $tbl ADD COLUMN company_id INTEGER NOT NULL DEFAULT 1");
+        }
+    }
+
+    // first_login para admins (controla wizard de onboarding)
+    $aCols = array_column($db->query("PRAGMA table_info(admins)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    if (!in_array('first_login', $aCols)) {
+        $db->exec("ALTER TABLE admins ADD COLUMN first_login INTEGER NOT NULL DEFAULT 0");
+    }
+
+    // Índices de performance por tenant
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_quizzes_company     ON quizzes(company_id, active)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_questions_company   ON questions(company_id, quiz_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_participants_company ON participants(company_id, quiz_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_answers_company     ON answers(company_id, participant_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_admins_company      ON admins(company_id)");
+
+    // ── Migration: recriar users com UNIQUE (company_id, email) ─────────────
+    $uIdxList = $db->query("PRAGMA index_list(users)")->fetchAll(PDO::FETCH_ASSOC);
+    $hasCompanyEmailUniq = false;
+    foreach ($uIdxList as $idx) {
+        if ($idx['unique'] && str_contains((string)($idx['name'] ?? ''), 'company')) {
+            $hasCompanyEmailUniq = true;
+            break;
+        }
+    }
+    if (!$hasCompanyEmailUniq) {
+        $uCols = array_column($db->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+        if (!in_array('company_id', $uCols)) {
+            // Passo 1: adicionar company_id como coluna temporária
+            $db->exec("ALTER TABLE users ADD COLUMN company_id INTEGER NOT NULL DEFAULT 1");
+        }
+        // Passo 2: recriar tabela com UNIQUE (company_id, email)
+        $db->exec("CREATE TABLE IF NOT EXISTS users_v2 (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            company_id    INTEGER NOT NULL DEFAULT 1,
+            name          TEXT    NOT NULL,
+            email         TEXT    NOT NULL,
+            password_hash TEXT    NOT NULL,
+            sector        TEXT    DEFAULT '',
+            active        INTEGER DEFAULT 1,
+            reset_token   TEXT    DEFAULT NULL,
+            reset_expires TEXT    DEFAULT NULL,
+            last_login    TEXT    DEFAULT NULL,
+            created_at    TEXT    DEFAULT (datetime('now','localtime')),
+            UNIQUE(company_id, email)
+        )");
+        $db->exec("INSERT OR IGNORE INTO users_v2
+                   SELECT id, company_id, name, email, password_hash, sector, active,
+                          reset_token, reset_expires, last_login, created_at FROM users");
+        $db->exec("DROP TABLE users");
+        $db->exec("ALTER TABLE users_v2 RENAME TO users");
+        $db->exec("CREATE INDEX IF NOT EXISTS idx_users_company ON users(company_id)");
     }
 
     // Seed initial sectors from existing quizzes if sectors table is empty

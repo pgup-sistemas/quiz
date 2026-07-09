@@ -10,7 +10,8 @@ function sessionStart(): void {
 
 function isLoggedIn(): bool {
     sessionStart();
-    return !empty($_SESSION['admin_id']);
+    // Suporta formato legado (admin_id) e formato novo (pageup_admin.id)
+    return !empty($_SESSION['admin_id']) || !empty($_SESSION['pageup_admin']['id']);
 }
 
 function requireLogin(): void {
@@ -20,15 +21,34 @@ function requireLogin(): void {
     }
 }
 
+function adminId(): int {
+    sessionStart();
+    return (int)($_SESSION['admin_id'] ?? $_SESSION['pageup_admin']['id'] ?? 0);
+}
+
+function adminCompanyId(): int {
+    sessionStart();
+    return (int)($_SESSION['admin_company_id'] ?? $_SESSION['pageup_admin']['company_id'] ?? 1);
+}
+
 function adminLogin(string $username, string $password): bool {
     require_once __DIR__ . '/db.php';
+    // Busca admin — sem filtro de company ainda (login por subdomínio virá com tenant)
     $admin = dbRow("SELECT * FROM admins WHERE username = ?", [$username]);
     if ($admin && password_verify($password, $admin['password_hash'])) {
         sessionStart();
-        session_regenerate_id(true); // Prevent session fixation
-        $_SESSION['admin_id']   = $admin['id'];
-        $_SESSION['admin_name'] = $admin['name'];
-        $_SESSION['admin_user'] = $admin['username'];
+        session_regenerate_id(true);
+        $_SESSION['admin_id']         = (int)$admin['id'];
+        $_SESSION['admin_name']       = $admin['name'];
+        $_SESSION['admin_user']       = $admin['username'];
+        $_SESSION['admin_company_id'] = (int)($admin['company_id'] ?? 1);
+        // Formato unificado
+        $_SESSION['pageup_admin'] = [
+            'id'         => (int)$admin['id'],
+            'name'       => $admin['name'],
+            'username'   => $admin['username'],
+            'company_id' => (int)($admin['company_id'] ?? 1),
+        ];
         return true;
     }
     return false;
@@ -41,7 +61,7 @@ function adminLogout(): void {
 
 function adminName(): string {
     sessionStart();
-    return $_SESSION['admin_name'] ?? 'Admin';
+    return $_SESSION['admin_name'] ?? $_SESSION['pageup_admin']['name'] ?? 'Admin';
 }
 
 function adminUrl(string $page = 'index.php'): string {
