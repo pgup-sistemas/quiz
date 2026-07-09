@@ -1,0 +1,32 @@
+Options -Indexes
+DirectoryIndex index.php
+
+# Protect data directory
+<FilesMatch "\.db$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect env files
+<FilesMatch "^\.env">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect includes
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block direct access to includes
+    RewriteRule ^includes/ - [F,L]
+
+    # Optional: pretty URLs (uncomment if needed)
+    # RewriteCond %{REQUEST_FILENAME} !-f
+    # RewriteCond %{REQUEST_FILENAME} !-d
+    # RewriteRule ^quiz/([0-9]+)/?$ quiz.php?id=$1 [QSA,L]
+</IfModule>
+
+# PHP settings
+php_value upload_max_filesize 8M
+php_value post_max_size 10M
+php_value memory_limit 128M

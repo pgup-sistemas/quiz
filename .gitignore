@@ -1,0 +1,24 @@
+# Banco de dados SQLite (dados locais)
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# Variáveis de ambiente sensíveis
+.env
+.env.local
+.env.*.local
+
+# Uploads e arquivos temporários
+uploads/
+tmp/*.json
+tmp/sync_*.php
+
+# XAMPP / sistema
+.htpasswd
+Thumbs.db
+.DS_Store
+
+# Editor
+.vscode/
+*.swp
+*.swo
