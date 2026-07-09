@@ -1,8 +1,8 @@
-# 🧪 Alphaclin Quiz · Sistema de Quiz Interativo
+# Page Quiz · Sistema de Quiz Interativo
 
 ## Visão Geral
 
-Plataforma completa de quizzes para o Alphaclin, desenvolvida em **PHP + SQLite**.
+Plataforma completa de quizzes para o questionários, desenvolvida em **PHP + SQLite**.
 Setores podem criar quizzes interativos para apresentações, treinamentos e auditorias (ONA).
 
 ---
