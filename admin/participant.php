@@ -7,12 +7,14 @@ requireLogin();
 $pid = (int)($_GET['id'] ?? 0);
 if (!$pid) redirect('results.php');
 
+$cid = adminCompanyId();
+
 $p = dbRow("
     SELECT p.*, q.title AS quiz_title, q.pass_percentage AS q_pass_pct, q.id AS quiz_id
     FROM participants p
     JOIN quizzes q ON q.id = p.quiz_id
-    WHERE p.id = ?
-", [$pid]);
+    WHERE p.id = ? AND q.company_id = ?
+", [$pid, $cid]);
 
 if (!$p) { flash('Participação não encontrada.', 'error'); redirect('results.php'); }
 

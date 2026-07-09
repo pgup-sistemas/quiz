@@ -4,17 +4,19 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/layout.php';
 requireLogin();
 
+$cid = adminCompanyId();
+
 /* ── Add Sector ─────────────────────────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_sector'])) {
     $name = trim($_POST['name'] ?? '');
     if (!$name) {
         flash('O nome do setor é obrigatório.', 'error');
     } else {
-        $exists = dbRow("SELECT id FROM sectors WHERE name = ?", [$name]);
+        $exists = dbRow("SELECT id FROM sectors WHERE name = ? AND company_id = ?", [$name, $cid]);
         if ($exists) {
             flash("O setor «{$name}» já existe.", 'error');
         } else {
-            dbExec("INSERT INTO sectors (name) VALUES (?)", [$name]);
+            dbExec("INSERT INTO sectors (name, company_id) VALUES (?,?)", [$name, $cid]);
             flash("Setor «{$name}» criado com sucesso!", 'success');
         }
     }
@@ -28,12 +30,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rename_sector'])) {
     if (!$newName) {
         flash('O novo nome não pode ser vazio.', 'error');
     } else {
-        $old = dbRow("SELECT name FROM sectors WHERE id = ?", [$id]);
+        $old = dbRow("SELECT name FROM sectors WHERE id = ? AND company_id = ?", [$id, $cid]);
         if ($old) {
-            // Update all quizzes that use this sector name
-            dbExec("UPDATE quizzes SET sector = ? WHERE sector = ?", [$newName, $old['name']]);
-            // Update sector record
-            dbExec("UPDATE sectors SET name = ? WHERE id = ?", [$newName, $id]);
+            dbExec("UPDATE quizzes SET sector = ? WHERE sector = ? AND company_id = ?", [$newName, $old['name'], $cid]);
+            dbExec("UPDATE sectors SET name = ? WHERE id = ? AND company_id = ?", [$newName, $id, $cid]);
             flash("Setor renomeado de «{$old['name']}» para «{$newName}». Todos os quizzes associados foram atualizados.", 'success');
         }
     }
@@ -43,13 +43,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rename_sector'])) {
 /* ── Delete Sector ───────────────────────────────────────── */
 if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $id = (int)$_GET['delete'];
-    $sector = dbRow("SELECT * FROM sectors WHERE id = ?", [$id]);
+    $sector = dbRow("SELECT * FROM sectors WHERE id = ? AND company_id = ?", [$id, $cid]);
     if ($sector) {
-        $quizCount = dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE sector = ?", [$sector['name']])['c'];
+        $quizCount = dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE sector = ? AND company_id = ?", [$sector['name'], $cid])['c'];
         if ($quizCount > 0) {
             flash("Não é possível excluir o setor «{$sector['name']}» pois há {$quizCount} quiz(es) associado(s). Reatribua os quizzes primeiro.", 'error');
         } else {
-            dbExec("DELETE FROM sectors WHERE id = ?", [$id]);
+            dbExec("DELETE FROM sectors WHERE id = ? AND company_id = ?", [$id, $cid]);
             flash("Setor «{$sector['name']}» excluído.", 'success');
         }
     }
@@ -59,12 +59,11 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
 /* ── Force Delete Sector (reassign quizzes to Geral) ──────── */
 if (isset($_GET['force_delete']) && is_numeric($_GET['force_delete'])) {
     $id = (int)$_GET['force_delete'];
-    $sector = dbRow("SELECT * FROM sectors WHERE id = ?", [$id]);
+    $sector = dbRow("SELECT * FROM sectors WHERE id = ? AND company_id = ?", [$id, $cid]);
     if ($sector && $sector['name'] !== 'Geral') {
-        dbExec("UPDATE quizzes SET sector = 'Geral' WHERE sector = ?", [$sector['name']]);
-        dbExec("DELETE FROM sectors WHERE id = ?", [$id]);
-        // Ensure Geral exists in sectors
-        dbExec("INSERT OR IGNORE INTO sectors (name) VALUES ('Geral')");
+        dbExec("UPDATE quizzes SET sector = 'Geral' WHERE sector = ? AND company_id = ?", [$sector['name'], $cid]);
+        dbExec("DELETE FROM sectors WHERE id = ? AND company_id = ?", [$id, $cid]);
+        dbExec("INSERT OR IGNORE INTO sectors (name, company_id) VALUES ('Geral', ?)", [$cid]);
         flash("Setor «{$sector['name']}» excluído. Quizzes reassociados para «Geral».", 'success');
     }
     redirect('sectors.php');
@@ -73,10 +72,11 @@ if (isset($_GET['force_delete']) && is_numeric($_GET['force_delete'])) {
 $sectors = dbRows("
     SELECT s.*, COUNT(q.id) AS quiz_count
     FROM sectors s
-    LEFT JOIN quizzes q ON q.sector = s.name
+    LEFT JOIN quizzes q ON q.sector = s.name AND q.company_id = s.company_id
+    WHERE s.company_id = ?
     GROUP BY s.id
     ORDER BY s.name ASC
-");
+", [$cid]);
 
 adminHead('Setores', 'sectors.php');
 ?>

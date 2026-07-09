@@ -4,10 +4,12 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/layout.php';
 requireLogin();
 
+$cid = adminCompanyId();
+
 /* ── Toggle active ───────────────────────────────────────── */
 if (isset($_GET['toggle']) && is_numeric($_GET['toggle'])) {
     $uid = (int)$_GET['toggle'];
-    dbExec("UPDATE users SET active = 1 - active WHERE id = ?", [$uid]);
+    dbExec("UPDATE users SET active = 1 - active WHERE id = ? AND company_id = ?", [$uid, $cid]);
     flash('Status do usuário atualizado.', 'success');
     redirect('users.php');
 }
@@ -15,7 +17,7 @@ if (isset($_GET['toggle']) && is_numeric($_GET['toggle'])) {
 /* ── Delete user ─────────────────────────────────────────── */
 if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $uid = (int)$_GET['delete'];
-    dbExec("DELETE FROM users WHERE id = ?", [$uid]);
+    dbExec("DELETE FROM users WHERE id = ? AND company_id = ?", [$uid, $cid]);
     flash('Usuário excluído.', 'success');
     redirect('users.php');
 }
@@ -33,12 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_user'])) {
         flash('E-mail inválido.', 'error');
     } elseif (strlen($pass) < 6) {
         flash('Senha mínima de 6 caracteres.', 'error');
-    } elseif (dbRow("SELECT id FROM users WHERE email = ?", [$email])) {
+    } elseif (dbRow("SELECT id FROM users WHERE email = ? AND company_id = ?", [$email, $cid])) {
         flash('Este e-mail já está cadastrado.', 'error');
     } else {
         $hash = password_hash($pass, PASSWORD_DEFAULT);
-        dbExec("INSERT INTO users (name, email, password_hash, sector, active) VALUES (?,?,?,?,1)",
-            [$name, $email, $hash, $sector]);
+        dbExec("INSERT INTO users (name, email, password_hash, sector, active, company_id) VALUES (?,?,?,?,1,?)",
+            [$name, $email, $hash, $sector, $cid]);
         flash("Usuário «{$name}» criado com sucesso!", 'success');
     }
     redirect('users.php');
@@ -50,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_pass'])) {
     $newPass = $_POST['new_pass'] ?? '';
     if ($uid && strlen($newPass) >= 6) {
         $hash = password_hash($newPass, PASSWORD_DEFAULT);
-        dbExec("UPDATE users SET password_hash = ? WHERE id = ?", [$hash, $uid]);
+        dbExec("UPDATE users SET password_hash = ? WHERE id = ? AND company_id = ?", [$hash, $uid, $cid]);
         flash('Senha redefinida com sucesso.', 'success');
     } else {
         flash('Senha mínima de 6 caracteres.', 'error');
@@ -62,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_pass'])) {
 $search = trim($_GET['q'] ?? '');
 $filter = $_GET['filter'] ?? 'all';
 
-$where  = [];
-$params = [];
+$where  = ["u.company_id = ?"];
+$params = [$cid];
 if ($search) {
     $where[]  = "(u.name LIKE ? OR u.email LIKE ?)";
     $params[] = "%$search%";
@@ -72,7 +74,7 @@ if ($search) {
 if ($filter === 'active')   { $where[] = "u.active = 1"; }
 if ($filter === 'inactive') { $where[] = "u.active = 0"; }
 
-$whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+$whereSql = 'WHERE ' . implode(' AND ', $where);
 
 $users = dbRows("
     SELECT u.*,
@@ -87,9 +89,9 @@ $users = dbRows("
 ", $params);
 
 $stats = [
-    'total'    => dbRow("SELECT COUNT(*) AS c FROM users")['c'],
-    'active'   => dbRow("SELECT COUNT(*) AS c FROM users WHERE active = 1")['c'],
-    'inactive' => dbRow("SELECT COUNT(*) AS c FROM users WHERE active = 0")['c'],
+    'total'    => dbRow("SELECT COUNT(*) AS c FROM users WHERE company_id = ?", [$cid])['c'],
+    'active'   => dbRow("SELECT COUNT(*) AS c FROM users WHERE active = 1 AND company_id = ?", [$cid])['c'],
+    'inactive' => dbRow("SELECT COUNT(*) AS c FROM users WHERE active = 0 AND company_id = ?", [$cid])['c'],
 ];
 
 adminHead('Usuários', 'users.php');

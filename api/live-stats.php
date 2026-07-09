@@ -1,10 +1,21 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/auth.php';
+
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+if (!isLoggedIn()) {
+    echo json_encode(['success' => false, 'message' => 'Não autorizado']); exit;
+}
 
 $quizId = (int)($_GET['quiz_id'] ?? 0);
 if (!$quizId) {
     echo json_encode(['success' => false, 'message' => 'Quiz ID obrigatório']); exit;
+}
+
+$cid = adminCompanyId();
+if (!dbRow("SELECT id FROM quizzes WHERE id=? AND company_id=?", [$quizId, $cid])) {
+    echo json_encode(['success' => false, 'message' => 'Quiz não encontrado']); exit;
 }
 
 // 1. Fetch total question count for this quiz

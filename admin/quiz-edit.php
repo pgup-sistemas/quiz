@@ -4,8 +4,9 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/layout.php';
 requireLogin();
 
+$cid     = adminCompanyId();
 $quizId  = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-$quiz    = $quizId ? dbRow("SELECT * FROM quizzes WHERE id = ?", [$quizId]) : null;
+$quiz    = $quizId ? dbRow("SELECT * FROM quizzes WHERE id = ? AND company_id = ?", [$quizId, $cid]) : null;
 $isNew   = !$quiz;
 
 /* ── Save Quiz ─────────────────────────────────────────────── */
@@ -27,17 +28,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_quiz'])) {
     if (!$title) { flash('O título é obrigatório.', 'error'); redirect("quiz-edit.php?id=$quizId"); }
 
     if ($isNew) {
-        dbExec("INSERT INTO quizzes (title,description,sector,created_by,time_per_question,pass_percentage,max_questions,expires_at,show_feedback,has_certificate,randomize,allow_retake,active)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            [$title,$desc,$sector,$createdBy,$timer,$passPct,$maxQ,$expiry,$feedback,$hasCert,$randomize,$retake,$active]);
+        dbExec("INSERT INTO quizzes (title,description,sector,created_by,time_per_question,pass_percentage,max_questions,expires_at,show_feedback,has_certificate,randomize,allow_retake,active,company_id)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            [$title,$desc,$sector,$createdBy,$timer,$passPct,$maxQ,$expiry,$feedback,$hasCert,$randomize,$retake,$active,$cid]);
         $quizId = (int)dbLastId();
         flash('Quiz criado com sucesso!', 'success');
     } else {
         dbExec("UPDATE quizzes SET title=?,description=?,sector=?,created_by=?,time_per_question=?,
                 pass_percentage=?,max_questions=?,expires_at=?,show_feedback=?,has_certificate=?,randomize=?,allow_retake=?,active=?,
                 updated_at=datetime('now','localtime')
-                WHERE id=?",
-            [$title,$desc,$sector,$createdBy,$timer,$passPct,$maxQ,$expiry,$feedback,$hasCert,$randomize,$retake,$active,$quizId]);
+                WHERE id=? AND company_id=?",
+            [$title,$desc,$sector,$createdBy,$timer,$passPct,$maxQ,$expiry,$feedback,$hasCert,$randomize,$retake,$active,$quizId,$cid]);
         flash('Quiz atualizado com sucesso!', 'success');
     }
     redirect("quiz-edit.php?id=$quizId");
@@ -160,7 +161,7 @@ adminHead($isNew ? 'Novo Quiz' : 'Editar: ' . ($quiz['title'] ?? ''), 'quizzes.p
         <div class="form-row">
             <div class="form-group">
                 <label class="form-label">Setor / Área</label>
-                <?php $sectors = dbRows("SELECT name FROM sectors ORDER BY name ASC"); ?>
+                <?php $sectors = dbRows("SELECT name FROM sectors WHERE company_id=? ORDER BY name ASC", [$cid]); ?>
                 <select class="form-control" name="sector">
                     <?php if (empty($sectors)): ?>
                         <option value="Geral">Geral</option>

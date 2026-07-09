@@ -4,19 +4,22 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/layout.php';
 requireLogin();
 
-$totalQuizzes = dbRow("SELECT COUNT(*) AS c FROM quizzes")['c'];
-$activeQuizzes = dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE active=1")['c'];
-$totalParticipants = dbRow("SELECT COUNT(*) AS c FROM participants")['c'];
-$passCount = dbRow("SELECT COUNT(*) AS c FROM participants WHERE passed=1")['c'];
+$cid = adminCompanyId();
+
+$totalQuizzes      = dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE company_id=?", [$cid])['c'];
+$activeQuizzes     = dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE active=1 AND company_id=?", [$cid])['c'];
+$totalParticipants = dbRow("SELECT COUNT(*) AS c FROM participants p JOIN quizzes q ON q.id=p.quiz_id WHERE q.company_id=?", [$cid])['c'];
+$passCount         = dbRow("SELECT COUNT(*) AS c FROM participants p JOIN quizzes q ON q.id=p.quiz_id WHERE p.passed=1 AND q.company_id=?", [$cid])['c'];
 $passRate  = $totalParticipants > 0 ? round(($passCount / $totalParticipants) * 100) : 0;
 
 $recentResults = dbRows("
     SELECT p.*, q.title AS quiz_title
     FROM participants p
     JOIN quizzes q ON q.id = p.quiz_id
+    WHERE q.company_id = ?
     ORDER BY p.completed_at DESC
     LIMIT 10
-");
+", [$cid]);
 
 $quizStats = dbRows("
     SELECT q.id, q.title, q.sector,
@@ -25,23 +28,23 @@ $quizStats = dbRows("
            ROUND(AVG(p.percentage),1) AS avg_pct
     FROM quizzes q
     LEFT JOIN participants p ON p.quiz_id = q.id
-    WHERE q.active = 1
+    WHERE q.active = 1 AND q.company_id = ?
     GROUP BY q.id
     ORDER BY total DESC
     LIMIT 8
-");
+", [$cid]);
 
-// New: Performance by Sector
 $sectorStats = dbRows("
-    SELECT sector, 
-           COUNT(*) AS total, 
-           SUM(passed) AS passed_count,
-           ROUND(AVG(percentage), 1) AS avg_pct
-    FROM participants
-    WHERE sector != ''
-    GROUP BY sector
+    SELECT p.sector,
+           COUNT(*) AS total,
+           SUM(p.passed) AS passed_count,
+           ROUND(AVG(p.percentage), 1) AS avg_pct
+    FROM participants p
+    JOIN quizzes q ON q.id = p.quiz_id
+    WHERE p.sector != '' AND q.company_id = ?
+    GROUP BY p.sector
     ORDER BY total DESC
-");
+", [$cid]);
 
 adminHead('Dashboard', 'index.php');
 ?>

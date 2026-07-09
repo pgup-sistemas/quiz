@@ -4,10 +4,15 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/layout.php';
 requireLogin();
 
+$cid = adminCompanyId();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
     $delId = (int)$_POST['id'];
-    dbExec("DELETE FROM answers WHERE participant_id = ?", [$delId]);
-    dbExec("DELETE FROM participants WHERE id = ?", [$delId]);
+    // IDOR: só exclui se o participante pertence a um quiz desta empresa
+    if (dbRow("SELECT p.id FROM participants p JOIN quizzes q ON q.id=p.quiz_id WHERE p.id=? AND q.company_id=?", [$delId, $cid])) {
+        dbExec("DELETE FROM answers WHERE participant_id = ?", [$delId]);
+        dbExec("DELETE FROM participants WHERE id = ?", [$delId]);
+    }
     flash("Resultado excluído com sucesso.", "success");
     
     $q = $_GET;
@@ -27,8 +32,8 @@ $offset     = ($page - 1) * $perPage;
 
 // CSV Export
 if (isset($_GET['export'])) {
-    $where = 'WHERE 1=1';
-    $params = [];
+    $where = 'WHERE q.company_id=?';
+    $params = [$cid];
     if ($filterQuiz) { $where .= ' AND p.quiz_id=?'; $params[] = $filterQuiz; }
     if ($filterName) { $where .= ' AND (p.name LIKE ? OR p.email LIKE ?)'; $params[] = "%$filterName%"; $params[] = "%$filterName%"; }
     if ($filterPass !== '') { $where .= ' AND p.passed=?'; $params[] = (int)$filterPass; }
@@ -60,8 +65,8 @@ if (isset($_GET['export'])) {
 }
 
 // Build WHERE
-$where  = 'WHERE 1=1';
-$params = [];
+$where  = 'WHERE q.company_id=?';
+$params = [$cid];
 if ($filterQuiz) { $where .= ' AND p.quiz_id=?';  $params[] = $filterQuiz; }
 if ($filterName) { $where .= ' AND (p.name LIKE ? OR p.email LIKE ?)'; $params[] = "%$filterName%"; $params[] = "%$filterName%"; }
 if ($filterPass !== '') { $where .= ' AND p.passed=?'; $params[] = (int)$filterPass; }
@@ -75,12 +80,12 @@ $results = dbRows("
     LIMIT ? OFFSET ?
 ", array_merge($params, [$perPage, $offset]));
 
-$quizList   = dbRows("SELECT id, title FROM quizzes ORDER BY title ASC");
-$totalRows  = dbRow("SELECT COUNT(*) AS c FROM participants p $where", $params)['c'];
+$quizList   = dbRows("SELECT id, title FROM quizzes WHERE company_id=? ORDER BY title ASC", [$cid]);
+$totalRows  = dbRow("SELECT COUNT(*) AS c FROM participants p JOIN quizzes q ON q.id=p.quiz_id $where", $params)['c'];
 $totalPages = ceil($totalRows / $perPage);
 
 // Stats for filtered set
-$statsQ = "SELECT COUNT(*) AS total, SUM(passed) AS passed_count, ROUND(AVG(percentage),1) AS avg_pct FROM participants p $where";
+$statsQ = "SELECT COUNT(*) AS total, SUM(passed) AS passed_count, ROUND(AVG(percentage),1) AS avg_pct FROM participants p JOIN quizzes q ON q.id=p.quiz_id $where";
 $stats  = dbRow($statsQ, $params);
 
 adminHead('Resultados', 'results.php');

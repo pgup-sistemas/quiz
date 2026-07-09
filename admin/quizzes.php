@@ -4,10 +4,12 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/layout.php';
 requireLogin();
 
+$cid = adminCompanyId();
+
 // Toggle active
 if (isset($_GET['toggle']) && is_numeric($_GET['toggle'])) {
     $qid = (int)$_GET['toggle'];
-    dbExec("UPDATE quizzes SET active = 1 - active WHERE id = ?", [$qid]);
+    dbExec("UPDATE quizzes SET active = 1 - active WHERE id = ? AND company_id = ?", [$qid, $cid]);
     flash('Status do quiz atualizado.', 'success');
     redirect('quizzes.php');
 }
@@ -15,7 +17,7 @@ if (isset($_GET['toggle']) && is_numeric($_GET['toggle'])) {
 // Delete
 if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $qid = (int)$_GET['delete'];
-    dbExec("DELETE FROM quizzes WHERE id = ?", [$qid]);
+    dbExec("DELETE FROM quizzes WHERE id = ? AND company_id = ?", [$qid, $cid]);
     flash('Quiz excluído.', 'success');
     redirect('quizzes.php');
 }
@@ -23,12 +25,12 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
 // Force Delete (including participants)
 if (isset($_GET['force_delete']) && is_numeric($_GET['force_delete'])) {
     $qid = (int)$_GET['force_delete'];
-    // Due to ON DELETE CASCADE on questions and custom logic for participants, we'll clear everything.
-    // participants has ON DELETE SET NULL for quiz_id, so they remain but lose link.
-    // If user wants to PURGE, we delete participants manually.
+    if (!dbRow("SELECT id FROM quizzes WHERE id = ? AND company_id = ?", [$qid, $cid])) {
+        redirect('quizzes.php');
+    }
     dbExec("DELETE FROM answers WHERE participant_id IN (SELECT id FROM participants WHERE quiz_id = ?)", [$qid]);
     dbExec("DELETE FROM participants WHERE quiz_id = ?", [$qid]);
-    dbExec("DELETE FROM quizzes WHERE id = ?", [$qid]);
+    dbExec("DELETE FROM quizzes WHERE id = ? AND company_id = ?", [$qid, $cid]);
     flash('Quiz e todos os seus resultados foram excluídos permanentemente.', 'success');
     redirect('quizzes.php');
 }
@@ -36,7 +38,7 @@ if (isset($_GET['force_delete']) && is_numeric($_GET['force_delete'])) {
 // Clone
 if (isset($_GET['clone']) && is_numeric($_GET['clone'])) {
     $qid = (int)$_GET['clone'];
-    $old = dbRow("SELECT * FROM quizzes WHERE id = ?", [$qid]);
+    $old = dbRow("SELECT * FROM quizzes WHERE id = ? AND company_id = ?", [$qid, $cid]);
     if ($old) {
         unset($old['id']);
         $old['title'] .= ' (Cópia)';

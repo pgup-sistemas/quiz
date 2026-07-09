@@ -3,13 +3,14 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
 requireLogin();
 
+$cid    = adminCompanyId();
 $quizId = (int) ($_GET['id'] ?? 0);
-$quiz = null;
+$quiz   = null;
 
 if ($quizId > 0) {
-    $quiz = dbRow("SELECT * FROM quizzes WHERE id = ?", [$quizId]);
+    $quiz = dbRow("SELECT * FROM quizzes WHERE id = ? AND company_id = ?", [$quizId, $cid]);
 } else {
-    $quizzes = dbRows("SELECT * FROM quizzes WHERE active = 1 ORDER BY created_at DESC");
+    $quizzes = dbRows("SELECT * FROM quizzes WHERE active = 1 AND company_id = ? ORDER BY created_at DESC", [$cid]);
 }
 ?>
 <!DOCTYPE html>
