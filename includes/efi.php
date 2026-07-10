@@ -7,7 +7,7 @@
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use EfiPay\Efi;
+use Efi\EfiPay;
 
 /* ─── Configuração ──────────────────────────────────────────────────────── */
 
@@ -32,15 +32,23 @@ function efiConfig(): array {
         'timeout'       => 30,
         'certificate'   => file_exists($certPath) ? $certPath : '',
         'password_cert' => $certPass,
+        // Desabilita verificação SSL em sandbox local (XAMPP não tem CA da EFI)
+        'validationCertificate' => !$sandbox,
     ];
 
     return $cfg;
 }
 
-function efiClient(): Efi {
+function efiClient(): EfiPay {
     static $client = null;
     if ($client === null) {
-        $client = new Efi(efiConfig());
+        // Em sandbox local (XAMPP), o curl não tem o CA da EFI — usa o bundle do XAMPP
+        $caBundle = 'C:/xampp/phpMyAdmin/vendor/composer/ca-bundle/res/cacert.pem';
+        if (file_exists($caBundle)) {
+            ini_set('curl.cainfo', $caBundle);
+            ini_set('openssl.cafile', $caBundle);
+        }
+        $client = new EfiPay(efiConfig());
     }
     return $client;
 }
@@ -90,9 +98,9 @@ function efiCreatePixCharge(
 
     $response = efiClient()->pixCreateImmediateCharge([], $body);
 
-    // Gerar QRCode
-    $qrParams   = ['txid' => $response['txid']];
-    $qrResponse = efiClient()->pixGenerateQrcode($qrParams);
+    // Gerar QRCode usando o loc.id retornado pela API
+    $locId      = $response['loc']['id'];
+    $qrResponse = efiClient()->pixGenerateQRCode(['id' => $locId]);
 
     return [
         'txid'        => $response['txid'],
@@ -240,12 +248,16 @@ function efiCreatePaymentLink(
             'value'  => $cents,
         ]],
         'metadata' => [
-            'notification_url' => efiWebhookUrl(),
-            'custom_id'        => "company_{$companyId}",
+            'custom_id' => "company_{$companyId}",
+        ],
+        'settings' => [
+            'payment_method'           => 'all',
+            'request_delivery_address' => false,
+            'expire_at'                => date('Y-m-d', strtotime('+30 days')),
         ],
     ];
 
-    $response = efiClient()->defineLinkPayment([], $body);
+    $response = efiClient()->createOneStepLink([], $body);
 
     return [
         'link_id' => $response['data']['link_id'] ?? '',
