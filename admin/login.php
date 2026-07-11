@@ -10,6 +10,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = trim($_POST['username'] ?? '');
     $pass = $_POST['password'] ?? '';
     if (adminLogin($user, $pass)) {
+        // Novos admins de tenant (first_login=1) vão para onboarding
+        $adminRow = dbRow("SELECT first_login FROM admins WHERE id=?", [adminId()]);
+        if (!empty($adminRow['first_login'])) {
+            redirect('onboarding.php');
+        }
         redirect('index.php');
     } else {
         $error = 'Usuário ou senha incorretos.';
@@ -237,6 +242,9 @@ body {
                 <label class="form-label" for="inp-pass">Senha</label>
                 <input class="form-control" id="inp-pass" type="password" name="password"
                        placeholder="••••••••" required autocomplete="current-password"/>
+                <div style="text-align:right;margin-top:6px;font-size:13px">
+                  <a href="forgot-password.php" style="color:var(--pacific);text-decoration:none">Esqueci minha senha</a>
+                </div>
             </div>
             <button type="submit" class="btn-login">
                 Entrar <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>

@@ -12,32 +12,38 @@ function resolveTenant(): ?array {
         return $_SESSION['tenant_company'];
     }
 
+    $slug = null;
+
+    // 1. Tenta subdomínio (produção: alphaclin.pagequiz.com.br)
     $host = strtolower($_SERVER['HTTP_HOST'] ?? '');
-    // Remove porta, se houver
     $host = explode(':', $host)[0];
-
-    // Domínios que não têm tenant: localhost, pagequiz (sem sub), 127.0.0.1, IPs
     $noTenantHosts = ['localhost', 'pagequiz', '127.0.0.1'];
-    if (in_array($host, $noTenantHosts) || filter_var($host, FILTER_VALIDATE_IP)) {
-        return null;
+    if (!in_array($host, $noTenantHosts) && !filter_var($host, FILTER_VALIDATE_IP)) {
+        $sub = strtok($host, '.');
+        if ($sub && $sub !== $host && $sub !== 'superadmin') {
+            $slug = $sub;
+        }
     }
 
-    // Extrai slug: primeiro segmento antes do primeiro ponto
-    // Ex.: alphaclin.pagequiz.com.br → alphaclin
-    $slug = strtok($host, '.');
-    if (!$slug || $slug === $host) {
-        // Sem subdomínio real — tratar como sem tenant
-        return null;
+    // 2. Fallback: ?c=slug (desenvolvimento local ou link de convite)
+    if (!$slug && !empty($_GET['c'])) {
+        $slug = preg_replace('/[^a-z0-9\-]/', '', strtolower(trim($_GET['c'])));
     }
 
-    // Superadmin não tem tenant
-    if ($slug === 'superadmin') {
+    // 3. Fallback: slug salvo na sessão por acesso anterior com ?c=
+    if (!$slug && !empty($_SESSION['_tenant_slug'])) {
+        $slug = $_SESSION['_tenant_slug'];
+    }
+
+    if (!$slug) {
         return null;
     }
 
     $company = dbRow("SELECT * FROM companies WHERE slug = ?", [$slug]);
 
     if (!$company) {
+        // Slug inválido via ?c= — ignora silenciosamente (não dá 404)
+        if (!empty($_GET['c'])) return null;
         http_response_code(404);
         include __DIR__ . '/../404.php';
         exit;
@@ -48,11 +54,19 @@ function resolveTenant(): ?array {
         exit;
     }
 
-    // Cache em sessão
+    // Persiste slug na sessão para que próximas páginas (login, register) mantenham o tenant
+    $_SESSION['_tenant_slug']      = $slug;
     $_SESSION['tenant_company']    = $company;
     $_SESSION['tenant_company_id'] = (int)$company['id'];
 
     return $company;
+}
+
+/**
+ * Remove o tenant da sessão (logout do user ou impersonation).
+ */
+function clearTenantSession(): void {
+    unset($_SESSION['tenant_company'], $_SESSION['tenant_company_id'], $_SESSION['_tenant_slug']);
 }
 
 /**

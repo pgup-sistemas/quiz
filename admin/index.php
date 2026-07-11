@@ -4,7 +4,8 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/layout.php';
 requireLogin();
 
-$cid = adminCompanyId();
+$cid     = adminCompanyId();
+$company = dbRow("SELECT * FROM companies WHERE id=?", [$cid]);
 
 $totalQuizzes      = dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE company_id=?", [$cid])['c'];
 $activeQuizzes     = dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE active=1 AND company_id=?", [$cid])['c'];
@@ -97,9 +98,50 @@ adminHead('Dashboard', 'index.php');
         <a href="../index.php" class="btn btn-outline" target="_blank" style="padding:12px 20px; font-size:14px; border-color:var(--blue); color:var(--blue)">
             <i class="fa-solid fa-rocket"></i> Acessar Plataforma
         </a>
-        <a href="quizzes.php?action=new" class="btn btn-primary" style="padding:12px 20px; font-size:14px">
+        <a href="quiz-edit.php" class="btn btn-primary" style="padding:12px 20px; font-size:14px">
             <i class="fa-solid fa-plus"></i> Novo Quiz
         </a>
+    </div>
+</div>
+
+<!-- Link de acesso para colaboradores -->
+<?php
+$base = ((!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off')?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pagequiz');
+$slug = $company['slug'] ?? '';
+// Em produção com subdomínio; localmente usa ?c=slug
+$isSubdomain = substr_count($_SERVER['HTTP_HOST'] ?? '', '.') >= 2;
+$accessUrl   = $isSubdomain
+    ? preg_replace('/^([a-z]+\.)/', $slug.'.', $base) . '/'
+    : $base . '/?c=' . urlencode($slug);
+$registerUrl = $isSubdomain
+    ? preg_replace('/^([a-z]+\.)/', $slug.'.', $base) . '/user/register.php'
+    : $base . '/user/register.php?c=' . urlencode($slug);
+?>
+<div style="background:linear-gradient(135deg,var(--prussian) 0%,#034a6e 100%);border-radius:16px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <div>
+        <div style="color:rgba(255,255,255,.65);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">
+            <i class="fa-solid fa-link" style="color:var(--yellow)"></i> Link de acesso para colaboradores
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <code id="access-url" style="background:rgba(255,255,255,.1);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;letter-spacing:.2px;word-break:break-all"><?= htmlspecialchars($accessUrl) ?></code>
+            <button onclick="copyAccessUrl('access-url','btn-copy-main')" id="btn-copy-main"
+                    style="padding:8px 16px;background:var(--yellow);color:var(--prussian);border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;transition:.2s">
+                <i class="fa-solid fa-copy"></i> Copiar
+            </button>
+        </div>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="color:rgba(255,255,255,.5);font-size:11px">Cadastro:</span>
+            <code id="register-url" style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);padding:5px 12px;border-radius:6px;font-size:12px;word-break:break-all"><?= htmlspecialchars($registerUrl) ?></code>
+            <button onclick="copyAccessUrl('register-url','btn-copy-reg')" id="btn-copy-reg"
+                    style="padding:5px 12px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:6px;font-weight:600;font-size:11px;cursor:pointer;white-space:nowrap">
+                <i class="fa-solid fa-copy"></i> Copiar
+            </button>
+        </div>
+    </div>
+    <div style="text-align:center;flex-shrink:0">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&margin=0&color=023047&bgcolor=ffffff&data=<?= urlencode($accessUrl) ?>"
+             width="90" height="90" style="border-radius:8px;display:block" alt="QR Code de acesso"/>
+        <div style="color:rgba(255,255,255,.5);font-size:10px;margin-top:6px">QR Code</div>
     </div>
 </div>
 
@@ -247,4 +289,15 @@ adminHead('Dashboard', 'index.php');
 </div>
 
 </div>
+<script>
+function copyAccessUrl(elId, btnId) {
+    const text = document.getElementById(elId).textContent.trim();
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById(btnId);
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado!';
+        setTimeout(() => btn.innerHTML = orig, 2000);
+    });
+}
+</script>
 <?php adminFoot(); ?>

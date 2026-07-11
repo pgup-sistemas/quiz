@@ -25,12 +25,12 @@ $planLabels = [
     'pro'  => 'Pro',
 ];
 $statusLabels = [
-    'pending'   => ['⏳ Aguardando', '#92400e', '#fef3c7'],
-    'active'    => ['✅ Ativo',       '#166534', '#dcfce7'],
-    'paid'      => ['✅ Pago',        '#166534', '#dcfce7'],
-    'overdue'   => ['⚠️ Inadimplente','#991b1b', '#fee2e2'],
-    'cancelled' => ['✗ Cancelado',   '#6b7280', '#f3f4f6'],
-    'expired'   => ['✗ Expirado',    '#6b7280', '#f3f4f6'],
+    'pending'   => ['Aguardando',    '#92400e', '#fef3c7'],
+    'active'    => ['Ativo',         '#166534', '#dcfce7'],
+    'paid'      => ['Pago',          '#166534', '#dcfce7'],
+    'overdue'   => ['Inadimplente',  '#991b1b', '#fee2e2'],
+    'cancelled' => ['Cancelado',     '#6b7280', '#f3f4f6'],
+    'expired'   => ['Expirado',      '#6b7280', '#f3f4f6'],
 ];
 $typeLabels = [
     'pix'            => 'PIX',

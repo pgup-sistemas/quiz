@@ -1,12 +1,26 @@
 <?php
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/tenant.php';
+require_once __DIR__ . '/includes/seo.php';
+
+if (session_status() === PHP_SESSION_NONE) session_start();
+$tenant = resolveTenant();
 
 $code = isset($_GET['code']) ? strtoupper(trim($_GET['code'])) : '';
 $participant = null;
 $quiz = null;
 
 if ($code) {
-    $participant = dbRow("SELECT * FROM participants WHERE verify_code = ?", [$code]);
+    if ($tenant) {
+        $participant = dbRow(
+            "SELECT p.* FROM participants p
+             JOIN quizzes q ON q.id = p.quiz_id
+             WHERE p.verify_code = ? AND q.company_id = ?",
+            [$code, (int)$tenant['id']]
+        );
+    } else {
+        $participant = dbRow("SELECT * FROM participants WHERE verify_code = ?", [$code]);
+    }
     if ($participant) {
         $quiz = dbRow("SELECT * FROM quizzes WHERE id = ?", [$participant['quiz_id']]);
     }
@@ -15,16 +29,41 @@ if ($code) {
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<?php
+$_seoBase    = ((!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off')?'https':'http').'://'.($_SERVER['HTTP_HOST']??'quiz.pageup.net.br');
+$_seoOrgName = $tenant ? htmlspecialchars($tenant['name']) : 'PageQuiz';
+if ($participant && $quiz) {
+    $_seoTitle = 'Certificado de '.htmlspecialchars($participant['name']).' — '.htmlspecialchars($quiz['title']);
+    $_seoDesc  = 'Verifique a autenticidade do certificado emitido para '.htmlspecialchars($participant['name']).' no quiz '.htmlspecialchars($quiz['title']).'. Emitido por '.$_seoOrgName.'.';
+    $_seoJsonLd = seoJsonLdCertificate($participant, $quiz, $_seoBase.'/verify.php?code='.urlencode($code));
+} else {
+    $_seoTitle  = 'Verificar Certificado · '.$_seoOrgName;
+    $_seoDesc   = 'Verifique a autenticidade de um certificado emitido pela plataforma '.$_seoOrgName.'. Informe o código do certificado para confirmar.';
+    $_seoJsonLd = null;
+}
+?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#023047">
-    <title>Verificar Certificado · PageQuiz</title>
+    <meta name="description" content="<?= htmlspecialchars(mb_substr(strip_tags($_seoDesc),0,160)) ?>"/>
+    <title><?= htmlspecialchars($_seoTitle) ?></title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
+    <link rel="apple-touch-icon" href="assets/logo-icon.svg"/>
+    <link rel="manifest" href="/manifest.json"/>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <?= seoHead([
+        'title'      => $_seoTitle,
+        'description'=> $_seoDesc,
+        'canonical'  => $_seoBase.'/verify.php'.($code ? '?code='.urlencode($code) : ''),
+        'image'      => $_seoBase.'/assets/og-image.jpg',
+        'site_name'  => $_seoOrgName,
+        'robots'     => $participant ? 'noindex,follow' : 'index,follow',
+        'jsonld'     => $_seoJsonLd,
+    ]) ?>
     <style>
         body {
             background: var(--gray-50);

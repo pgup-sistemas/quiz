@@ -1,42 +1,107 @@
 <?php
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/tenant.php';
 require_once __DIR__ . '/includes/user-auth.php';
+require_once __DIR__ . '/includes/seo.php';
 
 userSessionStart();
+$tenant = resolveTenant();
 $currentUser = currentUser();
 
-$quizzes = dbRows("
-    SELECT q.*, COUNT(DISTINCT p.id) AS participant_count, COUNT(DISTINCT qs.id) AS question_count
-    FROM quizzes q
-    LEFT JOIN participants p  ON p.quiz_id = q.id
-    LEFT JOIN questions   qs  ON qs.quiz_id = q.id
-    WHERE q.active = 1
-      AND (q.expires_at IS NULL OR q.expires_at = '' OR q.expires_at >= date('now','localtime'))
-    GROUP BY q.id
-    ORDER BY q.created_at DESC
-");
+if ($tenant) {
+    $cid = (int)$tenant['id'];
+    $quizzes = dbRows("
+        SELECT q.*, COUNT(DISTINCT p.id) AS participant_count, COUNT(DISTINCT qs.id) AS question_count
+        FROM quizzes q
+        LEFT JOIN participants p  ON p.quiz_id = q.id
+        LEFT JOIN questions   qs  ON qs.quiz_id = q.id
+        WHERE q.active = 1
+          AND q.company_id = ?
+          AND (q.expires_at IS NULL OR q.expires_at = '' OR q.expires_at >= date('now','localtime'))
+        GROUP BY q.id
+        ORDER BY q.created_at DESC
+    ", [$cid]);
 
-$stats = [
-    'quizzes'  => dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE active=1")['c'],
-    'done'     => dbRow("SELECT COUNT(*) AS c FROM participants WHERE completed_at IS NOT NULL")['c'],
-    'sectors'  => dbRow("SELECT COUNT(*) AS c FROM sectors")['c'],
-    'pass_rate'=> dbRow("SELECT ROUND(AVG(passed)*100) AS r FROM participants WHERE completed_at IS NOT NULL")['r'] ?? 0,
-];
+    $stats = [
+        'quizzes'  => dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE active=1 AND company_id=?", [$cid])['c'],
+        'done'     => dbRow("SELECT COUNT(*) AS c FROM participants WHERE completed_at IS NOT NULL AND company_id=?", [$cid])['c'],
+        'sectors'  => dbRow("SELECT COUNT(*) AS c FROM sectors WHERE company_id=?", [$cid])['c'],
+        'pass_rate'=> dbRow("SELECT ROUND(AVG(passed)*100) AS r FROM participants WHERE completed_at IS NOT NULL AND company_id=?", [$cid])['r'] ?? 0,
+    ];
+
+    $companyName   = htmlspecialchars($tenant['name']);
+    $primaryColor  = preg_match('/^#[0-9a-fA-F]{6}$/', $tenant['primary_color'] ?? '')
+                        ? $tenant['primary_color'] : '#219EBC';
+    $hasCustomBrand = planLimits($tenant['plan'])['custom_brand'];
+    $logoPath = ($hasCustomBrand && !empty($tenant['logo_path']) && file_exists(__DIR__ . '/' . $tenant['logo_path']))
+                    ? $tenant['logo_path'] : null;
+} else {
+    $quizzes = dbRows("
+        SELECT q.*, COUNT(DISTINCT p.id) AS participant_count, COUNT(DISTINCT qs.id) AS question_count
+        FROM quizzes q
+        LEFT JOIN participants p  ON p.quiz_id = q.id
+        LEFT JOIN questions   qs  ON qs.quiz_id = q.id
+        WHERE q.active = 1
+          AND (q.expires_at IS NULL OR q.expires_at = '' OR q.expires_at >= date('now','localtime'))
+        GROUP BY q.id
+        ORDER BY q.created_at DESC
+    ");
+
+    $stats = [
+        'quizzes'  => dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE active=1")['c'],
+        'done'     => dbRow("SELECT COUNT(*) AS c FROM participants WHERE completed_at IS NOT NULL")['c'],
+        'sectors'  => dbRow("SELECT COUNT(*) AS c FROM sectors")['c'],
+        'pass_rate'=> dbRow("SELECT ROUND(AVG(passed)*100) AS r FROM participants WHERE completed_at IS NOT NULL")['r'] ?? 0,
+    ];
+
+    $companyName   = 'PageQuiz';
+    $primaryColor  = '#219EBC';
+    $hasCustomBrand = false;
+    $logoPath = null;
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<?php
+$_seoBase  = ((!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off')?'https':'http').'://'.($_SERVER['HTTP_HOST']??'quiz.pageup.net.br');
+$_seoTitle = $tenant ? htmlspecialchars($tenant['name']).' · Treinamento e Avaliação' : 'PageQuiz · Plataforma de Treinamento e Avaliação';
+$_seoDesc  = $tenant
+    ? htmlspecialchars($tenant['name']).' — Realize treinamentos online, avalie sua equipe e emita certificados verificáveis. '.(int)$stats['quizzes'].' quiz(es) disponíveis.'
+    : 'PageQuiz — Plataforma profissional de treinamento corporativo via quizzes. Avalie, capacite e certifique sua equipe com certificados verificáveis.';
+$_seoJsonLd = seoJsonLdOrganization(
+    $tenant ? htmlspecialchars($tenant['name']) : 'PageQuiz',
+    $_seoBase . '/',
+    $_seoBase . '/assets/logo-icon.svg',
+    $_seoDesc
+);
+?>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<meta name="theme-color" content="#023047"/>
-<meta name="description" content="PageQuiz — Plataforma profissional de treinamento e avaliação da PageUp Sistemas."/>
-<title>PageQuiz · Plataforma de Treinamento</title>
+<meta name="theme-color" content="<?= htmlspecialchars($primaryColor) ?>"/>
+<meta name="description" content="<?= htmlspecialchars(mb_substr(strip_tags($_seoDesc),0,160)) ?>"/>
+<meta name="keywords" content="quiz, treinamento corporativo, avaliação, certificado, e-learning, capacitação<?= $tenant ? ', '.htmlspecialchars($tenant['name']) : ', PageQuiz, PageUp Sistemas' ?>"/>
+<title><?= htmlspecialchars($_seoTitle) ?></title>
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.svg"/>
+<link rel="apple-touch-icon" href="assets/logo-icon.svg"/>
+<link rel="manifest" href="/manifest.json"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<?= seoHead([
+    'title'      => $_seoTitle,
+    'description'=> $_seoDesc,
+    'canonical'  => $_seoBase . '/',
+    'image'      => $_seoBase . '/assets/og-image.jpg',
+    'site_name'  => $tenant ? htmlspecialchars($tenant['name']) : 'PageQuiz',
+    'jsonld'     => $_seoJsonLd,
+]) ?>
+<?php if ($tenant && $primaryColor !== '#219EBC'): ?>
+<style>:root{--pacific:<?= htmlspecialchars($primaryColor) ?>;}</style>
+<?php endif; ?>
 <style>
 /* ── Reset & Base ── */
 *{box-sizing:border-box}
@@ -151,7 +216,11 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
 <!-- ══ NAVBAR ══════════════════════════════════════════════════════ -->
 <nav class="lp-nav" role="navigation" aria-label="Navegação principal">
   <a class="lp-nav-logo" href="index.php">
-    <img src="assets/logo.svg" alt="PageQuiz" height="34"/>
+    <?php if ($logoPath): ?>
+      <img src="<?= htmlspecialchars($logoPath) ?>" alt="<?= $companyName ?>" height="34"/>
+    <?php else: ?>
+      <img src="assets/logo.svg" alt="PageQuiz" height="34"/>
+    <?php endif; ?>
   </a>
   <div class="lp-nav-links">
     <a href="#features">Recursos</a>
@@ -183,13 +252,20 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
 <section class="lp-hero" aria-labelledby="hero-title">
   <div class="hero-badge">
     <i class="fa-solid fa-bolt" aria-hidden="true"></i>
-    Plataforma de Treinamento Profissional
+    <?= $tenant ? htmlspecialchars($tenant['name']) : 'Plataforma de Treinamento Profissional' ?>
   </div>
   <h1 class="hero-h1" id="hero-title">
-    Treine sua equipe com<br/><span>quizzes inteligentes</span>
+    <?php if ($tenant): ?>
+      Bem-vindo ao treinamento<br/><span><?= $companyName ?></span>
+    <?php else: ?>
+      Treine sua equipe com<br/><span>quizzes inteligentes</span>
+    <?php endif; ?>
   </h1>
   <p class="hero-p">
-    Crie avaliações personalizadas, acompanhe o desempenho em tempo real e emita certificados automaticamente para os aprovados.
+    <?= $tenant
+        ? 'Realize os quizzes disponíveis, acompanhe seu desempenho e receba certificados automaticamente.'
+        : 'Crie avaliações personalizadas, acompanhe o desempenho em tempo real e emita certificados automaticamente para os aprovados.'
+    ?>
   </p>
   <div class="hero-actions">
     <?php if ($currentUser): ?>
@@ -370,8 +446,12 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
 <footer class="lp-footer" role="contentinfo">
   <div class="footer-inner">
     <div class="footer-brand">
-      <img src="assets/logo-white.svg" alt="PageQuiz" height="34"/>
-      <p>Plataforma profissional de treinamento e avaliação corporativa. Simples, eficiente e com certificação automática.</p>
+      <?php if ($logoPath): ?>
+        <img src="<?= htmlspecialchars($logoPath) ?>" alt="<?= $companyName ?>" height="34" style="filter:brightness(0) invert(1)"/>
+      <?php else: ?>
+        <img src="assets/logo-white.svg" alt="PageQuiz" height="34"/>
+      <?php endif; ?>
+      <p><?= $tenant ? htmlspecialchars($tenant['name']) . ' — Plataforma de treinamento e avaliação corporativa.' : 'Plataforma profissional de treinamento e avaliação corporativa. Simples, eficiente e com certificação automática.' ?></p>
       <a href="https://wa.me/5569993882222" target="_blank" rel="noopener"
          style="color:rgba(255,255,255,.5);font-size:18px;margin-top:12px;display:inline-block;transition:.2s"
          title="WhatsApp PageUp Sistemas">

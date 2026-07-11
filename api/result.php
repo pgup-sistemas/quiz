@@ -23,8 +23,8 @@ if (!$pid || !$quizId) {
     echo json_encode(['error' => 'Sessão não encontrada ou dados incompletos']); exit;
 }
 
-// 1. Fetch Participant data
-$p = dbRow("SELECT * FROM participants WHERE id = ?", [$pid]);
+// 1. Fetch Participant data — validates quiz ownership to prevent IDOR
+$p = dbRow("SELECT * FROM participants WHERE id = ? AND quiz_id = ?", [$pid, $quizId]);
 if (!$p) {
     echo json_encode(['error' => 'Participante não encontrado']); exit;
 }

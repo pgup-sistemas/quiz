@@ -1,11 +1,19 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/tenant.php';
+
+if (session_status() === PHP_SESSION_NONE) session_start();
+$tenant = resolveTenant();
 
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { echo json_encode(['error' => 'ID inválido']); exit; }
 
-$quiz = dbRow("SELECT * FROM quizzes WHERE id = ? AND active = 1", [$id]);
+if ($tenant) {
+    $quiz = dbRow("SELECT * FROM quizzes WHERE id = ? AND active = 1 AND company_id = ?", [$id, (int)$tenant['id']]);
+} else {
+    $quiz = dbRow("SELECT * FROM quizzes WHERE id = ? AND active = 1", [$id]);
+}
 if (!$quiz) { echo json_encode(['error' => 'Quiz não encontrado']); exit; }
 
 $questions = dbRows("

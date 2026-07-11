@@ -11,36 +11,49 @@ $isNew   = !$quiz;
 
 /* ── Save Quiz ─────────────────────────────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_quiz'])) {
-    $title    = trim($_POST['title']    ?? '');
-    $desc     = trim($_POST['description'] ?? '');
-    $sector   = trim($_POST['sector']   ?? 'Geral');
-    $timer    = (int)($_POST['timer']   ?? 30);
-    $passPct  = (int)($_POST['pass_pct']?? 70);
-    $maxQ     = (int)($_POST['max_questions'] ?? 0);
-    $expiry   = !empty($_POST['expires_at']) ? $_POST['expires_at'] : null;
-    $feedback = isset($_POST['feedback']) ? 1 : 0;
-    $hasCert  = isset($_POST['has_certificate']) ? 1 : 0;
-    $randomize= isset($_POST['randomize']) ? 1 : 0;
-    $retake   = isset($_POST['retake']) ? 1 : 0;
-    $active   = isset($_POST['active']) ? 1 : 0;
-    $createdBy= trim($_POST['created_by'] ?? adminName());
+    $title      = trim($_POST['title']       ?? '');
+    $desc       = trim($_POST['description'] ?? '');
+    $sector     = trim($_POST['sector']      ?? 'Geral');
+    $timer      = (int)($_POST['timer']      ?? 30);
+    $passPct    = (int)($_POST['pass_pct']   ?? 70);
+    $maxQ       = (int)($_POST['max_questions'] ?? 0);
+    $expiry     = !empty($_POST['expires_at']) ? $_POST['expires_at'] : null;
+    $feedback   = isset($_POST['feedback'])        ? 1 : 0;
+    $hasCert    = isset($_POST['has_certificate']) ? 1 : 0;
+    $randomize  = isset($_POST['randomize'])       ? 1 : 0;
+    $retake     = isset($_POST['retake'])          ? 1 : 0;
+    $active     = isset($_POST['active'])          ? 1 : 0;
+    $createdBy  = trim($_POST['created_by'] ?? adminName());
+    $visibility = in_array($_POST['visibility'] ?? '', ['all','sector']) ? $_POST['visibility'] : 'all';
+    $targetSectors = array_map('intval', (array)($_POST['target_sectors'] ?? []));
 
     if (!$title) { flash('O título é obrigatório.', 'error'); redirect("quiz-edit.php?id=$quizId"); }
 
     if ($isNew) {
-        dbExec("INSERT INTO quizzes (title,description,sector,created_by,time_per_question,pass_percentage,max_questions,expires_at,show_feedback,has_certificate,randomize,allow_retake,active,company_id)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            [$title,$desc,$sector,$createdBy,$timer,$passPct,$maxQ,$expiry,$feedback,$hasCert,$randomize,$retake,$active,$cid]);
+        dbExec("INSERT INTO quizzes (title,description,sector,created_by,time_per_question,pass_percentage,max_questions,expires_at,show_feedback,has_certificate,randomize,allow_retake,active,visibility,company_id)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            [$title,$desc,$sector,$createdBy,$timer,$passPct,$maxQ,$expiry,$feedback,$hasCert,$randomize,$retake,$active,$visibility,$cid]);
         $quizId = (int)dbLastId();
         flash('Quiz criado com sucesso!', 'success');
     } else {
         dbExec("UPDATE quizzes SET title=?,description=?,sector=?,created_by=?,time_per_question=?,
-                pass_percentage=?,max_questions=?,expires_at=?,show_feedback=?,has_certificate=?,randomize=?,allow_retake=?,active=?,
+                pass_percentage=?,max_questions=?,expires_at=?,show_feedback=?,has_certificate=?,randomize=?,allow_retake=?,active=?,visibility=?,
                 updated_at=datetime('now','localtime')
                 WHERE id=? AND company_id=?",
-            [$title,$desc,$sector,$createdBy,$timer,$passPct,$maxQ,$expiry,$feedback,$hasCert,$randomize,$retake,$active,$quizId,$cid]);
+            [$title,$desc,$sector,$createdBy,$timer,$passPct,$maxQ,$expiry,$feedback,$hasCert,$randomize,$retake,$active,$visibility,$quizId,$cid]);
         flash('Quiz atualizado com sucesso!', 'success');
     }
+
+    // Atualiza atribuições por setor
+    dbExec("DELETE FROM quiz_assignments WHERE quiz_id=?", [$quizId]);
+    if ($visibility === 'sector' && $targetSectors) {
+        $stmt = getDB()->prepare("INSERT OR IGNORE INTO quiz_assignments (quiz_id, sector_id) VALUES (?,?)");
+        foreach ($targetSectors as $sid) {
+            $sec = dbRow("SELECT id FROM sectors WHERE id=? AND company_id=?", [$sid, $cid]);
+            if ($sec) $stmt->execute([$quizId, $sid]);
+        }
+    }
+
     redirect("quiz-edit.php?id=$quizId");
 }
 
@@ -86,8 +99,12 @@ if (isset($_GET['del_q']) && $quizId) {
 }
 
 /* ── Load ─────────────────────────────────────────────────── */
-$quiz = $quizId ? dbRow("SELECT * FROM quizzes WHERE id=?", [$quizId]) : null;
+$quiz = $quizId ? dbRow("SELECT * FROM quizzes WHERE id=? AND company_id=?", [$quizId, $cid]) : null;
 $questions = $quizId ? dbRows("SELECT * FROM questions WHERE quiz_id=? ORDER BY sort_order ASC, id ASC", [$quizId]) : [];
+$assignedSectorIds = $quizId
+    ? array_column(dbRows("SELECT sector_id FROM quiz_assignments WHERE quiz_id=?", [$quizId]), 'sector_id')
+    : [];
+$allSectors = dbRows("SELECT id, name FROM sectors WHERE company_id=? ORDER BY name ASC", [$cid]);
 
 // Edit question?
 $editQ = null;
@@ -143,7 +160,7 @@ adminHead($isNew ? 'Novo Quiz' : 'Editar: ' . ($quiz['title'] ?? ''), 'quizzes.p
 <!-- ─── Quiz Form ──────────────────────────────────────────── -->
 <div class="card">
     <div class="card-header">
-        <h2><?= $isNew ? '➕ Criar Novo Quiz' : '✏️ Editar Quiz' ?></h2>
+        <h2><?= $isNew ? '<i class="fa-solid fa-plus"></i> Criar Novo Quiz' : '<i class="fa-solid fa-pen-to-square"></i> Editar Quiz' ?></h2>
     </div>
     <form method="post">
         <input type="hidden" name="save_quiz" value="1"/>
@@ -211,6 +228,47 @@ adminHead($isNew ? 'Novo Quiz' : 'Editar: ' . ($quiz['title'] ?? ''), 'quizzes.p
             </label>
             <?php endforeach; ?>
         </div>
+        <!-- Visibilidade -->
+        <?php $curVisibility = $quiz['visibility'] ?? 'all'; ?>
+        <div style="border:1.5px solid #dce8ef;border-radius:12px;padding:18px 20px;margin-bottom:20px">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-500);margin-bottom:14px">
+                <i class="fa-solid fa-eye" style="color:var(--blue)"></i> Visibilidade — Quem pode ver este quiz?
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;padding:9px 16px;border:2px solid var(--gray-200);border-radius:9px;transition:.15s"
+                       id="lbl-vis-all">
+                    <input type="radio" name="visibility" value="all" <?= $curVisibility === 'all' ? 'checked' : '' ?>
+                           onchange="toggleVisUI()" style="accent-color:var(--blue)"/>
+                    <i class="fa-solid fa-globe" style="color:var(--blue)"></i>
+                    Todos os colaboradores
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;padding:9px 16px;border:2px solid var(--gray-200);border-radius:9px;transition:.15s"
+                       id="lbl-vis-sector">
+                    <input type="radio" name="visibility" value="sector" <?= $curVisibility === 'sector' ? 'checked' : '' ?>
+                           onchange="toggleVisUI()" style="accent-color:var(--blue)"/>
+                    <i class="fa-solid fa-sitemap" style="color:var(--pacific)"></i>
+                    Setores específicos
+                </label>
+            </div>
+            <div id="sector-picker" style="display:<?= $curVisibility === 'sector' ? 'block' : 'none' ?>">
+                <div style="font-size:12px;color:var(--gray-500);margin-bottom:10px">Selecione os setores que terão acesso:</div>
+                <?php if (empty($allSectors)): ?>
+                <p style="font-size:13px;color:var(--gray-400)">Nenhum setor cadastrado. <a href="sectors.php">Criar setor</a></p>
+                <?php else: ?>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <?php foreach ($allSectors as $s): ?>
+                    <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;cursor:pointer;padding:7px 14px;border:2px solid var(--gray-200);border-radius:8px;transition:.15s">
+                        <input type="checkbox" name="target_sectors[]" value="<?= $s['id'] ?>"
+                               <?= in_array($s['id'], $assignedSectorIds) ? 'checked' : '' ?>
+                               style="accent-color:var(--blue)"/>
+                        <?= e($s['name']) ?>
+                    </label>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-circle-check"></i> <?= $isNew ? 'Criar Quiz' : 'Salvar Alterações' ?></button>
         <?php if (!$isNew): ?>
         <a href="../quiz.php?id=<?= $quizId ?>" target="_blank" class="btn btn-outline" style="margin-left:10px"><i class="fa-solid fa-eye"></i> Pré-visualizar</a>
@@ -293,7 +351,7 @@ adminHead($isNew ? 'Novo Quiz' : 'Editar: ' . ($quiz['title'] ?? ''), 'quizzes.p
 <!-- Questions List -->
 <div class="card">
     <div class="card-header flex items-center justify-between">
-        <h2>📋 Questões (<?= count($questions) ?>)</h2>
+        <h2><i class="fa-solid fa-list-ol"></i> Questões (<?= count($questions) ?>)</h2>
         <?php if (!empty($questions)): ?>
         <span class="text-muted" style="font-size:12px">Clique em <i class="fa-solid fa-pen-to-square"></i> para editar</span>
         <?php endif; ?>
@@ -359,4 +417,13 @@ adminHead($isNew ? 'Novo Quiz' : 'Editar: ' . ($quiz['title'] ?? ''), 'quizzes.p
 <?php endif; ?>
 
 </div><!-- admin-wrap -->
+<script>
+function toggleVisUI() {
+    const isSector = document.querySelector('[name=visibility][value=sector]')?.checked;
+    document.getElementById('sector-picker').style.display = isSector ? 'block' : 'none';
+    document.getElementById('lbl-vis-all').style.borderColor    = isSector ? 'var(--gray-200)' : 'var(--blue)';
+    document.getElementById('lbl-vis-sector').style.borderColor = isSector ? 'var(--blue)' : 'var(--gray-200)';
+}
+toggleVisUI();
+</script>
 <?php adminFoot(); ?>

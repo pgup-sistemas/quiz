@@ -17,27 +17,54 @@ function currentUser(): ?array {
     return $_SESSION[USER_SESS] ?? null;
 }
 
+function _userCompanyId(): int {
+    // Resolve company_id do tenant ativo, ou 0 (sem isolamento, modo standalone).
+    if (isset($_SESSION['tenant_company_id'])) return (int)$_SESSION['tenant_company_id'];
+    // Tenta resolver se ainda não cacheado
+    if (function_exists('resolveTenant')) {
+        $t = resolveTenant();
+        return $t ? (int)$t['id'] : 0;
+    }
+    return 0;
+}
+
 function userRegister(string $name, string $email, string $pass, string $sector = ''): true|string {
     $email = strtolower(trim($email));
-    if (dbRow("SELECT id FROM users WHERE email = ?", [$email])) {
+    $cid   = _userCompanyId();
+
+    $where  = $cid ? "email = ? AND company_id = ?" : "email = ?";
+    $params = $cid ? [$email, $cid] : [$email];
+    if (dbRow("SELECT id FROM users WHERE $where", $params)) {
         return 'Este e-mail já está cadastrado.';
     }
     $hash = password_hash($pass, PASSWORD_DEFAULT);
-    dbExec("INSERT INTO users (name, email, password_hash, sector) VALUES (?,?,?,?)",
-        [trim($name), $email, $hash, trim($sector)]);
+    if ($cid) {
+        dbExec("INSERT INTO users (name, email, password_hash, sector, company_id) VALUES (?,?,?,?,?)",
+            [trim($name), $email, $hash, trim($sector), $cid]);
+    } else {
+        dbExec("INSERT INTO users (name, email, password_hash, sector) VALUES (?,?,?,?)",
+            [trim($name), $email, $hash, trim($sector)]);
+    }
     return true;
 }
 
 function userLogin(string $email, string $pass): bool {
     $email = strtolower(trim($email));
-    $user  = dbRow("SELECT * FROM users WHERE email = ? AND active = 1", [$email]);
+    $cid   = _userCompanyId();
+
+    if ($cid) {
+        $user = dbRow("SELECT * FROM users WHERE email = ? AND company_id = ? AND active = 1", [$email, $cid]);
+    } else {
+        $user = dbRow("SELECT * FROM users WHERE email = ? AND active = 1", [$email]);
+    }
     if (!$user || !password_verify($pass, $user['password_hash'])) return false;
     userSessionStart();
     $_SESSION[USER_SESS] = [
-        'id'     => $user['id'],
-        'name'   => $user['name'],
-        'email'  => $user['email'],
-        'sector' => $user['sector'],
+        'id'         => $user['id'],
+        'name'       => $user['name'],
+        'email'      => $user['email'],
+        'sector'     => $user['sector'],
+        'company_id' => $user['company_id'] ?? 0,
     ];
     dbExec("UPDATE users SET last_login = datetime('now','localtime') WHERE id = ?", [$user['id']]);
     return true;
@@ -50,7 +77,12 @@ function userLogout(): void {
 
 function generateResetToken(string $email): string|false {
     $email = strtolower(trim($email));
-    $user  = dbRow("SELECT id FROM users WHERE email = ? AND active = 1", [$email]);
+    $cid   = _userCompanyId();
+    if ($cid) {
+        $user = dbRow("SELECT id FROM users WHERE email = ? AND company_id = ? AND active = 1", [$email, $cid]);
+    } else {
+        $user = dbRow("SELECT id FROM users WHERE email = ? AND active = 1", [$email]);
+    }
     if (!$user) return false;
     $token   = bin2hex(random_bytes(32));
     $expires = date('Y-m-d H:i:s', time() + 3600);

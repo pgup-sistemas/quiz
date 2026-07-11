@@ -151,7 +151,7 @@ superadminHead('Empresas', 'companies.php');
                 </td>
                 <td>
                     <?php if ($c['status'] === 'pending_payment'): ?>
-                    <span class="badge-plan badge-pending">⏳ Pro Solicitado</span>
+                    <span class="badge-plan badge-pending"><i class="fa-solid fa-hourglass-half"></i> Pro Solicitado</span>
                     <?php elseif ($c['plan'] === 'pro'): ?>
                     <span class="badge-plan badge-pro"><i class="fa-solid fa-star"></i> Pro</span>
                     <?php else: ?>

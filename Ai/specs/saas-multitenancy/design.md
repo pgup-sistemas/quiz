@@ -1,5 +1,6 @@
 # Design — SaaS Multi-tenancy (PageQuiz)
-> **Revisão:** 2026-07-09 — Modelo Free/Pro, auto-cadastro, limites configuráveis.
+> **Revisão:** 2026-07-11 — Fase 2: atribuição de quizzes por setor, acesso por `?c=slug`, `clearTenantSession()`.
+> **Revisão anterior:** 2026-07-09 — Modelo Free/Pro, auto-cadastro, limites configuráveis.
 
 ## Visão geral técnica
 
@@ -269,6 +270,103 @@ No plano Free: se admin tentar acessar configurações de logo/cor → modal de 
 | `index.php` | Resolver tenant; exibir logo/cor da empresa (se Pro) |
 | `quiz.php`, `verify.php` | Contexto de tenant; verificar `company_id` no certificado |
 | `lgpd.php`, `privacidade.php`, `cookies.php`, `contato.php` | Tenant branding; `company_id` em mensagens de contato |
+
+---
+
+---
+
+## Fase 2 — Atribuição de quizzes e acesso por link (2026-07-11)
+
+### Motivação
+
+Com o tenant resolvido apenas por subdomínio, testes locais e links de convite eram inviáveis. Além disso, todos os quizzes ativos ficavam visíveis a todos os colaboradores da empresa independentemente do setor — sem controle granular de acesso.
+
+### Novas tabelas/colunas
+
+#### `quizzes.visibility` (nova coluna, migration inline)
+```sql
+ALTER TABLE quizzes ADD COLUMN visibility TEXT NOT NULL DEFAULT 'all'
+```
+| Valor | Comportamento |
+|---|---|
+| `'all'` | Quiz visível para todos os colaboradores da empresa |
+| `'sector'` | Visível apenas para setores listados em `quiz_assignments` |
+
+#### `quiz_assignments` (nova tabela)
+```sql
+CREATE TABLE IF NOT EXISTS quiz_assignments (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    quiz_id    INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+    sector_id  INTEGER NOT NULL REFERENCES sectors(id) ON DELETE CASCADE,
+    UNIQUE(quiz_id, sector_id)
+);
+```
+Admin seleciona setores ao criar/editar um quiz. Se `visibility='all'`, a tabela fica vazia para aquele quiz (não precisam de linhas).
+
+#### `sectors` — migration UNIQUE `(company_id, name)`
+
+A tabela `sectors` foi criada originalmente com `UNIQUE(name)` global, impossibilitando que duas empresas tivessem setor com o mesmo nome (ex: "RH" em empresa A e empresa B). A migration recria a tabela com `UNIQUE(company_id, name)`:
+
+```sql
+CREATE TABLE sectors_v2 (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id INTEGER NOT NULL DEFAULT 1,
+    name       TEXT    NOT NULL,
+    created_at TEXT    DEFAULT (datetime('now','localtime')),
+    UNIQUE(company_id, name)
+);
+-- copia dados → DROP sectors → RENAME sectors_v2 → sectors
+```
+
+### `resolveTenant()` — 3 fontes em cascata
+
+```
+1. $_SESSION['tenant_company'] — cache de sessão (retorna imediato)
+2. HTTP_HOST → extrai slug do subdomínio (produção: alphaclin.pagequiz.com.br)
+3. $_GET['c'] → slug passado como parâmetro de URL (dev local / link de convite)
+4. $_SESSION['_tenant_slug'] → slug persistido na sessão pelo acesso anterior com ?c=
+```
+
+Fonte 3 e 4 permitem que o link de convite `http://pagequiz/?c=alphaclin` funcione sem DNS wildcard. O slug é sanitizado com `preg_replace('/[^a-z0-9\-]/', '', ...)` antes de consultar o banco. Slug inválido via `?c=` retorna `null` silenciosamente (não dá 404).
+
+Nova função: **`clearTenantSession(): void`** — limpa `tenant_company`, `tenant_company_id` e `_tenant_slug` da sessão para uso no logout do user ou no encerramento de impersonation.
+
+### Link de acesso para colaboradores
+
+O dashboard admin (`admin/index.php`) exibe, no topo, o link gerado automaticamente:
+
+| Ambiente | URL de acesso | URL de cadastro |
+|---|---|---|
+| Produção (subdomínio) | `https://alphaclin.pagequiz.com.br/` | `.../user/register.php` |
+| Dev local | `http://pagequiz/?c=alphaclin` | `.../user/register.php?c=alphaclin` |
+
+Inclui QR Code gerado via `api.qrserver.com` e botões "Copiar" para cada URL.
+
+### Filtro de quizzes no dashboard do usuário
+
+Query atualizada em `user/dashboard.php`:
+```sql
+SELECT DISTINCT q.*
+FROM quizzes q
+WHERE q.active = 1 AND q.company_id = ?
+  AND (q.expires_at IS NULL OR q.expires_at >= date('now','localtime'))
+  AND (
+      q.visibility = 'all'
+      OR (q.visibility = 'sector' AND EXISTS (
+          SELECT 1 FROM quiz_assignments qa
+          WHERE qa.quiz_id = q.id AND qa.sector_id = ?
+      ))
+  )
+ORDER BY q.created_at DESC
+```
+O `sector_id` do usuário é resolvido via `SELECT id FROM sectors WHERE name = user.sector AND company_id = ?`.
+
+### UI no `admin/quiz-edit.php`
+
+Seção "Visibilidade" adicionada ao formulário:
+- Radio `Todos os colaboradores` (default) / `Setores específicos`
+- Checkboxes com todos os setores da empresa (visíveis ao escolher "Setores específicos")
+- Ao salvar: `DELETE FROM quiz_assignments WHERE quiz_id=?` + `INSERT` para cada setor selecionado
 
 ---
 

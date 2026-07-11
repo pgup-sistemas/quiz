@@ -137,8 +137,8 @@ $flash = getFlash();
                value="<?= e($filterName) ?>" style="width:220px"/>
         <select class="form-select" name="passed" style="width:auto">
             <option value="">Todos os Status</option>
-            <option value="1" <?= $filterPass==='1' ? 'selected' : '' ?>>✅ Aprovados</option>
-            <option value="0" <?= $filterPass==='0' ? 'selected' : '' ?>>❌ Reprovados</option>
+            <option value="1" <?= $filterPass==='1' ? 'selected' : '' ?>>Aprovados</option>
+            <option value="0" <?= $filterPass==='0' ? 'selected' : '' ?>>Reprovados</option>
         </select>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Filtrar</button>
         <?php if ($filterQuiz || $filterName || $filterPass !== ''): ?>

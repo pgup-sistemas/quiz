@@ -100,7 +100,7 @@ superadminHead('Dashboard', 'index.php');
                 </td>
                 <td>
                     <?php if ($c['status'] === 'pending_payment'): ?>
-                    <span class="badge-plan badge-pending">⏳ Pro Solicitado</span>
+                    <span class="badge-plan badge-pending"><i class="fa-solid fa-hourglass-half"></i> Pro Solicitado</span>
                     <?php elseif ($c['plan'] === 'pro'): ?>
                     <span class="badge-plan badge-pro">Pro</span>
                     <?php else: ?>

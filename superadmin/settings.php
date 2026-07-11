@@ -144,11 +144,11 @@ superadminHead('Configurações', 'settings.php');
                 <label style="font-size:13px;font-weight:600;color:var(--gray-700);display:block;margin-bottom:6px">Ambiente</label>
                 <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;margin-right:20px">
                     <input type="radio" name="efi_sandbox" value="1" <?= $isSandbox?'checked':'' ?>/>
-                    <span style="font-size:14px">🧪 Sandbox (homologação)</span>
+                    <span style="font-size:14px">Sandbox (homologação)</span>
                 </label>
                 <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
                     <input type="radio" name="efi_sandbox" value="0" <?= !$isSandbox?'checked':'' ?>/>
-                    <span style="font-size:14px">🚀 Produção</span>
+                    <span style="font-size:14px">Produção</span>
                 </label>
             </div>
 
@@ -200,7 +200,7 @@ superadminHead('Configurações', 'settings.php');
                     $certPath = __DIR__ . '/../' . ltrim($settings['efi_cert_path']['value'] ?? '', '/');
                     ?>
                     <div style="font-size:11px;margin-top:4px;color:<?= file_exists($certPath) ? '#166534' : '#991b1b' ?>">
-                        <?= file_exists($certPath) ? '✅ Certificado encontrado' : '❌ Certificado não encontrado neste caminho' ?>
+                        <?= file_exists($certPath) ? '<i class="fa-solid fa-circle-check"></i> Certificado encontrado' : '<i class="fa-solid fa-circle-xmark"></i> Certificado não encontrado neste caminho' ?>
                     </div>
                 </div>
                 <div>

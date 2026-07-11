@@ -1,32 +1,77 @@
 Options -Indexes
 DirectoryIndex index.php
 
-# Protect data directory
+# ── Proteção de arquivos sensíveis ────────────────────────────────────────────
 <FilesMatch "\.db$">
     Order allow,deny
     Deny from all
 </FilesMatch>
 
-# Protect env files
 <FilesMatch "^\.env">
     Order allow,deny
     Deny from all
 </FilesMatch>
 
-# Protect includes
+# ── Rewrite rules ─────────────────────────────────────────────────────────────
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Block direct access to includes
+    # Bloqueia acesso direto a includes/
     RewriteRule ^includes/ - [F,L]
 
-    # Optional: pretty URLs (uncomment if needed)
-    # RewriteCond %{REQUEST_FILENAME} !-f
-    # RewriteCond %{REQUEST_FILENAME} !-d
-    # RewriteRule ^quiz/([0-9]+)/?$ quiz.php?id=$1 [QSA,L]
+    # Sitemap dinâmico → sitemap.php
+    RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
+    # Pretty URL: /quiz/5 → quiz.php?id=5
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^quiz/([0-9]+)/?$ quiz.php?id=$1 [QSA,L]
+
+    # Pretty URL: /verificar/ABC123 → verify.php?code=ABC123
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^verificar/([A-Za-z0-9]+)/?$ verify.php?code=$1 [QSA,L]
 </IfModule>
 
-# PHP settings
+# ── HTTP Security & SEO Headers ───────────────────────────────────────────────
+<IfModule mod_headers.c>
+    # Segurança
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+
+    # Cache de assets estáticos (SEO / Core Web Vitals)
+    <FilesMatch "\.(css|js|svg|woff2|woff|ttf)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp|ico)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+
+    # robots.txt e sitemap.xml sem cache
+    <FilesMatch "^(robots\.txt|sitemap\.xml|sitemap\.php)$">
+        Header set Cache-Control "public, max-age=3600"
+    </FilesMatch>
+</IfModule>
+
+# ── Compressão gzip (melhora PageSpeed) ───────────────────────────────────────
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css
+    AddOutputFilterByType DEFLATE application/javascript application/json
+    AddOutputFilterByType DEFLATE application/xml image/svg+xml
+    AddOutputFilterByType DEFLATE application/ld+json
+</IfModule>
+
+# ── MIME types corretos ────────────────────────────────────────────────────────
+<IfModule mod_mime.c>
+    AddType image/svg+xml          .svg
+    AddType application/manifest+json .json
+    AddType font/woff2             .woff2
+    AddType font/woff              .woff
+</IfModule>
+
+# ── PHP settings ──────────────────────────────────────────────────────────────
 php_value upload_max_filesize 8M
 php_value post_max_size 10M
 php_value memory_limit 128M

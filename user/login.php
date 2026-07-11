@@ -1,8 +1,10 @@
 <?php
 require_once __DIR__ . '/../includes/user-auth.php';
+require_once __DIR__ . '/../includes/tenant.php';
 require_once __DIR__ . '/_layout.php';
 
 userSessionStart();
+resolveTenant(); // garante que o tenant fica na sessão (via subdomínio ou ?c=slug)
 if (isUserLoggedIn()) { header('Location: dashboard.php'); exit; }
 
 $error = '';

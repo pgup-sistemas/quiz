@@ -4,7 +4,8 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/layout.php';
 requireLogin();
 
-$adminId = (int)($_SESSION['admin_id'] ?? 0);
+$adminId = adminId();
+$cid     = adminCompanyId();
 
 /* ── Change Password ─────────────────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_pass'])) {
@@ -12,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_pass'])) {
     $new      = $_POST['new_pass']     ?? '';
     $confirm  = $_POST['confirm_pass'] ?? '';
 
-    $admin = dbRow("SELECT * FROM admins WHERE id = ?", [$adminId]);
+    $admin = dbRow("SELECT * FROM admins WHERE id = ? AND company_id = ?", [$adminId, $cid]);
 
     if (!password_verify($current, $admin['password_hash'])) {
         flash('Senha atual incorreta.', 'error');
@@ -45,14 +46,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_admin'])) {
     $pass  = $_POST['new_password']      ?? '';
     $name  = trim($_POST['new_name']     ?? $user);
 
-    $exists = dbRow("SELECT id FROM admins WHERE username = ?", [$user]);
+    $exists = dbRow("SELECT id FROM admins WHERE username = ? AND company_id = ?", [$user, $cid]);
     if (!$user || strlen($pass) < 6) {
         flash('Preencha usuário e senha (mín. 6 chars).', 'error');
     } elseif ($exists) {
         flash('Esse usuário já existe.', 'error');
     } else {
         $hash = password_hash($pass, PASSWORD_DEFAULT);
-        dbExec("INSERT INTO admins (username, password_hash, name) VALUES (?,?,?)", [$user, $hash, $name]);
+        dbExec("INSERT INTO admins (username, password_hash, name, company_id) VALUES (?,?,?,?)", [$user, $hash, $name, $cid]);
         flash("Admin «{$user}» criado com sucesso!", 'success');
     }
     redirect('settings.php');
@@ -60,13 +61,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_admin'])) {
 
 /* ── Delete Admin ──────────────────────────────────── */
 if (isset($_GET['del_admin']) && (int)$_GET['del_admin'] !== $adminId) {
-    dbExec("DELETE FROM admins WHERE id = ? AND id != ?", [(int)$_GET['del_admin'], $adminId]);
+    dbExec("DELETE FROM admins WHERE id = ? AND id != ? AND company_id = ?", [(int)$_GET['del_admin'], $adminId, $cid]);
     flash('Administrador removido.', 'success');
     redirect('settings.php');
 }
 
-$admins  = dbRows("SELECT id, username, name, created_at FROM admins ORDER BY id ASC");
-$myAdmin = dbRow("SELECT * FROM admins WHERE id = ?", [$adminId]);
+$admins  = dbRows("SELECT id, username, name, created_at FROM admins WHERE company_id = ? ORDER BY id ASC", [$cid]);
+$myAdmin = dbRow("SELECT * FROM admins WHERE id = ? AND company_id = ?", [$adminId, $cid]);
 
 adminHead('Configurações', 'settings.php');
 ?>
@@ -74,13 +75,13 @@ adminHead('Configurações', 'settings.php');
 
 
 
-<h1 style="font-size:22px;font-weight:700;color:var(--gray-800);margin-bottom:24px">⚙️ Configurações</h1>
+<h1 style="font-size:22px;font-weight:700;color:var(--gray-800);margin-bottom:24px"><i class="fa-solid fa-sliders"></i> Configurações</h1>
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
 
 <!-- Change Name -->
 <div class="card">
-    <div class="card-header"><h2>👤 Meu Perfil</h2></div>
+    <div class="card-header"><h2><i class="fa-solid fa-user"></i> Meu Perfil</h2></div>
     <form method="post">
         <input type="hidden" name="update_name" value="1"/>
         <div class="form-group">
@@ -97,7 +98,7 @@ adminHead('Configurações', 'settings.php');
 
 <!-- Change Password -->
 <div class="card">
-    <div class="card-header"><h2>🔐 Alterar Senha</h2></div>
+    <div class="card-header"><h2><i class="fa-solid fa-lock"></i> Alterar Senha</h2></div>
     <form method="post" autocomplete="off">
         <input type="hidden" name="change_pass" value="1"/>
         <div class="form-group">
@@ -145,7 +146,7 @@ adminHead('Configurações', 'settings.php');
     </div>
 
     <hr style="border:none;border-top:1px solid var(--gray-100);margin-bottom:20px"/>
-    <h3 style="font-size:14px;font-weight:700;color:var(--gray-600);margin-bottom:16px">➕ Adicionar Administrador</h3>
+    <h3 style="font-size:14px;font-weight:700;color:var(--gray-600);margin-bottom:16px"><i class="fa-solid fa-plus"></i> Adicionar Administrador</h3>
     <form method="post">
         <input type="hidden" name="add_admin" value="1"/>
         <div class="form-row">

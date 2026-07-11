@@ -42,7 +42,7 @@ adminHead('Detalhes do Participante', 'results.php');
 
     <!-- Participant Info -->
     <div class="card">
-        <div class="card-header"><h2>👤 Participante</h2></div>
+        <div class="card-header"><h2><i class="fa-solid fa-user"></i> Participante</h2></div>
         <div style="font-size:24px;font-weight:700;color:var(--gray-800);margin-bottom:4px"><?= e($p['name']) ?></div>
         <?php if ($p['email']): ?>
         <div style="font-size:13px;color:var(--gray-400);margin-bottom:12px"><?= e($p['email']) ?></div>
@@ -50,9 +50,9 @@ adminHead('Detalhes do Participante', 'results.php');
         <div class="flex flex-wrap gap-8">
             <span class="badge badge-blue"><?= e($p['sector']) ?></span>
             <?php if ($p['passed']): ?>
-            <span class="badge badge-green">✅ Aprovado</span>
+            <span class="badge badge-green"><i class="fa-solid fa-circle-check"></i> Aprovado</span>
             <?php else: ?>
-            <span class="badge badge-red">❌ Reprovado</span>
+            <span class="badge badge-red"><i class="fa-solid fa-circle-xmark"></i> Reprovado</span>
             <?php endif; ?>
         </div>
         <hr style="border:none;border-top:1px solid var(--gray-100);margin:16px 0"/>
@@ -65,7 +65,7 @@ adminHead('Detalhes do Participante', 'results.php');
 
     <!-- Score -->
     <div class="card">
-        <div class="card-header"><h2>📊 Resultado</h2></div>
+        <div class="card-header"><h2><i class="fa-solid fa-chart-pie"></i> Resultado</h2></div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
             <?php
             $pct = $p['percentage'];
@@ -102,15 +102,15 @@ adminHead('Detalhes do Participante', 'results.php');
 <!-- Answer Detail -->
 <?php if (!empty($answers)): ?>
 <div class="card">
-    <div class="card-header"><h2>📋 Respostas Detalhadas</h2></div>
+    <div class="card-header"><h2><i class="fa-solid fa-list-check"></i> Respostas Detalhadas</h2></div>
     <?php $ltrs = ['A','B','C','D']; ?>
     <?php foreach ($answers as $i => $a): ?>
     <div style="padding:16px 0;border-bottom:1px solid var(--gray-100);<?= $i === 0 ? 'padding-top:0' : '' ?>">
         <div class="flex items-center gap-8" style="margin-bottom:8px">
             <span style="font-size:11px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.6px">Q<?= $i+1 ?></span>
             <?php if ($a['category']): ?><span class="badge badge-blue"><?= e($a['category']) ?></span><?php endif; ?>
-            <span class="badge <?= $a['is_correct'] ? 'badge-green' : 'badge-red' ?>"><?= $a['is_correct'] ? '✅ Correto' : ($a['selected_answer'] == -1 ? '⏱ Timeout' : '❌ Incorreto') ?></span>
-            <span style="margin-left:auto;font-size:12px;color:var(--gray-400)">⏱ <?= $a['time_taken'] ?>s</span>
+            <span class="badge <?= $a['is_correct'] ? 'badge-green' : 'badge-red' ?>"><?= $a['is_correct'] ? '<i class="fa-solid fa-check"></i> Correto' : ($a['selected_answer'] == -1 ? '<i class="fa-solid fa-clock"></i> Timeout' : '<i class="fa-solid fa-xmark"></i> Incorreto') ?></span>
+            <span style="margin-left:auto;font-size:12px;color:var(--gray-400)"><i class="fa-regular fa-clock"></i> <?= $a['time_taken'] ?>s</span>
         </div>
         <div style="font-size:14px;font-weight:600;color:var(--gray-800);margin-bottom:10px;line-height:1.4"><?= e($a['question_text']) ?></div>
         <div style="display:flex;flex-direction:column;gap:6px">
@@ -133,7 +133,7 @@ adminHead('Detalhes do Participante', 'results.php');
         </div>
         <?php if ($a['explanation']): ?>
         <div style="background:var(--blue-pale);border-left:3px solid var(--blue);border-radius:6px;padding:10px 12px;margin-top:10px;font-size:12.5px;color:var(--blue-deeper)">
-            💡 <?= e($a['explanation']) ?>
+            <i class="fa-solid fa-circle-info"></i> <?= e($a['explanation']) ?>
         </div>
         <?php endif; ?>
     </div>

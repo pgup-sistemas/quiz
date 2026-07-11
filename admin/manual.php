@@ -54,7 +54,7 @@ adminHead('Manual do Sistema', 'manual.php');
         <h2><i class="fa-solid fa-file-import"></i> Questões e Importação</h2>
         <p>Ao editar um quiz, você pode gerenciar o banco de questões na parte inferior da página.</p>
         <div class="manual-card">
-            <strong>🚀 Dica de Produtividade: Importação em Lote</strong>
+            <strong><i class="fa-solid fa-bolt"></i> Dica de Produtividade: Importação em Lote</strong>
             <p>Use o menu <strong>Importar</strong> para cadastrar dezenas de questões de uma vez usando um arquivo CSV. Baixe o modelo oficial na página de importação para garantir que as colunas estejam na ordem correta.</p>
         </div>
         <ul>

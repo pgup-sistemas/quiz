@@ -64,6 +64,7 @@ $isPro   = $company['plan'] === 'pro';
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="robots" content="noindex,nofollow"/>
 <title>Configurar empresa · PageQuiz</title>
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg"/>
 <link rel="stylesheet" href="../assets/style.css"/>
@@ -106,7 +107,7 @@ h2 { font-family:var(--font-heading,'Syne',sans-serif); font-size:20px; color:va
     </div>
 
     <?php if ($step === 1): ?>
-    <h2>Bem-vindo! 👋</h2>
+    <h2><i class="fa-solid fa-hand-wave" style="color:var(--pacific,#219EBC)"></i> Bem-vindo!</h2>
     <p class="sub">Vamos configurar sua empresa em 3 passos rápidos.</p>
     <form method="POST">
         <input type="hidden" name="action" value="step1"/>
@@ -126,7 +127,7 @@ h2 { font-family:var(--font-heading,'Syne',sans-serif); font-size:20px; color:va
 
     <?php if (!$isPro): ?>
     <div class="upgrade-box">
-        <div class="icon">🎨</div>
+        <div class="icon"><i class="fa-solid fa-palette" style="font-size:40px;color:#f59e0b"></i></div>
         <h3>Logo e cores personalizadas</h3>
         <p>Com o plano Pro, seus usuários verão o logo e as cores da sua empresa em todas as páginas do quiz.</p>
         <a href="upgrade.php" class="btn-upgrade"><i class="fa-solid fa-star"></i> Fazer Upgrade para Pro</a>
@@ -165,7 +166,7 @@ h2 { font-family:var(--font-heading,'Syne',sans-serif); font-size:20px; color:va
     <?php endif; ?>
 
     <?php elseif ($step === 3): ?>
-    <h2>Tudo pronto! 🚀</h2>
+    <h2>Tudo pronto!</h2>
     <p class="sub">Sua empresa está configurada. Agora você pode criar seus primeiros quizzes.</p>
     <div style="background:var(--gray-50,#f9fafb);border-radius:12px;padding:20px;margin-bottom:24px">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">

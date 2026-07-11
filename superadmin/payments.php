@@ -40,12 +40,12 @@ $failedEvents = (int)dbRow("SELECT COUNT(*) AS c FROM payment_events WHERE proce
 $companies = dbRows("SELECT id, name FROM companies ORDER BY name");
 
 $statusLabels = [
-    'pending'   => ['⏳ Aguardando', '#92400e', '#fef3c7'],
-    'active'    => ['✅ Ativo',       '#166534', '#dcfce7'],
-    'paid'      => ['✅ Pago',        '#166534', '#dcfce7'],
-    'overdue'   => ['⚠️ Inadim.',     '#991b1b', '#fee2e2'],
-    'cancelled' => ['✗ Cancelado',   '#6b7280', '#f3f4f6'],
-    'expired'   => ['✗ Expirado',    '#6b7280', '#f3f4f6'],
+    'pending'   => ['Aguardando', '#92400e', '#fef3c7'],
+    'active'    => ['Ativo',      '#166534', '#dcfce7'],
+    'paid'      => ['Pago',       '#166534', '#dcfce7'],
+    'overdue'   => ['Inadim.',    '#991b1b', '#fee2e2'],
+    'cancelled' => ['Cancelado',  '#6b7280', '#f3f4f6'],
+    'expired'   => ['Expirado',   '#6b7280', '#f3f4f6'],
 ];
 $typeLabels = [
     'pix'            => '<i class="fa-brands fa-pix"></i> PIX',

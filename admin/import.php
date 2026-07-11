@@ -4,8 +4,9 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/layout.php';
 requireLogin();
 
+$cid    = adminCompanyId();
 $quizId = (int)($_GET['quiz'] ?? 0);
-$quiz   = $quizId ? dbRow("SELECT * FROM quizzes WHERE id=?", [$quizId]) : null;
+$quiz   = $quizId ? dbRow("SELECT * FROM quizzes WHERE id=? AND company_id=?", [$quizId, $cid]) : null;
 
 if (!$quiz) {
     flash('Quiz não encontrado.', 'error');
@@ -99,10 +100,10 @@ adminHead('Importar Questões', 'quizzes.php');
 </div>
 
 <div class="card">
-    <div class="card-header"><h2>📥 Importar Questões via CSV</h2></div>
+    <div class="card-header"><h2><i class="fa-solid fa-file-arrow-up"></i> Importar Questões via CSV</h2></div>
 
     <div class="alert alert-info">
-        📋 <strong>Formato esperado do CSV</strong> — separador ponto-e-vírgula <code>;</code> (ou vírgula <code>,</code>)<br/>
+        <i class="fa-solid fa-table-list"></i> <strong>Formato esperado do CSV</strong> — separador ponto-e-vírgula <code>;</code> (ou vírgula <code>,</code>)<br/>
         Primeira linha deve ser o cabeçalho (será ignorada). As colunas devem estar nesta ordem:
     </div>
 

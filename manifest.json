@@ -1,0 +1,35 @@
+{
+  "name": "PageQuiz — Plataforma de Treinamento",
+  "short_name": "PageQuiz",
+  "description": "Plataforma profissional de treinamento e avaliação corporativa com emissão de certificados verificáveis.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#023047",
+  "theme_color": "#023047",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "orientation": "any",
+  "categories": ["education", "business", "productivity"],
+  "icons": [
+    {
+      "src": "/assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/logo-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/og-image.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "label": "PageQuiz — Tela inicial"
+    }
+  ]
+}

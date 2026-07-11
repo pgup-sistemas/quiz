@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/user-auth.php';
+require_once __DIR__ . '/../includes/tenant.php';
 require_once __DIR__ . '/_layout.php';
 
 userSessionStart();
@@ -33,7 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$sectors = dbRows("SELECT name FROM sectors ORDER BY name ASC");
+$_tenant = resolveTenant();
+$sectors = $_tenant
+    ? dbRows("SELECT name FROM sectors WHERE company_id = ? ORDER BY name ASC", [(int)$_tenant['id']])
+    : dbRows("SELECT name FROM sectors ORDER BY name ASC");
 
 userPageHead('Criar Conta');
 ?>

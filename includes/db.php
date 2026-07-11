@@ -233,11 +233,12 @@ function initDB(PDO $db): void {
         }
     }
 
-    // first_login para admins (controla wizard de onboarding)
+    // Colunas extras em admins
     $aCols = array_column($db->query("PRAGMA table_info(admins)")->fetchAll(PDO::FETCH_ASSOC), 'name');
-    if (!in_array('first_login', $aCols)) {
-        $db->exec("ALTER TABLE admins ADD COLUMN first_login INTEGER NOT NULL DEFAULT 0");
-    }
+    if (!in_array('first_login',    $aCols)) $db->exec("ALTER TABLE admins ADD COLUMN first_login    INTEGER NOT NULL DEFAULT 0");
+    if (!in_array('active',         $aCols)) $db->exec("ALTER TABLE admins ADD COLUMN active         INTEGER NOT NULL DEFAULT 1");
+    if (!in_array('reset_token',    $aCols)) $db->exec("ALTER TABLE admins ADD COLUMN reset_token    TEXT");
+    if (!in_array('reset_expires',  $aCols)) $db->exec("ALTER TABLE admins ADD COLUMN reset_expires  TEXT");
 
     // Índices de performance por tenant
     $db->exec("CREATE INDEX IF NOT EXISTS idx_quizzes_company     ON quizzes(company_id, active)");
@@ -284,14 +285,56 @@ function initDB(PDO $db): void {
         $db->exec("CREATE INDEX IF NOT EXISTS idx_users_company ON users(company_id)");
     }
 
-    // Seed initial sectors from existing quizzes if sectors table is empty
+    // ── Migration: sectors → UNIQUE(name, company_id) ───────────────────────
+    $sIdxList = $db->query("PRAGMA index_list(sectors)")->fetchAll(PDO::FETCH_ASSOC);
+    $hasSectorCompanyUniq = false;
+    foreach ($sIdxList as $idx) {
+        if ($idx['unique'] && str_contains((string)($idx['name'] ?? ''), 'company')) {
+            $hasSectorCompanyUniq = true; break;
+        }
+    }
+    if (!$hasSectorCompanyUniq) {
+        $sCols = array_column($db->query("PRAGMA table_info(sectors)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+        $db->exec("CREATE TABLE IF NOT EXISTS sectors_v2 (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            company_id INTEGER NOT NULL DEFAULT 1,
+            name       TEXT    NOT NULL,
+            created_at TEXT    DEFAULT (datetime('now','localtime')),
+            UNIQUE(company_id, name)
+        )");
+        if (in_array('company_id', $sCols)) {
+            $db->exec("INSERT OR IGNORE INTO sectors_v2 (id, company_id, name, created_at)
+                       SELECT id, company_id, name, created_at FROM sectors");
+        } else {
+            $db->exec("INSERT OR IGNORE INTO sectors_v2 (id, name, created_at)
+                       SELECT id, name, created_at FROM sectors");
+        }
+        $db->exec("DROP TABLE sectors");
+        $db->exec("ALTER TABLE sectors_v2 RENAME TO sectors");
+        $db->exec("CREATE INDEX IF NOT EXISTS idx_sectors_company ON sectors(company_id)");
+    }
+
+    // ── Migration: quizzes → visibility + quiz_assignments ───────────────────
+    $qCols2 = array_column($db->query("PRAGMA table_info(quizzes)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    if (!in_array('visibility', $qCols2)) {
+        $db->exec("ALTER TABLE quizzes ADD COLUMN visibility TEXT NOT NULL DEFAULT 'all'");
+    }
+    $db->exec("CREATE TABLE IF NOT EXISTS quiz_assignments (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        quiz_id    INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+        sector_id  INTEGER NOT NULL REFERENCES sectors(id) ON DELETE CASCADE,
+        UNIQUE(quiz_id, sector_id)
+    )");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_qa_quiz ON quiz_assignments(quiz_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_qa_sector ON quiz_assignments(sector_id)");
+
+    // ── Seed initial sectors ─────────────────────────────────────────────────
     $sc = $db->query("SELECT COUNT(*) FROM sectors")->fetchColumn();
     if ($sc == 0) {
         $existing = $db->query("SELECT DISTINCT sector FROM quizzes WHERE sector != '' AND sector IS NOT NULL")->fetchAll(PDO::FETCH_COLUMN);
-        $stmt = $db->prepare("INSERT OR IGNORE INTO sectors (name) VALUES (?)");
+        $stmt = $db->prepare("INSERT OR IGNORE INTO sectors (company_id, name) VALUES (1,?)");
         foreach (array_filter($existing) as $s) $stmt->execute([$s]);
-        // Always ensure Geral exists
-        $db->exec("INSERT OR IGNORE INTO sectors (name) VALUES ('Geral')");
+        $db->exec("INSERT OR IGNORE INTO sectors (company_id, name) VALUES (1,'Geral')");
     }
 
     // Seed default admin if none exists

@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+Allow: /index.php
+Allow: /quiz.php
+Allow: /verify.php
+Allow: /assets/
+
+Disallow: /admin/
+Disallow: /superadmin/
+Disallow: /api/
+Disallow: /includes/
+Disallow: /data/
+Disallow: /tmp/
+Disallow: /user/login.php
+Disallow: /user/register.php
+Disallow: /user/forgot-password.php
+Disallow: /user/reset-password.php
+Disallow: /certs/
+Disallow: /uploads/
+
+Sitemap: https://quiz.pageup.net.br/sitemap.xml

@@ -34,6 +34,7 @@ function adminHead(string $title, string $activeNav = ''): void {
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <meta name="theme-color" content="#0d1b35"/>
+<meta name="robots" content="noindex,nofollow"/>
 <title><?= htmlspecialchars($title) ?> · Admin · PageQuiz</title>
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg"/>
 <link rel="stylesheet" href="../assets/style.css"/>
