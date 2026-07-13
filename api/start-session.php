@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/tenant.php';
 
 session_start();
+require_once __DIR__ . '/../includes/user-auth.php';
 $tenant = resolveTenant();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -24,10 +25,19 @@ if (!$quizId || !$name || !$sector) {
 
 $companyId = $tenant ? (int)$tenant['id'] : (int)(dbRow("SELECT company_id FROM quizzes WHERE id=?", [$quizId])['company_id'] ?? 1);
 
+// Vincula ao user do portal se estiver autenticado
+$loggedUser = currentUser();
+$userId     = $loggedUser ? (int)$loggedUser['id'] : null;
+
+// Quando há usuário logado e o email não foi enviado, usa o e-mail da conta
+if ($userId && !$email && !empty($loggedUser['email'])) {
+    $email = $loggedUser['email'];
+}
+
 dbExec("
-    INSERT INTO participants (quiz_id, company_id, name, email, sector, score, total_questions, percentage, passed, avg_time, started_at, last_activity)
-    VALUES (?,?,?,?,?,0,0,0,0,0, datetime('now','localtime'), datetime('now','localtime'))
-", [$quizId, $companyId, $name, $email, $sector]);
+    INSERT INTO participants (quiz_id, company_id, user_id, name, email, sector, score, total_questions, percentage, passed, avg_time, started_at, last_activity)
+    VALUES (?,?,?,?,?,?,0,0,0,0,0, datetime('now','localtime'), datetime('now','localtime'))
+", [$quizId, $companyId, $userId, $name, $email, $sector]);
 
 $pid = dbLastId();
 $_SESSION['current_participant_id'] = $pid;

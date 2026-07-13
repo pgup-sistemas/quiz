@@ -120,12 +120,12 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
     white-space: nowrap;
     letter-spacing: .3px;
 }
-.btn-primary   { background: linear-gradient(135deg, var(--blue), var(--blue-dark)); color: #fff; }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,139,205,.35); }
-.btn-dark      { background: var(--navy); color: #fff; }
-.btn-dark:hover{ background: #121221; }
-.btn-outline   { background: transparent; border: 2px solid var(--blue); color: var(--blue); }
-.btn-outline:hover { background: var(--blue-light); }
+.btn-primary       { background: linear-gradient(135deg, var(--pacific), var(--blue-dark)); color: #fff; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(33,158,188,.35); }
+.btn-outline       { background: transparent; border: 2px solid var(--pacific); color: var(--pacific); }
+.btn-outline:hover { background: var(--sky-light); }
+.btn-dark          { background: var(--prussian); color: #fff; }
+.btn-dark:hover    { background: var(--gray-800); }
 .btn-danger    { background: var(--red); color: #fff; }
 .btn-danger:hover { background: #c0392b; }
 .btn-success   { background: var(--green); color: #fff; }

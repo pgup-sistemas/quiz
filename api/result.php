@@ -8,53 +8,54 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['error' => 'Método inválido']); exit;
 }
 
-/**
- * REFACTOR: Result API now handles quiz finalizing.
- * Answers are previously recorded per question via save-answer.php.
- */
-
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input) { $input = $_POST; }
 
 $pid    = (int)($input['participant_id'] ?? ($_SESSION['current_participant_id'] ?? 0));
-$quizId = (int)($input['quiz_id']          ?? 0);
+$quizId = (int)($input['quiz_id']        ?? 0);
 
 if (!$pid || !$quizId) {
     echo json_encode(['error' => 'Sessão não encontrada ou dados incompletos']); exit;
 }
 
-// 1. Fetch Participant data — validates quiz ownership to prevent IDOR
+// Garante que o participant_id pertence à sessão atual
+$sessionPid = (int)($_SESSION['current_participant_id'] ?? 0);
+if (!$sessionPid || $pid !== $sessionPid) {
+    echo json_encode(['error' => 'Sessão inválida']); exit;
+}
+
+// Busca e valida o participante: deve pertencer ao quiz informado
 $p = dbRow("SELECT * FROM participants WHERE id = ? AND quiz_id = ?", [$pid, $quizId]);
 if (!$p) {
     echo json_encode(['error' => 'Participante não encontrado']); exit;
 }
+$companyId = (int)$p['company_id'];
 
-// Check if already completed to avoid multiple submissions
+// Já finalizado — retorna os dados gravados sem recalcular
 if (!empty($p['completed_at'])) {
-    // Already finalized, just return data
-    $qPct = (int)dbRow("SELECT pass_percentage FROM quizzes WHERE id = ?", [$quizId])['pass_percentage'];
+    $qPct = (int)(dbRow("SELECT pass_percentage FROM quizzes WHERE id = ? AND company_id = ?", [$quizId, $companyId])['pass_percentage'] ?? 0);
     echo json_encode([
-        'ok'             => true,
-        'participant_id' => $pid,
-        'verify_code'    => strtoupper(substr(md5($pid . 'pageup'), 0, 8)),
-        'score'          => (int)$p['score'],
-        'total'          => (int)$p['total_questions'],
-        'percentage'     => (float)$p['percentage'],
-        'passed'         => (bool)$p['passed'],
+        'ok'              => true,
+        'participant_id'  => $pid,
+        'verify_code'     => $p['verify_code'] ?? strtoupper(substr(md5($pid . 'pageup'), 0, 8)),
+        'score'           => (int)$p['score'],
+        'total'           => (int)$p['total_questions'],
+        'percentage'      => (float)$p['percentage'],
+        'passed'          => (bool)$p['passed'],
         'pass_percentage' => $qPct,
     ]);
     exit;
 }
 
-// 2. Fetch Quiz pass percentage
-$quiz = dbRow("SELECT pass_percentage FROM quizzes WHERE id = ?", [$quizId]);
+// Busca o quiz — valida que pertence ao mesmo tenant do participante
+$quiz = dbRow("SELECT pass_percentage FROM quizzes WHERE id = ? AND company_id = ?", [$quizId, $companyId]);
 if (!$quiz) {
     echo json_encode(['error' => 'Quiz não encontrado']); exit;
 }
 
-// 3. Final calculation of results from the answers table to ensure accuracy
+// Recalcula resultado final a partir das respostas gravadas
 $stats = dbRow("
-    SELECT COUNT(*) as total_q, SUM(is_correct) as total_c, AVG(time_taken) as avg_t
+    SELECT COUNT(*) AS total_q, SUM(is_correct) AS total_c, AVG(time_taken) AS avg_t
     FROM answers
     WHERE participant_id = ?
 ", [$pid]);
@@ -65,26 +66,26 @@ $avgTime = (float)$stats['avg_t'];
 $pct     = $total > 0 ? round(($correct / $total) * 100, 1) : 0;
 $passed  = $pct >= (int)$quiz['pass_percentage'] ? 1 : 0;
 
-// 4. Update and finalize the participant record
-// Secure: cryptographically random, non-guessable verification code
+// Finaliza o registro com código de verificação criptograficamente seguro
 $vCode = strtoupper(bin2hex(random_bytes(4)));
 dbExec("
     UPDATE participants
-    SET score = ?, total_questions = ?, percentage = ?, passed = ?, avg_time = ?, completed_at = datetime('now','localtime'), verify_code = ?
-    WHERE id = ?
-", [$correct, $total, $pct, $passed, $avgTime, $vCode, $pid]);
+    SET score = ?, total_questions = ?, percentage = ?, passed = ?,
+        avg_time = ?, completed_at = datetime('now','localtime'), verify_code = ?
+    WHERE id = ? AND company_id = ?
+", [$correct, $total, $pct, $passed, $avgTime, $vCode, $pid, $companyId]);
 
-// 5. Clear session
+// Limpa sessão de participante ativo
 unset($_SESSION['current_participant_id']);
 $_SESSION['last_quiz_submit'] = time();
 
 echo json_encode([
-    'ok'             => true,
-    'participant_id' => $pid,
-    'verify_code'    => $vCode,  // return the same code that was persisted
-    'score'          => $correct,
-    'total'          => $total,
-    'percentage'     => $pct,
-    'passed'         => (bool)$passed,
+    'ok'              => true,
+    'participant_id'  => $pid,
+    'verify_code'     => $vCode,
+    'score'           => $correct,
+    'total'           => $total,
+    'percentage'      => $pct,
+    'passed'          => (bool)$passed,
     'pass_percentage' => (int)$quiz['pass_percentage'],
 ]);

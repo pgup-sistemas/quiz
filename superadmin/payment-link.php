@@ -45,9 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $companies  = dbRows("SELECT id, name, email, plan FROM companies ORDER BY name");
 $defaultPrice = (int)(dbRow("SELECT value FROM system_settings WHERE key='pro_price_monthly'")['value'] ?? 4990);
 
-superadminHead('Gerar Link de Pagamento', 'companies.php');
+superadminHead('Gerar Link de Pagamento', 'payments.php');
 ?>
-<div class="sa-wrap" style="max-width:680px">
+<div class="sa-wrap">
     <div class="page-header">
         <div>
             <h1><i class="fa-solid fa-link" style="color:var(--yellow)"></i> Link de Pagamento</h1>

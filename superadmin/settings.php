@@ -60,7 +60,7 @@ foreach (dbRows("SELECT * FROM system_settings ORDER BY key") as $row) {
 
 superadminHead('Configurações', 'settings.php');
 ?>
-<div class="sa-wrap" style="max-width:680px">
+<div class="sa-wrap">
     <div class="page-header">
         <div>
             <h1><i class="fa-solid fa-sliders" style="color:var(--yellow)"></i> Configurações Globais</h1>

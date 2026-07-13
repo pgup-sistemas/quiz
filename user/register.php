@@ -9,7 +9,7 @@ if (isUserLoggedIn()) { header('Location: dashboard.php'); exit; }
 $error   = '';
 $success = false;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
     $name    = trim($_POST['name']     ?? '');
     $email   = trim($_POST['email']    ?? '');
     $sector  = trim($_POST['sector']   ?? '');
@@ -35,9 +35,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $_tenant = resolveTenant();
+
+// Verifica se a empresa permite auto-cadastro
+if ($_tenant && !(int)($_tenant['allow_self_register'] ?? 1)) {
+    $error = 'O auto-cadastro está desabilitado para esta empresa. Solicite um convite ao administrador.';
+}
+
 $sectors = $_tenant
     ? dbRows("SELECT name FROM sectors WHERE company_id = ? ORDER BY name ASC", [(int)$_tenant['id']])
-    : dbRows("SELECT name FROM sectors ORDER BY name ASC");
+    : [];
 
 userPageHead('Criar Conta');
 ?>

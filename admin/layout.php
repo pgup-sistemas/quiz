@@ -1,8 +1,10 @@
 <?php
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/billing.php';
 // Usage: adminHead('Page Title');
 function adminHead(string $title, string $activeNav = ''): void {
     require_once __DIR__ . '/../includes/auth.php';
+    checkAndApplyDowngrades();
     $companyId = adminCompanyId();
     $company   = $companyId ? dbRow("SELECT * FROM companies WHERE id=?", [$companyId]) : null;
     $plan      = $company['plan'] ?? 'free';
@@ -139,7 +141,77 @@ body { background: var(--gray-100); min-height:100vh; }
 .confirm-ok:hover { background: #d97300; }
 .confirm-ok.pacific { background: var(--pacific); }
 .confirm-ok.pacific:hover { background: var(--blue-dark); }
+
+/* ── Page tabs (reutilizável em todas as páginas) ────────── */
+.page-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid var(--gray-100);
+    margin-bottom: 24px;
+}
+.page-tab {
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-500);
+    cursor: pointer;
+    border: none;
+    background: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    border-radius: 6px 6px 0 0;
+    transition: color .15s, border-color .15s, background .15s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.page-tab:hover  { color: var(--navy); background: var(--gray-50); }
+.page-tab.active { color: var(--blue); border-bottom-color: var(--blue); background: #fff; }
+.page-tab .tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-200);
+    color: var(--gray-600);
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+}
+.page-tab.active .tab-badge { background: rgba(33,158,188,.15); color: var(--blue); }
+.page-panel { display: none; }
+.page-panel.active { display: block; }
+@media (max-width: 640px) {
+    .page-tab span.tab-lbl { display: none; }
+    .page-tab { padding: 10px 14px; }
+}
 </style>
+<script>
+/* Tab helpers — disponíveis antes de qualquer script de página */
+window.switchPageTab = function(name, storageKey) {
+    document.querySelectorAll('.page-tab').forEach(function(t) {
+        var active = t.dataset.tab === name;
+        t.classList.toggle('active', active);
+        t.setAttribute('aria-selected', active);
+    });
+    document.querySelectorAll('.page-panel').forEach(function(p) {
+        p.classList.toggle('active', p.id === 'panel-' + name);
+    });
+    if (storageKey) {
+        try { sessionStorage.setItem(storageKey, name); } catch(e) {}
+    }
+};
+window.initPageTabs = function(defaultTab, storageKey) {
+    var saved = storageKey ? sessionStorage.getItem(storageKey) : null;
+    var hash  = location.hash.replace('#tab-', '');
+    var tab   = (hash && document.getElementById('panel-' + hash)) ? hash : (saved || defaultTab);
+    switchPageTab(tab, storageKey);
+};
+</script>
 </head>
 <body>
 <nav class="topbar">
@@ -287,6 +359,7 @@ setTimeout(() => {
         if (confirmed) window.location.href = link.href;
     });
 })();
+
 </script>
 </body>
 </html>

@@ -55,7 +55,7 @@ $typeLabels = [
     'manual'         => '<i class="fa-solid fa-user-shield"></i> Manual',
 ];
 
-superadminHead('Pagamentos', 'companies.php');
+superadminHead('Pagamentos', 'payments.php');
 ?>
 <div class="sa-wrap">
     <div class="page-header">

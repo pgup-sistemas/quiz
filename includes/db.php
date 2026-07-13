@@ -9,7 +9,10 @@ function getDB(): PDO {
         $pdo = new PDO('sqlite:' . DB_PATH);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $pdo->exec('PRAGMA foreign_keys = ON');
+        $pdo->exec('PRAGMA journal_mode=WAL');   // leituras paralelas durante escritas
+        $pdo->exec('PRAGMA synchronous=NORMAL'); // durabilidade OK, sem fsync em cada write
+        $pdo->exec('PRAGMA foreign_keys=ON');
+        $pdo->exec('PRAGMA busy_timeout=5000');  // espera até 5s antes de "database is locked"
         initDB($pdo);
     }
     return $pdo;
@@ -187,6 +190,7 @@ function initDB(PDO $db): void {
     CREATE TABLE IF NOT EXISTS answers (
         id              INTEGER PRIMARY KEY AUTOINCREMENT,
         participant_id  INTEGER NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
+        company_id      INTEGER NOT NULL DEFAULT 1,
         question_id     INTEGER NOT NULL,
         selected_answer INTEGER DEFAULT -1,
         is_correct      INTEGER DEFAULT 0,
@@ -220,6 +224,10 @@ function initDB(PDO $db): void {
     }
     if (!in_array('verify_code',   $pCols)) {
         $db->exec("ALTER TABLE participants ADD COLUMN verify_code TEXT DEFAULT NULL");
+    }
+    if (!in_array('user_id', $pCols)) {
+        $db->exec("ALTER TABLE participants ADD COLUMN user_id INTEGER DEFAULT NULL REFERENCES users(id) ON DELETE SET NULL");
+        $db->exec("CREATE INDEX IF NOT EXISTS idx_participants_user ON participants(user_id)");
     }
 
     // ── Migrations SaaS: company_id em todas as tabelas de domínio ──────────
@@ -336,6 +344,27 @@ function initDB(PDO $db): void {
         foreach (array_filter($existing) as $s) $stmt->execute([$s]);
         $db->exec("INSERT OR IGNORE INTO sectors (company_id, name) VALUES (1,'Geral')");
     }
+
+    // ── Migration: companies → allow_self_register ──────────────────────────
+    $coCols = array_column($db->query("PRAGMA table_info(companies)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    if (!in_array('allow_self_register', $coCols)) {
+        $db->exec("ALTER TABLE companies ADD COLUMN allow_self_register INTEGER NOT NULL DEFAULT 1");
+    }
+
+    // ── Tabela de convites por token ─────────────────────────────────────────
+    $db->exec("CREATE TABLE IF NOT EXISTS invites (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        company_id INTEGER NOT NULL,
+        email      TEXT    DEFAULT NULL,
+        sector     TEXT    DEFAULT '',
+        token      TEXT    UNIQUE NOT NULL,
+        expires_at TEXT    NOT NULL,
+        used_at    TEXT    DEFAULT NULL,
+        created_by INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT    DEFAULT (datetime('now','localtime'))
+    )");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_invites_company ON invites(company_id)");
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_invites_token   ON invites(token)");
 
     // Seed default admin if none exists
     $count = $db->query("SELECT COUNT(*) FROM admins")->fetchColumn();

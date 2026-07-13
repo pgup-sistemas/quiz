@@ -12,7 +12,8 @@ if (!$id) { echo json_encode(['error' => 'ID inválido']); exit; }
 if ($tenant) {
     $quiz = dbRow("SELECT * FROM quizzes WHERE id = ? AND active = 1 AND company_id = ?", [$id, (int)$tenant['id']]);
 } else {
-    $quiz = dbRow("SELECT * FROM quizzes WHERE id = ? AND active = 1", [$id]);
+    // Sem tenant resolvido não há contexto de empresa — nega o acesso
+    echo json_encode(['error' => 'Empresa não identificada']); exit;
 }
 if (!$quiz) { echo json_encode(['error' => 'Quiz não encontrado']); exit; }
 

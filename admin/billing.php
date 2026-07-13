@@ -40,9 +40,9 @@ $typeLabels = [
     'manual'         => 'Ativação manual',
 ];
 
-adminHead('Cobrança e Assinatura', 'settings.php');
+adminHead('Cobrança e Assinatura', 'billing.php');
 ?>
-<div class="admin-wrap" style="max-width:860px">
+<div class="admin-wrap">
     <div style="margin-bottom:24px">
         <h2 style="font-family:var(--font-heading);font-size:22px;color:var(--prussian);margin:0 0 4px">
             <i class="fa-solid fa-receipt" style="color:var(--pacific)"></i> Cobrança e Assinatura
@@ -100,13 +100,13 @@ adminHead('Cobrança e Assinatura', 'settings.php');
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
             <?php if ($company['plan'] === 'free'): ?>
-            <a href="../payments/checkout.php?method=pix" class="btn" style="background:var(--pacific);color:#fff;font-weight:700">
+            <a href="../payments/checkout.php?method=pix" class="btn btn-primary">
                 <i class="fa-solid fa-star"></i> Assinar Pro
             </a>
             <?php elseif ($activeSub && $activeSub['type'] === 'card_recurring' && $activeSub['status'] === 'active'): ?>
             <form method="POST" action="../payments/cancel.php" onsubmit="return confirm('Cancelar assinatura recorrente? Seu Pro ficará ativo até o fim do período pago.')">
                 <input type="hidden" name="sub_id" value="<?= $activeSub['id'] ?>"/>
-                <button type="submit" class="btn" style="background:var(--gray-100);color:var(--gray-700)">
+                <button type="submit" class="btn btn-outline">
                     <i class="fa-solid fa-xmark"></i> Cancelar assinatura
                 </button>
             </form>
@@ -124,7 +124,7 @@ adminHead('Cobrança e Assinatura', 'settings.php');
             <i class="fa-solid fa-receipt" style="font-size:32px;margin-bottom:8px;display:block;opacity:.3"></i>
             Nenhum pagamento registrado.
             <?php if ($company['plan'] === 'free'): ?>
-            <div style="margin-top:12px"><a href="../payments/checkout.php" class="btn btn-sm" style="background:var(--pacific);color:#fff">Assinar Pro</a></div>
+            <div style="margin-top:12px"><a href="../payments/checkout.php" class="btn btn-primary btn-sm">Assinar Pro</a></div>
             <?php endif; ?>
         </div>
         <?php else: ?>

@@ -50,28 +50,31 @@ if ($cid) {
     ");
 }
 
-// ── Histórico de participações (filtrado por company_id quando tenant) ────────
+// ── Histórico de participações ─────────────────────────────────────────────────
+// Critério primário: user_id (vinculado ao criar sessão quando logado)
+// Fallback:         email igual ao da conta (retrocompat com registros antigos)
+$uid = (int)$user['id'];
 if ($cid) {
     $history = dbRows("
         SELECT p.*, q.title AS quiz_title, q.pass_percentage AS pass_pct, q.has_certificate
         FROM participants p
         JOIN quizzes q ON q.id = p.quiz_id
-        WHERE (p.email = ? OR (p.email = '' AND p.name = ?))
+        WHERE (p.user_id = ? OR (p.user_id IS NULL AND p.email != '' AND p.email = ?))
           AND q.company_id = ?
           AND p.completed_at IS NOT NULL
         ORDER BY p.completed_at DESC
-        LIMIT 30
-    ", [$user['email'], $user['name'], $cid]);
+        LIMIT 50
+    ", [$uid, $user['email'], $cid]);
 } else {
     $history = dbRows("
         SELECT p.*, q.title AS quiz_title, q.pass_percentage AS pass_pct, q.has_certificate
         FROM participants p
         JOIN quizzes q ON q.id = p.quiz_id
-        WHERE (p.email = ? OR (p.email = '' AND p.name = ?))
+        WHERE (p.user_id = ? OR (p.user_id IS NULL AND p.email != '' AND p.email = ?))
           AND p.completed_at IS NOT NULL
         ORDER BY p.completed_at DESC
-        LIMIT 30
-    ", [$user['email'], $user['name']]);
+        LIMIT 50
+    ", [$uid, $user['email']]);
 }
 
 $totalDone   = count($history);
@@ -333,10 +336,15 @@ body { background: #eef4f7; font-family: 'DM Sans', sans-serif; margin: 0; }
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 13px 0;
+    padding: 13px 8px;
     border-bottom: 1px solid #f0f4f7;
     gap: 12px;
+    border-radius: 8px;
+    margin: 0 -8px;
+    transition: background .15s;
+    cursor: pointer;
 }
+.history-row:hover { background: #f0f7fa; }
 .history-row:last-child { border-bottom: none; }
 .history-title { font-size: 13px; font-weight: 700; color: var(--prussian); margin-bottom: 3px; }
 .history-meta { font-size: 11px; color: var(--gray-400); }
@@ -649,7 +657,7 @@ body { background: #eef4f7; font-family: 'DM Sans', sans-serif; margin: 0; }
             </div>
             <?php else: ?>
             <?php foreach ($history as $h): ?>
-            <div class="history-row">
+            <a href="result.php?id=<?= (int)$h['id'] ?>" class="history-row" style="text-decoration:none;color:inherit;display:flex">
                 <div style="flex:1;min-width:0">
                     <div class="history-title"><?= htmlspecialchars($h['quiz_title']) ?></div>
                     <div class="history-meta">
@@ -666,18 +674,20 @@ body { background: #eef4f7; font-family: 'DM Sans', sans-serif; margin: 0; }
                             <i class="fa-solid fa-check" aria-hidden="true"></i> Aprovado
                         </span>
                         <?php if ($h['verify_code'] && $h['has_certificate']): ?>
-                        <a href="certificate.php?id=<?= (int)$h['id'] ?>"
-                           class="cert-link" title="Ver certificado">
+                        <span class="cert-link" title="Ver certificado">
                             <i class="fa-solid fa-award" aria-hidden="true"></i> Certificado
-                        </a>
+                        </span>
                         <?php endif; ?>
                     <?php else: ?>
                         <span class="badge-fail">
                             <i class="fa-solid fa-xmark" aria-hidden="true"></i> Reprovado
                         </span>
                     <?php endif; ?>
+                    <span style="color:var(--pacific);font-size:13px" title="Ver detalhes">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </span>
                 </div>
-            </div>
+            </a>
             <?php endforeach; ?>
             <?php endif; ?>
         </div>

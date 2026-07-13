@@ -27,9 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Recarregar
 $company = dbRow("SELECT * FROM companies WHERE id=?", [$companyId]);
-adminHead('Upgrade para Pro', 'settings.php');
+adminHead('Upgrade para Pro', 'upgrade.php');
 ?>
-<div class="admin-wrap" style="max-width:760px">
+<div class="admin-wrap">
     <div style="margin-bottom:24px">
         <h2 style="font-family:var(--font-heading);font-size:22px;color:var(--prussian);margin:0 0 4px">
             <i class="fa-solid fa-star" style="color:#f59e0b"></i> Upgrade para o plano Pro

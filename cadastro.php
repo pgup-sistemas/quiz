@@ -11,11 +11,21 @@ if (isLoggedIn()) {
     exit;
 }
 
+// CSRF
+if (empty($_SESSION['csrf_cadastro'])) {
+    $_SESSION['csrf_cadastro'] = bin2hex(random_bytes(16));
+}
+$csrfToken = $_SESSION['csrf_cadastro'];
+
 $errors   = [];
 $pending  = false;
 $tempInfo = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!hash_equals($csrfToken, $_POST['csrf_token'] ?? '')) {
+        $errors[] = 'Token de segurança inválido. Recarregue a página e tente novamente.';
+    }
+
     $companyName = trim($_POST['company_name'] ?? '');
     $adminName   = trim($_POST['admin_name']   ?? '');
     $email       = trim($_POST['email']        ?? '');
@@ -24,15 +34,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cnpj        = trim($_POST['cnpj']         ?? '');
     $plan        = in_array($_POST['plan'] ?? '', ['free','pro']) ? $_POST['plan'] : 'free';
 
-    if (!$companyName) $errors[] = 'O nome da empresa é obrigatório.';
-    if (!$adminName)   $errors[] = 'Seu nome é obrigatório.';
-    if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'E-mail inválido.';
-    if (strlen($pass) < 8) $errors[] = 'A senha deve ter ao menos 8 caracteres.';
-    if ($pass !== $pass2)  $errors[] = 'As senhas não coincidem.';
+    if (empty($errors)) {
+        if (!$companyName) $errors[] = 'O nome da empresa é obrigatório.';
+        if (!$adminName)   $errors[] = 'Seu nome é obrigatório.';
+        if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'E-mail inválido.';
+        if (strlen($pass) < 8) $errors[] = 'A senha deve ter ao menos 8 caracteres.';
+        if ($pass !== $pass2)  $errors[] = 'As senhas não coincidem.';
+    }
 
     if ($email && empty($errors)) {
         if (dbRow("SELECT id FROM admins WHERE username=?", [$email])) {
-            $errors[] = 'Este e-mail já está cadastrado. <a href="admin/login.php" style="color:inherit;font-weight:700">Fazer login →</a>';
+            $errors[] = 'email_duplicado';
         }
     }
     if ($cnpj && empty($errors)) {
@@ -44,25 +56,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         $slug   = slugUnico($companyName);
         $status = ($plan === 'pro') ? 'pending_payment' : 'active';
+        $hash   = password_hash($pass, PASSWORD_DEFAULT);
 
-        dbExec(
-            "INSERT INTO companies (name, slug, email, cnpj, plan, status) VALUES (?,?,?,?,?,?)",
-            [$companyName, $slug, $email, $cnpj ?: null, 'free', $status]
-        );
-        $companyId = (int)dbLastId();
+        $db = getDB();
+        $db->beginTransaction();
+        try {
+            dbExec(
+                "INSERT INTO companies (name, slug, email, cnpj, plan, status) VALUES (?,?,?,?,?,?)",
+                [$companyName, $slug, $email, $cnpj ?: null, 'free', $status]
+            );
+            $companyId = (int)dbLastId();
 
-        $hash = password_hash($pass, PASSWORD_DEFAULT);
-        dbExec(
-            "INSERT INTO admins (company_id, username, password_hash, name, first_login) VALUES (?,?,?,?,1)",
-            [$companyId, $email, $hash, $adminName]
-        );
-        $adminId = (int)dbLastId();
+            dbExec(
+                "INSERT INTO admins (company_id, username, password_hash, name, first_login) VALUES (?,?,?,?,1)",
+                [$companyId, $email, $hash, $adminName]
+            );
+            $adminId = (int)dbLastId();
 
-        dbExec(
-            "INSERT INTO audit_log (actor_type, actor_id, action, target_company_id, ip, detail)
-             VALUES ('self_register', ?, 'create_company', ?, ?, ?)",
-            [$adminId, $companyId, $_SERVER['REMOTE_ADDR'] ?? '', json_encode(['slug' => $slug, 'plan' => $plan])]
-        );
+            dbExec(
+                "INSERT INTO audit_log (actor_type, actor_id, action, target_company_id, ip, detail)
+                 VALUES ('self_register', ?, 'create_company', ?, ?, ?)",
+                [$adminId, $companyId, $_SERVER['REMOTE_ADDR'] ?? '', json_encode(['slug' => $slug, 'plan' => $plan])]
+            );
+            $db->commit();
+        } catch (\Exception $e) {
+            $db->rollBack();
+            $errors[] = 'Erro interno ao criar a conta. Tente novamente.';
+        }
+    }
+
+    if (empty($errors) && isset($companyId, $adminId)) {
 
         // Login automático (independente do plano — pro fica pendente mas usuário acessa com free)
         session_regenerate_id(true);
@@ -170,11 +193,18 @@ h2 { font-family:var(--font-heading,'Syne',sans-serif); font-size:20px; color:va
 
     <?php if ($errors): ?>
     <div class="alert-err"><ul>
-        <?php foreach ($errors as $e): ?><li><?= $e ?></li><?php endforeach; ?>
+        <?php foreach ($errors as $e):
+            if ($e === 'email_duplicado'): ?>
+            <li>Este e-mail já está cadastrado. <a href="admin/login.php" style="color:inherit;font-weight:700">Fazer login →</a></li>
+            <?php else: ?>
+            <li><?= htmlspecialchars($e) ?></li>
+            <?php endif; ?>
+        <?php endforeach; ?>
     </ul></div>
     <?php endif; ?>
 
     <form method="POST" novalidate>
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>"/>
         <div class="fg">
             <label>Nome da empresa *</label>
             <input type="text" name="company_name" required autofocus maxlength="120"
