@@ -8,6 +8,17 @@ require_once __DIR__ . '/db.php';
  * Não encontrado → 404.
  */
 function resolveTenant(): ?array {
+    $host = strtolower($_SERVER['HTTP_HOST'] ?? '');
+    $host = explode(':', $host)[0];
+    $noTenantHosts = ['localhost', 'pagequiz', '127.0.0.1'];
+    $isNoTenantHost = in_array($host, $noTenantHosts) || filter_var($host, FILTER_VALIDATE_IP);
+
+    // Se estamos num host sem tenant e não há ?c=slug, limpa sessão e retorna null
+    if ($isNoTenantHost && empty($_GET['c'])) {
+        clearTenantSession();
+        return null;
+    }
+
     if (isset($_SESSION['tenant_company'])) {
         return $_SESSION['tenant_company'];
     }
@@ -15,10 +26,7 @@ function resolveTenant(): ?array {
     $slug = null;
 
     // 1. Tenta subdomínio (produção: alphaclin.pagequiz.com.br)
-    $host = strtolower($_SERVER['HTTP_HOST'] ?? '');
-    $host = explode(':', $host)[0];
-    $noTenantHosts = ['localhost', 'pagequiz', '127.0.0.1'];
-    if (!in_array($host, $noTenantHosts) && !filter_var($host, FILTER_VALIDATE_IP)) {
+    if (!$isNoTenantHost) {
         $sub = strtok($host, '.');
         if ($sub && $sub !== $host && $sub !== 'superadmin') {
             $slug = $sub;

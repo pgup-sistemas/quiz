@@ -69,6 +69,8 @@ $quizzes = dbRows("
     ORDER BY q.created_at DESC
 ", [$cid]);
 
+$companySlug = dbRow("SELECT slug FROM companies WHERE id = ?", [$cid])['slug'] ?? '';
+
 $totalAll      = count($quizzes);
 $totalAtivos   = count(array_filter($quizzes, fn($q) => $q['active'] && !($q['expires_at'] && strtotime($q['expires_at']) < time())));
 $totalInativos = $totalAll - $totalAtivos;
@@ -155,6 +157,7 @@ adminHead('Quizzes', 'quizzes.php');
                     <div class="row-actions">
                         <a href="quiz-questions.php?id=<?= $q['id'] ?>" class="row-action" title="Questões (<?= $q['q_count'] ?>)"><i class="fa-solid fa-list-ol"></i></a>
                         <a href="quiz-edit.php?id=<?= $q['id'] ?>" class="row-action" title="Configurações"><i class="fa-solid fa-sliders"></i></a>
+                        <a href="/quiz.php?id=<?= $q['id'] ?><?= $companySlug ? '&c='.urlencode($companySlug) : '' ?>" class="row-action" title="Abrir Quiz" target="_blank"><i class="fa-solid fa-play-circle"></i></a>
                         <a href="?clone=<?= $q['id'] ?>" class="row-action" title="Duplicar" onclick="return confirmAction('Duplicar este quiz?')"><i class="fa-solid fa-copy"></i></a>
                         <a href="results.php?quiz=<?= $q['id'] ?>" class="row-action" title="Resultados"><i class="fa-solid fa-chart-bar"></i></a>
                         <a href="?toggle=<?= $q['id'] ?>" class="row-action <?= $q['active'] ? 'row-action--danger' : 'row-action--success' ?>"

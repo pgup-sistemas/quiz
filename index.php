@@ -104,11 +104,12 @@ $_seoJsonLd = seoJsonLdOrganization(
 <?php endif; ?>
 <style>
 /* ── Reset & Base ── */
-*{box-sizing:border-box}
-body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:hidden}
 
 /* ── Navbar ── */
-.lp-nav{position:sticky;top:0;z-index:200;background:#fff;border-bottom:1px solid #e2ecf1;height:64px;display:flex;align-items:center;padding:0 32px;gap:24px}
+.lp-nav{position:sticky;top:0;z-index:200;background:#fff;border-bottom:1px solid #e2ecf1;height:64px;display:flex;align-items:center;padding:0 32px;gap:24px;transition:box-shadow .3s}
+.lp-nav.scrolled{box-shadow:0 2px 20px rgba(2,48,71,.08)}
 .lp-nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
 .lp-nav-logo img{height:36px}
 .lp-nav-links{display:flex;align-items:center;gap:4px;margin-left:8px}
@@ -125,89 +126,171 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
 .user-avatar{width:30px;height:30px;background:var(--pacific);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0}
 
 /* ── Hero ── */
-.lp-hero{background:linear-gradient(135deg,#023047 0%,#03506f 60%,#023047 100%);padding:80px 32px 100px;text-align:center;position:relative;overflow:hidden}
-.lp-hero::before{content:'';position:absolute;inset:0;pointer-events:none;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23219EBC' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,183,3,.15);border:1px solid rgba(255,183,3,.3);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;color:#FFB703;text-transform:uppercase;letter-spacing:1px;margin-bottom:24px}
-.hero-h1{font-family:'Syne',sans-serif;font-size:clamp(32px,5vw,54px);font-weight:800;color:#fff;line-height:1.15;margin-bottom:20px;text-wrap:balance}
+.lp-hero{background:linear-gradient(135deg,#012840 0%,#023047 40%,#034a6b 70%,#023047 100%);padding:96px 32px 120px;text-align:center;position:relative;overflow:hidden}
+.hero-glow{position:absolute;border-radius:50%;pointer-events:none;will-change:opacity}
+.hero-glow-1{width:480px;height:480px;background:radial-gradient(circle,rgba(33,158,188,.22) 0%,transparent 70%);top:-120px;left:-120px}
+.hero-glow-2{width:380px;height:380px;background:radial-gradient(circle,rgba(255,183,3,.13) 0%,transparent 70%);bottom:-80px;right:-80px}
+.hero-glow-3{width:320px;height:320px;background:radial-gradient(circle,rgba(142,202,230,.1) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%)}
+.lp-hero::before{content:'';position:absolute;inset:0;pointer-events:none;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23219EBC' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.hero-inner{position:relative;z-index:1}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,183,3,.15);border:1px solid rgba(255,183,3,.3);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;color:#FFB703;text-transform:uppercase;letter-spacing:1px;margin-bottom:28px;animation:fadeInDown .6s ease both}
+.hero-h1{font-family:'Syne',sans-serif;font-size:clamp(34px,5.5vw,60px);font-weight:800;color:#fff;line-height:1.12;margin-bottom:22px;text-wrap:balance;animation:fadeInUp .7s .1s ease both}
 .hero-h1 span{color:#8ECAE6}
-.hero-p{font-size:18px;color:rgba(255,255,255,.75);max-width:560px;margin:0 auto 36px;line-height:1.7}
-.hero-actions{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
-.btn-hero-primary{padding:14px 32px;background:#FFB703;color:#023047;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:10px;transition:.2s;letter-spacing:.3px}
-.btn-hero-primary:hover{background:#e6a600;transform:translateY(-2px)}
-.btn-hero-secondary{padding:14px 28px;background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.25);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:.2s}
-.btn-hero-secondary:hover{background:rgba(255,255,255,.18)}
+.hero-p{font-size:18px;color:rgba(255,255,255,.72);max-width:580px;margin:0 auto 40px;line-height:1.75;animation:fadeInUp .7s .2s ease both}
+.hero-actions{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;animation:fadeInUp .7s .3s ease both}
+.btn-hero-primary{padding:15px 34px;background:#FFB703;color:#023047;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:10px;transition:background .2s,box-shadow .2s;letter-spacing:.3px;box-shadow:0 4px 20px rgba(255,183,3,.35);will-change:auto}
+.btn-hero-primary:hover{background:#e6a600;box-shadow:0 8px 28px rgba(255,183,3,.45)}
+.btn-hero-secondary{padding:15px 28px;background:rgba(255,255,255,.08);color:#fff;border:1.5px solid rgba(255,255,255,.22);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:background .2s,border-color .2s}
+.btn-hero-secondary:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4)}
+/* floating cards decoration */
+.hero-float{position:absolute;border-radius:16px;border:1px solid rgba(255,255,255,.12);padding:14px 18px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:#fff;pointer-events:none;z-index:1;will-change:transform;animation:float 4s ease-in-out infinite}
+.hero-float-1{background:rgba(33,158,188,.25);left:5%;top:20%;animation-delay:0s}
+.hero-float-2{background:rgba(255,183,3,.2);right:5%;top:30%;animation-delay:1.5s}
+.hero-float-3{background:rgba(2,48,71,.5);left:8%;bottom:15%;animation-delay:.8s}
+.hero-float i{font-size:18px}
 
 /* ── Stats ── */
 .lp-stats{background:#f0f7fa;border-top:1px solid #dce8ef;border-bottom:1px solid #dce8ef}
-.stats-inner{max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);padding:32px 24px;gap:0}
-.stat-item{text-align:center;padding:0 16px;border-right:1px solid #dce8ef}
+.stats-inner{max-width:960px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);padding:36px 24px;gap:0}
+.stat-item{text-align:center;padding:0 20px;border-right:1px solid #dce8ef;position:relative}
 .stat-item:last-child{border-right:none}
-.stat-num{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--prussian)}
-.stat-lbl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-top:4px}
+.stat-num{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--prussian);line-height:1}
+.stat-suf{font-size:22px;color:var(--pacific)}
+.stat-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b;margin-top:6px}
+
+/* ── Section commons ── */
+.section-inner{max-width:1100px;margin:0 auto}
+.section-center{text-align:center}
+.section-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--pacific);margin-bottom:10px}
+.section-title{font-family:'Syne',sans-serif;font-size:clamp(22px,3vw,36px);font-weight:800;color:var(--prussian);margin-bottom:12px;line-height:1.2}
+.section-sub{font-size:16px;color:#64748b;line-height:1.75;margin-bottom:52px}
+
+/* ── Reveal animation ── */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:none}
+.reveal-delay-1{transition-delay:.1s}
+.reveal-delay-2{transition-delay:.2s}
+.reveal-delay-3{transition-delay:.3s}
+.reveal-delay-4{transition-delay:.4s}
+.reveal-delay-5{transition-delay:.5s}
+.reveal-delay-6{transition-delay:.6s}
 
 /* ── Features ── */
-.lp-features{padding:72px 32px}
-.section-inner{max-width:1100px;margin:0 auto}
-.section-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--pacific);margin-bottom:12px}
-.section-title{font-family:'Syne',sans-serif;font-size:clamp(22px,3vw,34px);font-weight:800;color:var(--prussian);margin-bottom:12px;line-height:1.2}
-.section-sub{font-size:16px;color:#64748b;max-width:520px;line-height:1.7;margin-bottom:48px}
-.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
-.feat-card{background:#fff;border:1px solid #e2ecf1;border-radius:16px;padding:28px 24px;transition:.2s}
-.feat-card:hover{border-color:var(--pacific);box-shadow:0 8px 24px rgba(33,158,188,.08)}
-.feat-icon{width:48px;height:48px;border-radius:12px;background:#f0f7fa;display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:20px;color:var(--pacific)}
-.feat-title{font-size:16px;font-weight:700;color:var(--prussian);margin-bottom:8px}
-.feat-desc{font-size:14px;color:#64748b;line-height:1.6}
+.lp-features{padding:80px 32px}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.feat-card{background:#fff;border:1.5px solid #e8f0f5;border-radius:18px;padding:30px 26px;transition:.3s;position:relative;overflow:hidden}
+.feat-card::after{content:'';position:absolute;inset:0;border-radius:18px;background:linear-gradient(135deg,var(--pacific),var(--prussian));opacity:0;transition:.3s}
+.feat-card:hover{border-color:transparent;transform:translateY(-6px);box-shadow:0 16px 40px rgba(33,158,188,.14)}
+.feat-card:hover::after{opacity:.04}
+.feat-icon{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#e8f5fa,#d0eaf4);display:flex;align-items:center;justify-content:center;margin-bottom:18px;font-size:22px;color:var(--pacific);transition:.3s;position:relative;z-index:1}
+.feat-card:hover .feat-icon{background:linear-gradient(135deg,var(--pacific),#1a7d9a);color:#fff;transform:scale(1.08)}
+.feat-title{font-size:16px;font-weight:700;color:var(--prussian);margin-bottom:9px;position:relative;z-index:1}
+.feat-desc{font-size:14px;color:#64748b;line-height:1.65;position:relative;z-index:1}
 
-/* ── Quiz List ── */
-.lp-quizzes{background:#f8fafc;border-top:1px solid #e2ecf1;padding:72px 32px}
-.quiz-list{display:flex;flex-direction:column;gap:10px;margin-top:0}
-.qi{background:#fff;border:1.5px solid #e2ecf1;border-radius:14px;overflow:hidden;transition:border-color .2s}
-.qi.open{border-color:var(--pacific)}
-.qi-header{display:flex;align-items:center;gap:16px;padding:18px 22px;cursor:pointer;user-select:none;-webkit-user-select:none}
-.qi-header:hover .qi-title{color:var(--pacific)}
-.qi-sector{background:#f0f7fa;color:var(--pacific);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:3px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0}
-.qi-title{font-size:15px;font-weight:700;color:var(--prussian);flex:1;transition:.15s;line-height:1.3}
-.qi-meta{display:flex;align-items:center;gap:14px;flex-shrink:0}
-.qi-meta span{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#64748b;white-space:nowrap}
-.qi-meta i{color:var(--pacific);font-size:11px}
-.qi-chevron{color:var(--gray-300);font-size:13px;transition:transform .25s;flex-shrink:0}
-.qi.open .qi-chevron{transform:rotate(90deg)}
-.qi-body{display:none;border-top:1px solid #f0f4f7;padding:22px 22px 24px}
-.qi.open .qi-body{display:block}
-.qi-desc{font-size:14px;color:#64748b;line-height:1.7;margin-bottom:20px}
-.qi-details{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px}
-.qi-detail-pill{display:flex;align-items:center;gap:7px;background:#f0f7fa;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--prussian)}
-.qi-detail-pill i{color:var(--pacific);font-size:12px}
-.qi-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.btn-start-quiz{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:var(--pacific);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;text-decoration:none;transition:.2s;cursor:pointer}
-.btn-start-quiz:hover{background:var(--prussian)}
-.btn-login-quiz{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;background:transparent;border:1.5px solid var(--pacific);color:var(--pacific);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;text-decoration:none;transition:.2s}
-.btn-login-quiz:hover{background:var(--pacific);color:#fff}
-.qi-pcount{font-size:12px;color:#94a3b8;margin-left:auto}
+/* ── How it works ── */
+.lp-howitworks{background:linear-gradient(180deg,#f8fafc 0%,#fff 100%);padding:80px 32px;border-top:1px solid #e8f0f5}
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;position:relative}
+.steps-grid::before{content:'';position:absolute;top:36px;left:calc(16.66% + 20px);right:calc(16.66% + 20px);height:2px;background:linear-gradient(90deg,var(--pacific),#8ECAE6);border-radius:2px}
+.step-card{background:#fff;border:1.5px solid #e8f0f5;border-radius:20px;padding:32px 24px;text-align:center;transition:.3s;position:relative}
+.step-card:hover{border-color:var(--pacific);box-shadow:0 12px 32px rgba(33,158,188,.1);transform:translateY(-4px)}
+.step-num{width:56px;height:56px;background:linear-gradient(135deg,var(--pacific),#1a7d9a);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;position:relative;z-index:1;box-shadow:0 4px 16px rgba(33,158,188,.3)}
+.step-title{font-size:16px;font-weight:700;color:var(--prussian);margin-bottom:10px}
+.step-desc{font-size:14px;color:#64748b;line-height:1.65}
+
+/* ── For managers ── */
+.lp-managers{padding:80px 32px;background:#fff}
+.managers-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+.managers-left h2{font-family:'Syne',sans-serif;font-size:clamp(22px,3vw,36px);font-weight:800;color:var(--prussian);line-height:1.2;margin-bottom:14px}
+.managers-left p{font-size:16px;color:#64748b;line-height:1.75;margin-bottom:32px}
+.managers-feature-list{display:flex;flex-direction:column;gap:14px}
+.mgr-feat{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border:1.5px solid #e8f0f5;border-radius:14px;transition:.25s}
+.mgr-feat:hover{border-color:var(--pacific);background:#f7fbfd;transform:translateX(4px)}
+.mgr-feat-icon{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#e8f5fa,#d0eaf4);display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--pacific);flex-shrink:0;transition:.25s}
+.mgr-feat:hover .mgr-feat-icon{background:linear-gradient(135deg,var(--pacific),#1a7d9a);color:#fff}
+.mgr-feat-text strong{display:block;font-size:14px;font-weight:700;color:var(--prussian);margin-bottom:3px}
+.mgr-feat-text span{font-size:13px;color:#64748b;line-height:1.5}
+.managers-right{position:relative}
+.mgr-mockup{background:linear-gradient(145deg,#023047,#034a6b);border-radius:24px;padding:28px;overflow:hidden;position:relative}
+.mgr-mockup::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23219EBC' fill-opacity='0.06'%3E%3Ccircle cx='20' cy='20' r='3'/%3E%3C/g%3E%3C/svg%3E")}
+.mgr-mockup-bar{display:flex;align-items:center;gap:6px;margin-bottom:20px;position:relative;z-index:1}
+.mgr-mockup-dot{width:10px;height:10px;border-radius:50%}
+.mgr-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;position:relative;z-index:1}
+.mgr-stat-box{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 16px}
+.mgr-stat-box-num{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#fff}
+.mgr-stat-box-lbl{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+.mgr-chart-row{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 16px;position:relative;z-index:1}
+.mgr-chart-row p{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:10px;font-weight:600}
+.mgr-bar-list{display:flex;flex-direction:column;gap:8px}
+.mgr-bar-item{display:flex;align-items:center;gap:10px;font-size:12px;color:rgba(255,255,255,.65)}
+.mgr-bar-track{flex:1;height:6px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
+.mgr-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--pacific),#8ECAE6);animation:growBar .8s ease both}
+.mgr-badge-row{display:flex;gap:8px;margin-top:12px;position:relative;z-index:1;flex-wrap:wrap}
+.mgr-badge{background:rgba(255,183,3,.15);border:1px solid rgba(255,183,3,.3);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;color:#FFB703}
+
+/* ── Quiz Cards ── */
+.lp-quizzes{background:#f8fafc;border-top:1px solid #e2ecf1;padding:80px 32px}
+.quiz-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;margin-top:0}
+.qcard{background:#fff;border:1.5px solid #e8f0f5;border-radius:20px;overflow:hidden;transition:.3s;display:flex;flex-direction:column;position:relative}
+.qcard:hover{border-color:var(--pacific);box-shadow:0 12px 36px rgba(33,158,188,.13);transform:translateY(-5px)}
+.qcard-top{padding:22px 22px 16px;flex:1}
+.qcard-sector-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.qcard-sector{background:#edf6fa;color:var(--pacific);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:4px 11px;border-radius:20px}
+.qcard-cert{color:#FFB703;font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px}
+.qcard-title{font-size:16px;font-weight:700;color:var(--prussian);line-height:1.35;margin-bottom:10px}
+.qcard-desc{font-size:13px;color:#64748b;line-height:1.65;margin-bottom:16px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.qcard-pills{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px}
+.qcard-pill{display:flex;align-items:center;gap:5px;background:#f0f7fa;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;color:#475569}
+.qcard-pill i{color:var(--pacific);font-size:11px}
+.qcard-bottom{padding:16px 22px 20px;border-top:1px solid #f0f4f7;display:flex;align-items:center;gap:10px}
+.btn-start-quiz{display:inline-flex;align-items:center;gap:7px;padding:11px 22px;background:var(--pacific);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;text-decoration:none;transition:.2s;cursor:pointer;flex-shrink:0}
+.btn-start-quiz:hover{background:var(--prussian);transform:scale(1.03)}
+.btn-login-quiz{display:inline-flex;align-items:center;gap:7px;padding:11px 16px;background:transparent;border:1.5px solid #dce8ef;color:#64748b;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;text-decoration:none;transition:.2s;flex-shrink:0}
+.btn-login-quiz:hover{border-color:var(--pacific);color:var(--pacific)}
+.qcard-pcount{font-size:11px;color:#94a3b8;margin-left:auto;white-space:nowrap}
+
+/* ── CTA Banner ── */
+.lp-cta{background:linear-gradient(135deg,#023047 0%,#034a6b 50%,#023047 100%);padding:80px 32px;text-align:center;position:relative;overflow:hidden}
+.lp-cta::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23219EBC' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/svg%3E")}
+.cta-inner{position:relative;z-index:1;max-width:620px;margin:0 auto}
+.cta-inner h2{font-family:'Syne',sans-serif;font-size:clamp(24px,3.5vw,40px);font-weight:800;color:#fff;margin-bottom:16px;line-height:1.2}
+.cta-inner p{font-size:17px;color:rgba(255,255,255,.7);margin-bottom:36px;line-height:1.7}
+.cta-actions{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
 
 /* ── Footer ── */
-.lp-footer{background:var(--prussian);padding:48px 32px 32px}
+.lp-footer{background:var(--prussian);padding:56px 32px 32px}
 .footer-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:32px}
-.footer-brand p{font-size:13px;color:rgba(142,202,230,.7);line-height:1.7;margin-top:12px}
-.footer-col h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4);margin-bottom:14px}
-.footer-col a{display:block;font-size:13px;color:rgba(255,255,255,.6);text-decoration:none;margin-bottom:8px;transition:.15s}
+.footer-brand p{font-size:13px;color:rgba(142,202,230,.65);line-height:1.75;margin-top:12px;max-width:280px}
+.footer-col h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);margin-bottom:14px}
+.footer-col a{display:block;font-size:13px;color:rgba(255,255,255,.55);text-decoration:none;margin-bottom:9px;transition:.15s}
 .footer-col a:hover{color:#fff}
 .footer-bottom{max-width:1100px;margin:32px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.footer-bottom p{font-size:12px;color:rgba(255,255,255,.3)}
 
 /* ── Empty state ── */
-.empty-quizzes{text-align:center;padding:60px 24px;color:#94a3b8}
-.empty-quizzes i{font-size:48px;display:block;margin-bottom:16px;color:#cbd5e1}
+.empty-quizzes{text-align:center;padding:64px 24px;color:#94a3b8;grid-column:1/-1}
+.empty-quizzes i{font-size:52px;display:block;margin-bottom:16px;color:#cbd5e1}
+
+/* ── Keyframes ── */
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:none}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes growBar{from{width:0}to{width:var(--w)}}
 
 /* ── Mobile ── */
+@media(max-width:900px){
+  .steps-grid{grid-template-columns:1fr;gap:16px}
+  .steps-grid::before{display:none}
+  .managers-grid{grid-template-columns:1fr}
+  .managers-right{display:none}
+}
 @media(max-width:768px){
   .lp-nav-links{display:none}
   .stats-inner{grid-template-columns:1fr 1fr}
   .stat-item:nth-child(2){border-right:none}
   .stat-item:nth-child(3){border-top:1px solid #dce8ef}
   .footer-inner{grid-template-columns:1fr}
-  .qi-meta{display:none}
-  .lp-hero{padding:60px 24px 80px}
+  .lp-hero{padding:72px 20px 96px}
+  .hero-float{display:none}
+  .quiz-cards-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -250,39 +333,57 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
 
 <!-- ══ HERO ════════════════════════════════════════════════════════ -->
 <section class="lp-hero" aria-labelledby="hero-title">
-  <div class="hero-badge">
-    <i class="fa-solid fa-bolt" aria-hidden="true"></i>
-    <?= $tenant ? htmlspecialchars($tenant['name']) : 'Plataforma de Treinamento Profissional' ?>
+  <div class="hero-glow hero-glow-1"></div>
+  <div class="hero-glow hero-glow-2"></div>
+  <div class="hero-glow hero-glow-3"></div>
+  <!-- decorative floating cards -->
+  <div class="hero-float hero-float-1">
+    <i class="fa-solid fa-award" style="color:#FFB703"></i>
+    <span>Certificado emitido!</span>
   </div>
-  <h1 class="hero-h1" id="hero-title">
-    <?php if ($tenant): ?>
-      Bem-vindo ao treinamento<br/><span><?= $companyName ?></span>
-    <?php else: ?>
-      Treine sua equipe com<br/><span>quizzes inteligentes</span>
-    <?php endif; ?>
-  </h1>
-  <p class="hero-p">
-    <?= $tenant
-        ? 'Realize os quizzes disponíveis, acompanhe seu desempenho e receba certificados automaticamente.'
-        : 'Crie avaliações personalizadas, acompanhe o desempenho em tempo real e emita certificados automaticamente para os aprovados.'
-    ?>
-  </p>
-  <div class="hero-actions">
-    <?php if ($currentUser): ?>
-      <a href="#quizzes" class="btn-hero-primary">
-        <i class="fa-solid fa-play" aria-hidden="true"></i> Ver quizzes disponíveis
-      </a>
-      <a href="user/dashboard.php" class="btn-hero-secondary">
-        <i class="fa-solid fa-chart-line" aria-hidden="true"></i> Meu painel
-      </a>
-    <?php else: ?>
-      <a href="user/register.php" class="btn-hero-primary">
-        <i class="fa-solid fa-rocket" aria-hidden="true"></i> Começar gratuitamente
-      </a>
-      <a href="#quizzes" class="btn-hero-secondary">
-        <i class="fa-solid fa-eye" aria-hidden="true"></i> Ver quizzes
-      </a>
-    <?php endif; ?>
+  <div class="hero-float hero-float-2">
+    <i class="fa-solid fa-chart-line" style="color:#8ECAE6"></i>
+    <span>92% aprovação</span>
+  </div>
+  <div class="hero-float hero-float-3">
+    <i class="fa-solid fa-users" style="color:#8ECAE6"></i>
+    <span>+<?= max((int)$stats['done'], 1) ?> participações</span>
+  </div>
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+      <?= $tenant ? htmlspecialchars($tenant['name']) : 'Plataforma de Treinamento Profissional' ?>
+    </div>
+    <h1 class="hero-h1" id="hero-title">
+      <?php if ($tenant): ?>
+        Bem-vindo ao treinamento<br/><span><?= $companyName ?></span>
+      <?php else: ?>
+        Treine sua equipe com<br/><span>quizzes inteligentes</span>
+      <?php endif; ?>
+    </h1>
+    <p class="hero-p">
+      <?= $tenant
+          ? 'Realize os quizzes disponíveis, acompanhe seu desempenho e receba certificados verificáveis automaticamente.'
+          : 'Crie avaliações personalizadas, acompanhe o desempenho em tempo real e emita certificados automáticos para os aprovados.'
+      ?>
+    </p>
+    <div class="hero-actions">
+      <?php if ($currentUser): ?>
+        <a href="#quizzes" class="btn-hero-primary">
+          <i class="fa-solid fa-play" aria-hidden="true"></i> Ver quizzes disponíveis
+        </a>
+        <a href="user/dashboard.php" class="btn-hero-secondary">
+          <i class="fa-solid fa-chart-line" aria-hidden="true"></i> Meu painel
+        </a>
+      <?php else: ?>
+        <a href="user/register.php" class="btn-hero-primary">
+          <i class="fa-solid fa-rocket" aria-hidden="true"></i> Começar agora
+        </a>
+        <a href="#quizzes" class="btn-hero-secondary">
+          <i class="fa-solid fa-eye" aria-hidden="true"></i> Ver quizzes
+        </a>
+      <?php endif; ?>
+    </div>
   </div>
 </section>
 
@@ -290,19 +391,19 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
 <div class="lp-stats">
   <div class="stats-inner">
     <div class="stat-item">
-      <div class="stat-num"><?= $stats['quizzes'] ?></div>
+      <div class="stat-num" data-target="<?= $stats['quizzes'] ?>">0</div>
       <div class="stat-lbl">Quizzes Ativos</div>
     </div>
     <div class="stat-item">
-      <div class="stat-num"><?= $stats['done'] ?></div>
+      <div class="stat-num" data-target="<?= $stats['done'] ?>">0</div>
       <div class="stat-lbl">Participações</div>
     </div>
     <div class="stat-item">
-      <div class="stat-num"><?= $stats['pass_rate'] ?>%</div>
+      <div class="stat-num" data-target="<?= $stats['pass_rate'] ?>" data-suffix="%">0<span class="stat-suf">%</span></div>
       <div class="stat-lbl">Taxa de Aprovação</div>
     </div>
     <div class="stat-item">
-      <div class="stat-num"><?= $stats['sectors'] ?></div>
+      <div class="stat-num" data-target="<?= $stats['sectors'] ?>">0</div>
       <div class="stat-lbl">Setores</div>
     </div>
   </div>
@@ -310,137 +411,242 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
 
 <!-- ══ FEATURES ════════════════════════════════════════════════════ -->
 <section class="lp-features" id="features" aria-labelledby="feat-title">
-  <div class="section-inner">
-    <div class="section-label">Recursos</div>
-    <h2 class="section-title" id="feat-title">Tudo que você precisa para treinar</h2>
-    <p class="section-sub">Do quiz ao certificado, uma plataforma completa para gestão de treinamentos corporativos.</p>
+  <div class="section-inner section-center">
+    <div class="section-label reveal">Recursos</div>
+    <h2 class="section-title reveal reveal-delay-1" id="feat-title">Tudo que você precisa para treinar</h2>
+    <p class="section-sub reveal reveal-delay-2" style="margin:0 auto 52px">Do quiz ao certificado — uma plataforma completa para gestão de treinamentos corporativos.</p>
     <div class="features-grid">
-      <div class="feat-card">
+      <div class="feat-card reveal reveal-delay-1">
         <div class="feat-icon"><i class="fa-solid fa-stopwatch" aria-hidden="true"></i></div>
         <div class="feat-title">Timer por questão</div>
         <div class="feat-desc">Controle o tempo de cada questão individualmente. O sistema avança automaticamente quando o tempo esgota.</div>
       </div>
-      <div class="feat-card">
+      <div class="feat-card reveal reveal-delay-2">
         <div class="feat-icon"><i class="fa-solid fa-award" aria-hidden="true"></i></div>
         <div class="feat-title">Certificação automática</div>
-        <div class="feat-desc">Participantes aprovados recebem um certificado verificável com QR Code e código de autenticidade.</div>
+        <div class="feat-desc">Participantes aprovados recebem certificado verificável com QR Code e código de autenticidade único.</div>
       </div>
-      <div class="feat-card">
+      <div class="feat-card reveal reveal-delay-3">
         <div class="feat-icon"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i></div>
         <div class="feat-title">Dashboard em tempo real</div>
-        <div class="feat-desc">Acompanhe aprovações, médias e desempenho por setor no painel administrativo.</div>
+        <div class="feat-desc">Acompanhe aprovações, médias e desempenho por setor no painel administrativo com gráficos interativos.</div>
       </div>
-      <div class="feat-card">
+      <div class="feat-card reveal reveal-delay-4">
         <div class="feat-icon"><i class="fa-solid fa-shuffle" aria-hidden="true"></i></div>
         <div class="feat-title">Questões aleatórias</div>
-        <div class="feat-desc">Embaralhe questões e limite quantas serão apresentadas, tornando cada aplicação única.</div>
+        <div class="feat-desc">Embaralhe questões e limite quantas serão exibidas, tornando cada aplicação única e anti-cola.</div>
       </div>
-      <div class="feat-card">
+      <div class="feat-card reveal reveal-delay-5">
         <div class="feat-icon"><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i></div>
         <div class="feat-title">100% responsivo</div>
-        <div class="feat-desc">Funciona perfeitamente em celular, tablet e desktop. Acesso por QR Code para facilitar a entrada.</div>
+        <div class="feat-desc">Funciona em celular, tablet e desktop. Acesso via QR Code para facilitar a entrada em treinamentos presenciais.</div>
       </div>
-      <div class="feat-card">
+      <div class="feat-card reveal reveal-delay-6">
         <div class="feat-icon"><i class="fa-solid fa-file-csv" aria-hidden="true"></i></div>
         <div class="feat-title">Importação em lote</div>
-        <div class="feat-desc">Cadastre centenas de questões de uma vez via CSV. Exportação de resultados para Excel.</div>
+        <div class="feat-desc">Cadastre centenas de questões de uma vez via planilha CSV. Exporte resultados para Excel com um clique.</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ══ QUIZ LIST ════════════════════════════════════════════════════ -->
+<!-- ══ HOW IT WORKS ════════════════════════════════════════════════ -->
+<section class="lp-howitworks" id="como-funciona" aria-labelledby="hiw-title">
+  <div class="section-inner section-center">
+    <div class="section-label reveal">Como funciona</div>
+    <h2 class="section-title reveal reveal-delay-1" id="hiw-title">Três passos para o treinamento completo</h2>
+    <p class="section-sub reveal reveal-delay-2" style="margin:0 auto 52px">Sem complexidade, sem instalação. Do cadastro ao certificado em minutos.</p>
+    <div class="steps-grid">
+      <div class="step-card reveal reveal-delay-1">
+        <div class="step-num">1</div>
+        <div class="step-title">Crie o quiz</div>
+        <div class="step-desc">Cadastre perguntas manualmente ou importe via CSV. Configure timer, aprovação mínima, randomização e expiração.</div>
+      </div>
+      <div class="step-card reveal reveal-delay-2">
+        <div class="step-num">2</div>
+        <div class="step-title">Compartilhe o link</div>
+        <div class="step-desc">Envie o link ou QR Code para os participantes. Eles acessam de qualquer dispositivo, sem instalação.</div>
+      </div>
+      <div class="step-card reveal reveal-delay-3">
+        <div class="step-num">3</div>
+        <div class="step-title">Acompanhe e certifique</div>
+        <div class="step-desc">Veja resultados em tempo real. Aprovados recebem certificado verificável automaticamente com código único.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOR MANAGERS ════════════════════════════════════════════════ -->
+<section class="lp-managers" id="gestores" aria-labelledby="mgr-title">
+  <div class="section-inner">
+    <div class="managers-grid">
+      <div class="managers-left reveal">
+        <div class="section-label">Para gestores</div>
+        <h2 id="mgr-title">Controle total na palma da mão</h2>
+        <p>O painel administrativo oferece visibilidade completa sobre o desempenho da equipe, emissão de certificados e gestão de treinamentos — tudo em um só lugar.</p>
+        <div class="managers-feature-list">
+          <div class="mgr-feat">
+            <div class="mgr-feat-icon"><i class="fa-solid fa-chart-bar" aria-hidden="true"></i></div>
+            <div class="mgr-feat-text">
+              <strong>Relatórios e resultados</strong>
+              <span>Visualize aprovações, reprovações e notas individuais por quiz e por setor.</span>
+            </div>
+          </div>
+          <div class="mgr-feat">
+            <div class="mgr-feat-icon"><i class="fa-solid fa-certificate" aria-hidden="true"></i></div>
+            <div class="mgr-feat-text">
+              <strong>Gestão de certificados</strong>
+              <span>Emissão automática com QR Code verificável e histórico completo por participante.</span>
+            </div>
+          </div>
+          <div class="mgr-feat">
+            <div class="mgr-feat-icon"><i class="fa-solid fa-users-gear" aria-hidden="true"></i></div>
+            <div class="mgr-feat-text">
+              <strong>Gestão de usuários</strong>
+              <span>Cadastre participantes, redefina senhas e acompanhe o histórico de cada colaborador.</span>
+            </div>
+          </div>
+          <div class="mgr-feat">
+            <div class="mgr-feat-icon"><i class="fa-solid fa-file-export" aria-hidden="true"></i></div>
+            <div class="mgr-feat-text">
+              <strong>Exportação de dados</strong>
+              <span>Exporte resultados e listas de aprovados em CSV/Excel para integrar com seu RH.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="managers-right reveal reveal-delay-2">
+        <div class="mgr-mockup">
+          <div class="mgr-mockup-bar">
+            <div class="mgr-mockup-dot" style="background:#FF5F57"></div>
+            <div class="mgr-mockup-dot" style="background:#FEBC2E"></div>
+            <div class="mgr-mockup-dot" style="background:#28C840"></div>
+            <span style="font-size:12px;color:rgba(255,255,255,.4);margin-left:8px">Dashboard · PageQuiz</span>
+          </div>
+          <div class="mgr-stat-row">
+            <div class="mgr-stat-box">
+              <div class="mgr-stat-box-num"><?= $stats['done'] ?></div>
+              <div class="mgr-stat-box-lbl">Participações</div>
+            </div>
+            <div class="mgr-stat-box">
+              <div class="mgr-stat-box-num"><?= $stats['pass_rate'] ?>%</div>
+              <div class="mgr-stat-box-lbl">Aprovação</div>
+            </div>
+          </div>
+          <div class="mgr-chart-row">
+            <p><i class="fa-solid fa-chart-bar" style="margin-right:6px"></i>Desempenho por setor</p>
+            <div class="mgr-bar-list">
+              <div class="mgr-bar-item">
+                <span style="width:80px;text-align:left">Segurança</span>
+                <div class="mgr-bar-track"><div class="mgr-bar-fill" style="--w:88%;width:88%"></div></div>
+                <span>88%</span>
+              </div>
+              <div class="mgr-bar-item">
+                <span style="width:80px;text-align:left">RH</span>
+                <div class="mgr-bar-track"><div class="mgr-bar-fill" style="--w:74%;width:74%"></div></div>
+                <span>74%</span>
+              </div>
+              <div class="mgr-bar-item">
+                <span style="width:80px;text-align:left">Operações</span>
+                <div class="mgr-bar-track"><div class="mgr-bar-fill" style="--w:92%;width:92%"></div></div>
+                <span>92%</span>
+              </div>
+            </div>
+          </div>
+          <div class="mgr-badge-row">
+            <span class="mgr-badge"><i class="fa-solid fa-award"></i> 3 certificados emitidos hoje</span>
+            <span class="mgr-badge"><i class="fa-solid fa-bolt"></i> Ao vivo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ QUIZ CARDS ═══════════════════════════════════════════════════ -->
 <section class="lp-quizzes" id="quizzes" aria-labelledby="quiz-list-title">
   <div class="section-inner">
-    <div class="section-label">Disponíveis agora</div>
-    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:32px">
-      <div>
-        <h2 class="section-title" id="quiz-list-title" style="margin-bottom:0">Quizzes disponíveis</h2>
-        <p style="font-size:14px;color:#64748b;margin-top:6px"><?= count($quizzes) ?> quiz<?= count($quizzes) !== 1 ? 'zes' : '' ?> ativo<?= count($quizzes) !== 1 ? 's' : '' ?></p>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:40px">
+      <div class="reveal">
+        <div class="section-label">Disponíveis agora</div>
+        <h2 class="section-title" id="quiz-list-title" style="margin-bottom:4px">Quizzes disponíveis</h2>
+        <p style="font-size:14px;color:#64748b"><?= count($quizzes) ?> quiz<?= count($quizzes) !== 1 ? 'zes' : '' ?> ativo<?= count($quizzes) !== 1 ? 's' : '' ?></p>
       </div>
       <?php if ($currentUser): ?>
-      <a href="user/dashboard.php" class="btn-ghost" style="font-size:13px">
+      <a href="user/dashboard.php" class="btn-ghost reveal" style="font-size:13px">
         <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Meu histórico
       </a>
       <?php endif; ?>
     </div>
 
+    <div class="quiz-cards-grid">
     <?php if (empty($quizzes)): ?>
-    <div class="empty-quizzes">
-      <i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>
-      <strong style="display:block;font-size:16px;color:#475569">Nenhum quiz disponível no momento</strong>
-      <p style="margin-top:8px;font-size:14px">Novos quizzes serão publicados em breve.</p>
-    </div>
+      <div class="empty-quizzes">
+        <i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>
+        <strong style="display:block;font-size:16px;color:#475569;margin-bottom:8px">Nenhum quiz disponível no momento</strong>
+        <p style="font-size:14px">Novos quizzes serão publicados em breve.</p>
+      </div>
     <?php else: ?>
-    <div class="quiz-list" role="list">
       <?php foreach ($quizzes as $i => $q): ?>
-      <div class="qi" id="qi-<?= $q['id'] ?>" role="listitem">
-        <div class="qi-header" onclick="toggleQi(<?= $q['id'] ?>)"
-             role="button" aria-expanded="false" aria-controls="qi-body-<?= $q['id'] ?>"
-             tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){toggleQi(<?= $q['id'] ?>);event.preventDefault()}">
-          <span class="qi-sector"><?= htmlspecialchars($q['sector']) ?></span>
-          <h3 class="qi-title"><?= htmlspecialchars($q['title']) ?></h3>
-          <div class="qi-meta">
-            <span><i class="fa-solid fa-list-ol" aria-hidden="true"></i><?= $q['question_count'] ?> questões</span>
-            <span><i class="fa-solid fa-stopwatch" aria-hidden="true"></i><?= $q['time_per_question'] ?>s</span>
-            <span><i class="fa-solid fa-bullseye" aria-hidden="true"></i>≥<?= $q['pass_percentage'] ?>%</span>
-            <span><i class="fa-solid fa-users" aria-hidden="true"></i><?= $q['participant_count'] ?></span>
-          </div>
-          <i class="fa-solid fa-chevron-right qi-chevron" aria-hidden="true"></i>
-        </div>
-        <div class="qi-body" id="qi-body-<?= $q['id'] ?>" hidden>
-          <?php if ($q['description']): ?>
-          <p class="qi-desc"><?= htmlspecialchars($q['description']) ?></p>
-          <?php endif; ?>
-          <div class="qi-details">
-            <div class="qi-detail-pill">
-              <i class="fa-solid fa-list-ol" aria-hidden="true"></i>
-              <?= $q['question_count'] ?> questões<?= $q['max_questions'] > 0 ? ' (até ' . $q['max_questions'] . ' por sessão)' : '' ?>
-            </div>
-            <div class="qi-detail-pill">
-              <i class="fa-solid fa-stopwatch" aria-hidden="true"></i>
-              <?= $q['time_per_question'] ?> segundos por questão
-            </div>
-            <div class="qi-detail-pill">
-              <i class="fa-solid fa-bullseye" aria-hidden="true"></i>
-              Aprovação com <?= $q['pass_percentage'] ?>%
-            </div>
+      <div class="qcard reveal reveal-delay-<?= ($i % 3) + 1 ?>">
+        <div class="qcard-top">
+          <div class="qcard-sector-row">
+            <span class="qcard-sector"><?= htmlspecialchars($q['sector']) ?></span>
             <?php if ($q['has_certificate']): ?>
-            <div class="qi-detail-pill">
-              <i class="fa-solid fa-award" aria-hidden="true"></i>
-              Emite certificado
-            </div>
+            <span class="qcard-cert"><i class="fa-solid fa-award"></i> Certificado</span>
             <?php endif; ?>
+          </div>
+          <h3 class="qcard-title"><?= htmlspecialchars($q['title']) ?></h3>
+          <?php if ($q['description']): ?>
+          <p class="qcard-desc"><?= htmlspecialchars($q['description']) ?></p>
+          <?php endif; ?>
+          <div class="qcard-pills">
+            <span class="qcard-pill"><i class="fa-solid fa-list-ol"></i><?= $q['question_count'] ?> questões<?= $q['max_questions'] > 0 ? ' (até '.$q['max_questions'].')' : '' ?></span>
+            <span class="qcard-pill"><i class="fa-solid fa-stopwatch"></i><?= $q['time_per_question'] ?>s / questão</span>
+            <span class="qcard-pill"><i class="fa-solid fa-bullseye"></i>≥<?= $q['pass_percentage'] ?>% aprovação</span>
             <?php if ($q['allow_retake']): ?>
-            <div class="qi-detail-pill">
-              <i class="fa-solid fa-rotate" aria-hidden="true"></i>
-              Permite nova tentativa
-            </div>
+            <span class="qcard-pill"><i class="fa-solid fa-rotate"></i>Retentativas</span>
             <?php endif; ?>
           </div>
-          <div class="qi-actions">
-            <a href="quiz.php?id=<?= $q['id'] ?>" class="btn-start-quiz">
-              <i class="fa-solid fa-play" aria-hidden="true"></i>
-              Iniciar Quiz
-            </a>
-            <?php if (!$currentUser): ?>
-            <a href="user/login.php?redirect=../quiz.php?id=<?= $q['id'] ?>" class="btn-login-quiz">
-              <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
-              Entrar para salvar progresso
-            </a>
-            <?php endif; ?>
-            <span class="qi-pcount">
-              <i class="fa-solid fa-users" aria-hidden="true"></i>
-              <?= $q['participant_count'] ?> participação<?= $q['participant_count'] !== '1' ? 'ões' : '' ?>
-            </span>
-          </div>
+        </div>
+        <div class="qcard-bottom">
+          <a href="quiz.php?id=<?= $q['id'] ?>" class="btn-start-quiz">
+            <i class="fa-solid fa-play" aria-hidden="true"></i> Iniciar
+          </a>
+          <?php if (!$currentUser): ?>
+          <a href="user/login.php?redirect=../quiz.php?id=<?= $q['id'] ?>" class="btn-login-quiz" title="Entrar para salvar progresso">
+            <i class="fa-solid fa-right-to-bracket"></i> Entrar
+          </a>
+          <?php endif; ?>
+          <span class="qcard-pcount">
+            <i class="fa-solid fa-users"></i>
+            <?= $q['participant_count'] ?> participaç<?= $q['participant_count'] != 1 ? 'ões' : 'ão' ?>
+          </span>
         </div>
       </div>
       <?php endforeach; ?>
-    </div>
     <?php endif; ?>
+    </div>
   </div>
 </section>
+
+<!-- ══ CTA ═════════════════════════════════════════════════════════ -->
+<?php if (!$currentUser): ?>
+<section class="lp-cta" aria-labelledby="cta-title">
+  <div class="cta-inner reveal">
+    <h2 id="cta-title">Pronto para capacitar sua equipe?</h2>
+    <p>Crie uma conta gratuita e publique seu primeiro quiz em menos de 5 minutos. Sem cartão de crédito.</p>
+    <div class="cta-actions">
+      <a href="user/register.php" class="btn-hero-primary">
+        <i class="fa-solid fa-rocket"></i> Criar conta grátis
+      </a>
+      <a href="verify.php" class="btn-hero-secondary">
+        <i class="fa-solid fa-shield-halved"></i> Verificar certificado
+      </a>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
 
 <!-- ══ FOOTER ══════════════════════════════════════════════════════ -->
 <footer class="lp-footer" role="contentinfo">
@@ -453,7 +659,7 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
       <?php endif; ?>
       <p><?= $tenant ? htmlspecialchars($tenant['name']) . ' — Plataforma de treinamento e avaliação corporativa.' : 'Plataforma profissional de treinamento e avaliação corporativa. Simples, eficiente e com certificação automática.' ?></p>
       <a href="https://wa.me/5569993882222" target="_blank" rel="noopener"
-         style="color:rgba(255,255,255,.5);font-size:18px;margin-top:12px;display:inline-block;transition:.2s"
+         style="color:rgba(255,255,255,.5);font-size:20px;margin-top:14px;display:inline-block;transition:.2s"
          title="WhatsApp PageUp Sistemas">
         <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
       </a>
@@ -462,8 +668,8 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
       <h4>Plataforma</h4>
       <a href="#quizzes">Quizzes disponíveis</a>
       <a href="#features">Recursos</a>
+      <a href="#como-funciona">Como funciona</a>
       <a href="verify.php">Verificar certificado</a>
-      <a href="user/dashboard.php">Meu painel</a>
     </div>
     <div class="footer-col">
       <h4>Legal</h4>
@@ -482,49 +688,63 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
         <a href="user/register.php">Criar conta</a>
         <a href="user/forgot-password.php">Esqueci a senha</a>
       <?php endif; ?>
-      <a href="admin/login.php" style="margin-top:16px;opacity:.5">Área administrativa</a>
+      <a href="admin/login.php" style="margin-top:16px;opacity:.4">Área administrativa</a>
     </div>
   </div>
   <div style="max-width:1100px;margin:32px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
     <p style="font-size:12px;color:rgba(255,255,255,.3);margin:0">© <?= date('Y') ?> PageQuiz · PageUp Sistemas</p>
     <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-      <a href="lgpd.php" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:12px;transition:.15s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.4)'">LGPD</a>
-      <a href="privacidade.php" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:12px;transition:.15s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.4)'">Privacidade</a>
-      <a href="cookies.php" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:12px;transition:.15s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.4)'">Cookies</a>
-      <a href="contato.php" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:12px;transition:.15s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.4)'">Contato</a>
-      <a href="verify.php" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:12px">
-        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Verificar certificado
+      <a href="lgpd.php" style="color:rgba(255,255,255,.35);text-decoration:none;font-size:12px;transition:.15s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.35)'">LGPD</a>
+      <a href="privacidade.php" style="color:rgba(255,255,255,.35);text-decoration:none;font-size:12px;transition:.15s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Privacidade</a>
+      <a href="cookies.php" style="color:rgba(255,255,255,.35);text-decoration:none;font-size:12px;transition:.15s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Cookies</a>
+      <a href="contato.php" style="color:rgba(255,255,255,.35);text-decoration:none;font-size:12px;transition:.15s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Contato</a>
+      <a href="verify.php" style="color:rgba(255,255,255,.35);text-decoration:none;font-size:12px">
+        <i class="fa-solid fa-shield-halved"></i> Verificar certificado
       </a>
     </div>
   </div>
 </footer>
 
 <script>
-function toggleQi(id) {
-    const qi     = document.getElementById('qi-' + id);
-    const body   = document.getElementById('qi-body-' + id);
-    const header = qi.querySelector('.qi-header');
-    const isOpen = qi.classList.contains('open');
+// ── Navbar shadow on scroll
+window.addEventListener('scroll', () => {
+    document.querySelector('.lp-nav').classList.toggle('scrolled', window.scrollY > 10);
+}, {passive: true});
 
-    document.querySelectorAll('.qi.open').forEach(el => {
-        el.classList.remove('open');
-        el.querySelector('.qi-body').hidden = true;
-        el.querySelector('.qi-header').setAttribute('aria-expanded','false');
+// ── Animated counters
+function animateCounter(el) {
+    const target = parseInt(el.dataset.target) || 0;
+    const suffix = el.dataset.suffix || '';
+    const duration = 1400;
+    const start = performance.now();
+    const inner = el.querySelector('span.stat-suf');
+    const update = (now) => {
+        const p = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        const val = Math.round(ease * target);
+        el.childNodes[0].nodeValue = val;
+        if (p < 1) requestAnimationFrame(update);
+        else el.childNodes[0].nodeValue = target;
+    };
+    requestAnimationFrame(update);
+}
+
+const statsObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            document.querySelectorAll('.stat-num[data-target]').forEach(animateCounter);
+            statsObs.disconnect();
+        }
     });
+}, {threshold: .5});
+const statsEl = document.querySelector('.lp-stats');
+if (statsEl) statsObs.observe(statsEl);
 
-    if (!isOpen) {
-        qi.classList.add('open');
-        body.hidden = false;
-        header.setAttribute('aria-expanded','true');
-        setTimeout(() => qi.scrollIntoView({behavior:'smooth',block:'nearest'}), 50);
-    }
-}
-
-// Auto-open if URL has #quiz-N
-if (window.location.hash.startsWith('#quiz-')) {
-    const id = window.location.hash.replace('#quiz-','');
-    if (id) toggleQi(id);
-}
+// ── Reveal on scroll
+const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, {threshold: .12, rootMargin: '0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 </script>
 </body>
 </html>
