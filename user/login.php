@@ -8,7 +8,7 @@ resolveTenant(); // garante que o tenant fica na sessão (via subdomínio ou ?c=
 if (isUserLoggedIn()) { header('Location: dashboard.php'); exit; }
 
 $error = '';
-$redirect = $_GET['redirect'] ?? '../index.php';
+$redirect = $_GET['redirect'] ?? 'dashboard.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');

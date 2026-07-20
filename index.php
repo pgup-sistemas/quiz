@@ -329,7 +329,8 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
   </a>
   <div class="lp-nav-links">
     <a href="#features">Recursos</a>
-    <a href="#quizzes">Quizzes</a>
+    <?php if ($tenant): ?><a href="#quizzes">Quizzes</a><?php endif; ?>
+    <?php if ($currentUser && !$tenant): ?><a href="user/dashboard.php">Meus treinamentos</a><?php endif; ?>
     <a href="verify.php">Verificar Certificado</a>
   </div>
   <div class="lp-nav-spacer"></div>
@@ -399,12 +400,21 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
     </p>
     <div class="hero-actions">
       <?php if ($currentUser): ?>
+        <?php if ($tenant): ?>
         <a href="#quizzes" class="btn-hero-primary">
           <i class="fa-solid fa-play" aria-hidden="true"></i> Ver quizzes disponíveis
         </a>
         <a href="user/dashboard.php" class="btn-hero-secondary">
           <i class="fa-solid fa-chart-line" aria-hidden="true"></i> Meu painel
         </a>
+        <?php else: ?>
+        <a href="user/dashboard.php" class="btn-hero-primary">
+          <i class="fa-solid fa-list-check" aria-hidden="true"></i> Acessar meu painel
+        </a>
+        <a href="user/logout.php" class="btn-hero-secondary">
+          <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sair
+        </a>
+        <?php endif; ?>
       <?php else: ?>
         <?php if ($tenant): ?>
         <a href="user/register.php" class="btn-hero-primary">
@@ -447,6 +457,34 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
     </div>
   </div>
 </div>
+
+<!-- ══ BANNER COLABORADOR LOGADO (landing sem tenant) ══════════════ -->
+<?php if ($currentUser && !$tenant): ?>
+<div style="background:linear-gradient(135deg,#f0f7fa 0%,#e8f4f8 100%);border-top:1px solid #c9e2ec;border-bottom:1px solid #c9e2ec;padding:32px 24px">
+  <div style="max-width:820px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:16px;flex:1;min-width:0">
+      <div style="width:50px;height:50px;border-radius:50%;background:var(--pacific);color:#fff;font-size:18px;font-weight:800;font-family:'Syne',sans-serif;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <?= strtoupper(mb_substr($currentUser['name'],0,2)) ?>
+      </div>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--prussian)">
+          Olá, <?= htmlspecialchars($currentUser['name']) ?>!
+        </div>
+        <div style="font-size:13px;color:#475569;margin-top:3px">
+          Acesse seu painel para ver os treinamentos disponíveis para você.
+        </div>
+      </div>
+    </div>
+    <a href="user/dashboard.php"
+       style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:var(--pacific);color:#fff;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;transition:.2s;white-space:nowrap;flex-shrink:0"
+       onmouseover="this.style.background='var(--prussian)'" onmouseout="this.style.background='var(--pacific)'">
+      <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+      Ver meus treinamentos
+      <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+    </a>
+  </div>
+</div>
+<?php endif; ?>
 
 <!-- ══ FEATURES ════════════════════════════════════════════════════ -->
 <section class="lp-features" id="features" aria-labelledby="feat-title">
