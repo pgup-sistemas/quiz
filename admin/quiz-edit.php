@@ -152,7 +152,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_quiz'])) {
     $timer      = (int)($_POST['timer']      ?? 30);
     $passPct    = (int)($_POST['pass_pct']   ?? 70);
     $maxQ       = (int)($_POST['max_questions'] ?? 0);
-    $expiry     = !empty($_POST['expires_at']) ? $_POST['expires_at'] : null;
+    $expiry      = !empty($_POST['expires_at'])   ? $_POST['expires_at']   : null;
+    $visibleFrom = !empty($_POST['visible_from']) ? $_POST['visible_from'] : null;
     $feedback   = isset($_POST['feedback'])        ? 1 : 0;
     $hasCert    = isset($_POST['has_certificate']) ? 1 : 0;
     $randomize  = isset($_POST['randomize'])       ? 1 : 0;
@@ -175,10 +176,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_quiz'])) {
     if ($isNew) {
         dbExec("INSERT INTO quizzes
                     (title,description,sector,created_by,time_per_question,pass_percentage,
-                     max_questions,expires_at,show_feedback,has_certificate,randomize,
+                     max_questions,expires_at,visible_from,show_feedback,has_certificate,randomize,
                      allow_retake,active,visibility,company_id)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            [$title,$desc,$sector,$createdBy,$timer,$passPct,$maxQ,$expiry,
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            [$title,$desc,$sector,$createdBy,$timer,$passPct,$maxQ,$expiry,$visibleFrom,
              $feedback,$hasCert,$randomize,$retake,$active,$visibility,$cid]);
         $quizId = (int)dbLastId();
         flash('Quiz criado! Agora adicione as questões.', 'success');
@@ -187,11 +188,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_quiz'])) {
 
     dbExec("UPDATE quizzes SET
                 title=?,description=?,sector=?,created_by=?,time_per_question=?,
-                pass_percentage=?,max_questions=?,expires_at=?,show_feedback=?,
+                pass_percentage=?,max_questions=?,expires_at=?,visible_from=?,show_feedback=?,
                 has_certificate=?,randomize=?,allow_retake=?,active=?,visibility=?,
                 updated_at=datetime('now','localtime')
             WHERE id=? AND company_id=?",
-        [$title,$desc,$sector,$createdBy,$timer,$passPct,$maxQ,$expiry,
+        [$title,$desc,$sector,$createdBy,$timer,$passPct,$maxQ,$expiry,$visibleFrom,
          $feedback,$hasCert,$randomize,$retake,$active,$visibility,$quizId,$cid]);
 
     dbExec("DELETE FROM quiz_assignments WHERE quiz_id IN (SELECT id FROM quizzes WHERE id=? AND company_id=?)", [$quizId,$cid]);
@@ -532,11 +533,20 @@ adminHead($isNew ? 'Novo Quiz' : 'Configurações: '.($quiz['title'] ?? ''), 'qu
                            value="<?= $quiz['max_questions'] ?? 0 ?>"/>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Data de Expiração
+                    <label class="form-label">Exibir a partir de
+                        <span style="font-size:11px;color:var(--gray-400);font-weight:400">(opcional)</span>
+                    </label>
+                    <input class="form-control" type="date" name="visible_from"
+                           value="<?= !empty($quiz['visible_from']) ? date('Y-m-d', strtotime($quiz['visible_from'])) : '' ?>"
+                           title="Deixe em branco para exibir imediatamente"/>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Expira em
                         <span style="font-size:11px;color:var(--gray-400);font-weight:400">(opcional)</span>
                     </label>
                     <input class="form-control" type="date" name="expires_at"
-                           value="<?= $quiz['expires_at'] ? date('Y-m-d', strtotime($quiz['expires_at'])) : '' ?>"/>
+                           value="<?= !empty($quiz['expires_at']) ? date('Y-m-d', strtotime($quiz['expires_at'])) : '' ?>"
+                           title="Deixe em branco para não expirar"/>
                 </div>
             </div>
         </div>

@@ -213,9 +213,10 @@ function initDB(PDO $db): void {
 
     // Migrations — add columns to existing DBs that were created before these fields existed
     $cols = array_column($db->query("PRAGMA table_info(quizzes)")->fetchAll(PDO::FETCH_ASSOC), 'name');
-    if (!in_array('expires_at',    $cols)) $db->exec("ALTER TABLE quizzes ADD COLUMN expires_at TEXT DEFAULT NULL");
-    if (!in_array('max_questions', $cols)) $db->exec("ALTER TABLE quizzes ADD COLUMN max_questions INTEGER DEFAULT 0");
-    if (!in_array('has_certificate', $cols)) $db->exec("ALTER TABLE quizzes ADD COLUMN has_certificate INTEGER DEFAULT 1");
+    if (!in_array('expires_at',     $cols)) $db->exec("ALTER TABLE quizzes ADD COLUMN expires_at TEXT DEFAULT NULL");
+    if (!in_array('max_questions',  $cols)) $db->exec("ALTER TABLE quizzes ADD COLUMN max_questions INTEGER DEFAULT 0");
+    if (!in_array('has_certificate',$cols)) $db->exec("ALTER TABLE quizzes ADD COLUMN has_certificate INTEGER DEFAULT 1");
+    if (!in_array('visible_from',   $cols)) $db->exec("ALTER TABLE quizzes ADD COLUMN visible_from TEXT DEFAULT NULL");
 
     $pCols = array_column($db->query("PRAGMA table_info(participants)")->fetchAll(PDO::FETCH_ASSOC), 'name');
     if (!in_array('last_activity', $pCols)) {

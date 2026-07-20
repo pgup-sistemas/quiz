@@ -9,7 +9,22 @@ $tenant = resolveTenant();
 $currentUser = currentUser();
 
 if ($tenant) {
-    $cid = (int)$tenant['id'];
+    $cid      = (int)$tenant['id'];
+    $perPage  = 6;
+    $page     = max(1, (int)($_GET['page'] ?? 1));
+    $offset   = ($page - 1) * $perPage;
+
+    $totalQuizzes = (int)(dbRow("
+        SELECT COUNT(*) AS c FROM quizzes
+        WHERE active = 1 AND company_id = ?
+          AND (expires_at  IS NULL OR expires_at  = '' OR expires_at  >= date('now','localtime'))
+          AND (visible_from IS NULL OR visible_from = '' OR visible_from <= date('now','localtime'))
+    ", [$cid])['c'] ?? 0);
+
+    $totalPages = max(1, (int)ceil($totalQuizzes / $perPage));
+    $page       = min($page, $totalPages);
+    $offset     = ($page - 1) * $perPage;
+
     $quizzes = dbRows("
         SELECT q.*, COUNT(DISTINCT p.id) AS participant_count, COUNT(DISTINCT qs.id) AS question_count
         FROM quizzes q
@@ -17,10 +32,12 @@ if ($tenant) {
         LEFT JOIN questions   qs  ON qs.quiz_id = q.id
         WHERE q.active = 1
           AND q.company_id = ?
-          AND (q.expires_at IS NULL OR q.expires_at = '' OR q.expires_at >= date('now','localtime'))
+          AND (q.expires_at   IS NULL OR q.expires_at   = '' OR q.expires_at   >= date('now','localtime'))
+          AND (q.visible_from IS NULL OR q.visible_from = '' OR q.visible_from <= date('now','localtime'))
         GROUP BY q.id
         ORDER BY q.created_at DESC
-    ", [$cid]);
+        LIMIT ? OFFSET ?
+    ", [$cid, $perPage, $offset]);
 
     $stats = [
         'quizzes'  => dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE active=1 AND company_id=?", [$cid])['c'],
@@ -36,17 +53,9 @@ if ($tenant) {
     $logoPath = ($hasCustomBrand && !empty($tenant['logo_path']) && file_exists(__DIR__ . '/' . $tenant['logo_path']))
                     ? $tenant['logo_path'] : null;
 } else {
-    $quizzes = dbRows("
-        SELECT q.*, COUNT(DISTINCT p.id) AS participant_count, COUNT(DISTINCT qs.id) AS question_count
-        FROM quizzes q
-        JOIN companies c ON c.id = q.company_id AND c.status = 'active'
-        LEFT JOIN participants p  ON p.quiz_id = q.id
-        LEFT JOIN questions   qs  ON qs.quiz_id = q.id
-        WHERE q.active = 1
-          AND (q.expires_at IS NULL OR q.expires_at = '' OR q.expires_at >= date('now','localtime'))
-        GROUP BY q.id
-        ORDER BY q.created_at DESC
-    ");
+    $quizzes    = [];
+    $totalPages = 1;
+    $page       = 1;
 
     $stats = [
         'quizzes'  => dbRow("SELECT COUNT(*) AS c FROM quizzes q JOIN companies c ON c.id=q.company_id AND c.status='active' WHERE q.active=1")['c'],
@@ -249,6 +258,14 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
 .btn-login-quiz{display:inline-flex;align-items:center;gap:7px;padding:11px 16px;background:transparent;border:1.5px solid #dce8ef;color:#64748b;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;text-decoration:none;transition:.2s;flex-shrink:0}
 .btn-login-quiz:hover{border-color:var(--pacific);color:var(--pacific)}
 .qcard-pcount{font-size:11px;color:#94a3b8;margin-left:auto;white-space:nowrap}
+
+/* ── Pagination ── */
+.quiz-pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:40px;flex-wrap:wrap}
+.pag-btn{min-width:38px;height:38px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;text-decoration:none;transition:.15s;border:1.5px solid #e2ecf1;color:#475569;background:#fff}
+.pag-btn:hover:not(.pag-active):not(.pag-disabled){border-color:var(--pacific);color:var(--pacific)}
+.pag-active{background:var(--pacific);color:#fff;border-color:var(--pacific)}
+.pag-disabled{opacity:.35;cursor:default}
+.pag-dots{padding:0 4px;color:#94a3b8;font-size:14px;line-height:38px}
 
 /* ── CTA Banner ── */
 .lp-cta{background:linear-gradient(135deg,#023047 0%,#034a6b 50%,#023047 100%);padding:80px 32px;text-align:center;position:relative;overflow:hidden}
@@ -570,14 +587,15 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
   </div>
 </section>
 
-<!-- ══ QUIZ CARDS ═══════════════════════════════════════════════════ -->
+<!-- ══ QUIZ CARDS (apenas no portal da empresa) ═════════════════════ -->
+<?php if ($tenant): ?>
 <section class="lp-quizzes" id="quizzes" aria-labelledby="quiz-list-title">
   <div class="section-inner">
     <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:40px">
       <div class="reveal">
         <div class="section-label">Disponíveis agora</div>
         <h2 class="section-title" id="quiz-list-title" style="margin-bottom:4px">Quizzes disponíveis</h2>
-        <p style="font-size:14px;color:#64748b"><?= count($quizzes) ?> quiz<?= count($quizzes) !== 1 ? 'zes' : '' ?> ativo<?= count($quizzes) !== 1 ? 's' : '' ?></p>
+        <p style="font-size:14px;color:#64748b"><?= $totalQuizzes ?> quiz<?= $totalQuizzes !== 1 ? 'zes' : '' ?> ativo<?= $totalQuizzes !== 1 ? 's' : '' ?></p>
       </div>
       <?php if ($currentUser): ?>
       <a href="user/dashboard.php" class="btn-ghost reveal" style="font-size:13px">
@@ -617,7 +635,7 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
           </div>
         </div>
         <div class="qcard-bottom">
-          <a href="quiz.php?id=<?= $q['id'] ?>" class="btn-start-quiz">
+          <a href="quiz.php?id=<?= $q['id'] ?><?= $tenant ? '&c='.urlencode($tenant['slug']) : '' ?>" class="btn-start-quiz">
             <i class="fa-solid fa-play" aria-hidden="true"></i> Iniciar
           </a>
           <?php if (!$currentUser): ?>
@@ -634,8 +652,41 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
       <?php endforeach; ?>
     <?php endif; ?>
     </div>
+
+    <?php if ($totalPages > 1): ?>
+    <nav class="quiz-pagination" aria-label="Paginação de quizzes">
+      <?php
+        $base = '?c='.urlencode($tenant['slug']).'&page=';
+        $prev = $page > 1 ? $page - 1 : null;
+        $next = $page < $totalPages ? $page + 1 : null;
+      ?>
+      <?php if ($prev): ?>
+      <a href="<?= $base.$prev ?>#quizzes" class="pag-btn"><i class="fa-solid fa-chevron-left"></i></a>
+      <?php else: ?>
+      <span class="pag-btn pag-disabled"><i class="fa-solid fa-chevron-left"></i></span>
+      <?php endif; ?>
+
+      <?php for ($p = 1; $p <= $totalPages; $p++): ?>
+        <?php if ($p === $page): ?>
+        <span class="pag-btn pag-active"><?= $p ?></span>
+        <?php elseif ($p === 1 || $p === $totalPages || abs($p - $page) <= 1): ?>
+        <a href="<?= $base.$p ?>#quizzes" class="pag-btn"><?= $p ?></a>
+        <?php elseif (abs($p - $page) === 2): ?>
+        <span class="pag-dots">…</span>
+        <?php endif; ?>
+      <?php endfor; ?>
+
+      <?php if ($next): ?>
+      <a href="<?= $base.$next ?>#quizzes" class="pag-btn"><i class="fa-solid fa-chevron-right"></i></a>
+      <?php else: ?>
+      <span class="pag-btn pag-disabled"><i class="fa-solid fa-chevron-right"></i></span>
+      <?php endif; ?>
+    </nav>
+    <?php endif; ?>
+
   </div>
 </section>
+<?php endif; ?>
 
 <!-- ══ CTA ═════════════════════════════════════════════════════════ -->
 <?php if (!$currentUser): ?>
