@@ -184,8 +184,12 @@ adminHead('Dashboard', 'index.php');
 
 <div class="flex items-center justify-between mb-24 flex-mobile-col">
     <div>
-        <h1 style="font-family:var(--font-heading); font-size:26px; font-weight:800; color:var(--navy); letter-spacing:-0.5px">Dashboard</h1>
-        <p class="text-muted" style="font-size:13px; margin-top:4px">Bem-vindo, <strong><?= e(adminName()) ?></strong></p>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--yellow);margin-bottom:4px;display:flex;align-items:center;gap:6px">
+            <i class="fa-solid fa-building" aria-hidden="true"></i>
+            <?= e($company['name'] ?? '') ?>
+        </div>
+        <h1 style="font-family:var(--font-heading); font-size:26px; font-weight:800; color:var(--navy); letter-spacing:-0.5px">Bem-vindo(a), <?= e(adminName()) ?>!</h1>
+        <p class="text-muted" style="font-size:13px; margin-top:2px">Aqui está um resumo da sua plataforma de treinamento.</p>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap">
         <a href="../index.php" class="btn btn-outline" target="_blank">

@@ -276,7 +276,7 @@ body {
     <div class="login-footer">
         <a href="../index.php">
             <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
-            Voltar ao Quiz
+            Voltar ao início
         </a>
     </div>
 </div>
