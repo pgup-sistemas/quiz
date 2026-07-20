@@ -75,9 +75,9 @@ adminHead('Questões: ' . $quiz['title'], 'quizzes.php');
 }
 .quiz-step.done   .quiz-step-num { background:var(--green);   color:#fff; }
 .quiz-step.active .quiz-step-num { background:var(--pacific); color:#fff; }
-.quiz-step.done   span { color:var(--gray-600); }
-.quiz-step.active span { color:var(--gray-800); }
-.quiz-step-line      { flex:1;height:2px;background:var(--gray-200);margin:0 10px;min-width:32px; }
+.quiz-step.done   span { color:rgba(255,255,255,.7); }
+.quiz-step.active span { color:#fff; }
+.quiz-step-line      { flex:1;height:2px;background:rgba(255,255,255,.15);margin:0 10px;min-width:32px; }
 .quiz-step-line.done { background:var(--green); }
 
 /* Welcome banner */

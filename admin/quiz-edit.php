@@ -227,10 +227,10 @@ adminHead($isNew ? 'Novo Quiz' : 'Configurações: '.($quiz['title'] ?? ''), 'qu
     font-size:12px;font-weight:700;flex-shrink:0;
 }
 .quiz-step.active .quiz-step-num  { background:var(--pacific);color:#fff; }
-.quiz-step.pending .quiz-step-num { background:var(--gray-200);color:var(--gray-400); }
-.quiz-step.active  span { color:var(--gray-800); }
-.quiz-step.pending span { color:var(--gray-400); }
-.quiz-step-line      { flex:1;height:2px;background:var(--gray-200);margin:0 10px;min-width:32px; }
+.quiz-step.pending .quiz-step-num { background:rgba(255,255,255,.15);color:rgba(255,255,255,.5); }
+.quiz-step.active  span { color:#fff; }
+.quiz-step.pending span { color:rgba(255,255,255,.45); }
+.quiz-step-line      { flex:1;height:2px;background:rgba(255,255,255,.15);margin:0 10px;min-width:32px; }
 
 /* Divider "ou" entre as duas opções de criação */
 .or-divider {

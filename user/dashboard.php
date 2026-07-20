@@ -136,7 +136,7 @@ $orgName = $tenant ? htmlspecialchars($tenant['name']) : 'PageQuiz';
 <link rel="stylesheet" href="../assets/style.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
-body { background: #eef4f7; font-family: 'DM Sans', sans-serif; margin: 0; }
+body { background: #0b1e35; font-family: 'DM Sans', sans-serif; margin: 0; }
 
 /* ── Navbar — tonalidade alinhada ao template Super Admin ── */
 .dash-nav {
@@ -174,11 +174,11 @@ body { background: #eef4f7; font-family: 'DM Sans', sans-serif; margin: 0; }
 /* ── Layout ── */
 .wrap { max-width: 1000px; margin: 0 auto; padding: 32px 20px; }
 
-/* ── Header ── */
+/* ── Header (texto solto sobre o fundo escuro) ── */
 .dash-header { margin-bottom: 28px; }
-.dash-greeting { font-size: 22px; font-weight: 800; color: var(--prussian); font-family: 'Syne', sans-serif; }
-.dash-greeting span { color: var(--pacific); }
-.dash-sub { font-size: 13px; color: var(--gray-500); margin-top: 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dash-greeting { font-size: 22px; font-weight: 800; color: #fff; font-family: 'Syne', sans-serif; }
+.dash-greeting span { color: var(--yellow); }
+.dash-sub { font-size: 13px; color: rgba(255,255,255,.6); margin-top: 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .dash-sub-item { display: flex; align-items: center; gap: 5px; }
 
 /* ── Stats ── */

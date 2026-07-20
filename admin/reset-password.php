@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $token && $admin) {
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
 *{box-sizing:border-box}
-body{min-height:100vh;background:#eef4f7;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif}
+body{min-height:100vh;background:#0b1e35;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif}
 .login-box{width:100%;max-width:420px}
 .login-card{background:#fff;border-radius:24px;padding:40px 36px 32px;box-shadow:0 2px 4px rgba(2,48,71,.04),0 8px 20px rgba(2,48,71,.08),0 24px 56px rgba(2,48,71,.12)}
 .brand-block{text-align:center;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid #e8eef2}

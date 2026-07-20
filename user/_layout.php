@@ -16,7 +16,7 @@ function userPageHead(string $title, string $desc = ''): void { ?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
 *{box-sizing:border-box}
-body{min-height:100vh;background:#eef4f7;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif}
+body{min-height:100vh;background:#0b1e35;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif}
 .u-box{width:100%;max-width:440px}
 .u-card{background:#fff;border-radius:20px;padding:36px;box-shadow:0 2px 8px rgba(2,48,71,.06),0 12px 32px rgba(2,48,71,.10),0 28px 56px rgba(2,48,71,.08)}
 .u-brand{text-align:center;margin-bottom:24px;padding-bottom:22px;border-bottom:1px solid #e8eef2}

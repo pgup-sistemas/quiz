@@ -127,7 +127,7 @@ $supportEmail = dbRow("SELECT value FROM system_settings WHERE key='support_emai
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
-html,body { min-height:100vh; background:#f0f4f8; margin:0; font-family:var(--font-body,'DM Sans',sans-serif); }
+html,body { min-height:100vh; background:#0b1e35; margin:0; font-family:var(--font-body,'DM Sans',sans-serif); }
 .reg-outer { min-height:100vh; display:flex; align-items:flex-start; justify-content:center; padding:40px 20px; }
 .reg-box   { background:#fff; border-radius:16px; padding:40px 36px; width:100%; max-width:520px; box-shadow:0 8px 32px rgba(2,48,71,.1); }
 .reg-logo  { display:flex; align-items:center; gap:10px; margin-bottom:28px; text-decoration:none; }

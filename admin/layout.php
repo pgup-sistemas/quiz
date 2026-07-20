@@ -52,10 +52,24 @@ function adminHead(string $title, string $activeNav = ''): void {
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
-body { background: var(--gray-100); min-height:100vh; }
+/* Fundo escuro — tonalidade alinhada ao template Super Admin */
+body { background: #0b1e35; min-height:100vh; }
 .admin-wrap { max-width:1100px; margin:0 auto; padding:28px 20px; animation: adminFadeIn .4s ease both; }
-.card { margin-bottom:24px; }
+.card { margin-bottom:24px; background:#fff; }
 @keyframes adminFadeIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform:none; } }
+
+/* Texto solto na área escura (fora de caixas com fundo próprio, ex.: .card,
+   .import-full-card, .manual-card) — ajusta contraste automaticamente */
+.admin-wrap [style*="color:var(--gray-800)"]:not([class*="card"] *),
+.admin-wrap [style*="color:var(--navy)"]:not([class*="card"] *),
+.admin-wrap [style*="color:var(--prussian)"]:not([class*="card"] *),
+.admin-wrap h1:not([class*="card"] *) { color: #fff !important; }
+.admin-wrap [style*="color:var(--gray-700)"]:not([class*="card"] *),
+.admin-wrap [style*="color:var(--gray-600)"]:not([class*="card"] *),
+.admin-wrap [style*="color:var(--gray-500)"]:not([class*="card"] *),
+.admin-wrap [style*="color:var(--gray-400)"]:not([class*="card"] *) { color: rgba(255,255,255,.6) !important; }
+.admin-wrap > .page-header .sub,
+.admin-wrap .text-muted:not([class*="card"] *) { color: rgba(255,255,255,.5) !important; }
 
 /* Topbar — tonalidade alinhada ao template Super Admin */
 .topbar { background: #05111f; border-bottom: 2px solid var(--yellow); }

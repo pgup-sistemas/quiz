@@ -51,7 +51,7 @@ $date   = $p['completed_at'] ? date('d/m/Y', strtotime($p['completed_at'])) : da
 <link rel="stylesheet" href="../assets/style.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
-body { background: #f0f4f8; min-height: 100vh; }
+body { background: #0b1e35; min-height: 100vh; }
 
 .cert-page-nav {
     background: #05111f;

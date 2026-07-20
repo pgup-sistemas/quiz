@@ -72,7 +72,7 @@ $isPro   = $company['plan'] === 'pro';
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
-html,body { min-height:100vh; background:#f0f4f8; margin:0; font-family:var(--font-body,'DM Sans',sans-serif); display:flex; align-items:center; justify-content:center; }
+html,body { min-height:100vh; background:#0b1e35; margin:0; font-family:var(--font-body,'DM Sans',sans-serif); display:flex; align-items:center; justify-content:center; }
 .ob-box  { background:#fff; border-radius:16px; padding:40px 36px; width:100%; max-width:500px; box-shadow:0 8px 32px rgba(2,48,71,.1); margin:40px 20px; }
 .steps   { display:flex; gap:8px; margin-bottom:32px; }
 .step-dot{ flex:1; height:4px; border-radius:2px; background:var(--gray-200,#e5e7eb); }

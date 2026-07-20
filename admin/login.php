@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 body {
     min-height: 100vh;
-    background: #eef4f7;
+    background: #0b1e35;
     display: flex;
     flex-direction: column;
     align-items: center;

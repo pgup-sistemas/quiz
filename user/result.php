@@ -63,7 +63,7 @@ $scoreColor = $p['passed'] ? '#00875a' : '#c53030';
 <link rel="stylesheet" href="../assets/style.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
-body { background: #eef4f7; font-family: 'DM Sans', sans-serif; margin: 0; }
+body { background: #0b1e35; font-family: 'DM Sans', sans-serif; margin: 0; }
 
 .dash-nav {
     background: #05111f;
@@ -90,7 +90,7 @@ body { background: #eef4f7; font-family: 'DM Sans', sans-serif; margin: 0; }
 .breadcrumb { display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:24px; flex-wrap:wrap; }
 .breadcrumb a { color:var(--pacific); text-decoration:none; font-weight:600; }
 .breadcrumb a:hover { text-decoration:underline; }
-.breadcrumb span { color:var(--gray-300); }
+.breadcrumb span { color:rgba(255,255,255,.4); }
 
 /* Score hero */
 .score-hero {
@@ -233,7 +233,7 @@ body { background: #eef4f7; font-family: 'DM Sans', sans-serif; margin: 0; }
     <div class="breadcrumb">
         <a href="dashboard.php"><i class="fa-solid fa-house"></i> Meu Painel</a>
         <span>/</span>
-        <span style="color:var(--gray-600)"><?= htmlspecialchars(mb_strimwidth($p['quiz_title'], 0, 50, '…')) ?></span>
+        <span style="color:rgba(255,255,255,.75)"><?= htmlspecialchars(mb_strimwidth($p['quiz_title'], 0, 50, '…')) ?></span>
     </div>
 
     <!-- Score hero -->

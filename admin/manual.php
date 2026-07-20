@@ -35,22 +35,22 @@ adminHead('Manual do Sistema', 'manual.php');
 }
 .manual-nav a:hover { background: var(--prussian); color: #fff; border-color: var(--prussian); }
 
-/* Seções */
+/* Seções — texto solto sobre o fundo escuro do template */
 .manual-section { margin-bottom: 44px; scroll-margin-top: 80px; }
 .manual-section h2 {
     font-size: 18px;
     font-weight: 700;
-    color: var(--navy);
+    color: #fff;
     margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 10px;
-    border-bottom: 2px solid var(--gray-100);
+    border-bottom: 2px solid rgba(255,255,255,.15);
     padding-bottom: 10px;
 }
-.manual-section h2 i { color: var(--pacific); }
-.manual-section h3 { font-size: 14px; font-weight: 700; color: var(--gray-700); margin: 20px 0 10px; }
-.manual-section p  { line-height: 1.7; color: var(--gray-600); margin-bottom: 14px; font-size: 14px; }
+.manual-section h2 i { color: var(--yellow); }
+.manual-section h3 { font-size: 14px; font-weight: 700; color: rgba(255,255,255,.85); margin: 20px 0 10px; }
+.manual-section p  { line-height: 1.7; color: rgba(255,255,255,.65); margin-bottom: 14px; font-size: 14px; }
 
 .manual-list { list-style: none; padding: 0; margin: 0 0 16px; }
 .manual-list li {
@@ -58,10 +58,10 @@ adminHead('Manual do Sistema', 'manual.php');
     display: flex;
     gap: 12px;
     font-size: 13.5px;
-    color: var(--gray-600);
+    color: rgba(255,255,255,.65);
     line-height: 1.6;
 }
-.manual-list li i { color: var(--pacific); margin-top: 3px; flex-shrink: 0; width: 16px; text-align: center; }
+.manual-list li i { color: var(--yellow); margin-top: 3px; flex-shrink: 0; width: 16px; text-align: center; }
 
 /* Steps numerados */
 .step-list { list-style: none; padding: 0; margin: 0 0 16px; }
@@ -70,7 +70,7 @@ adminHead('Manual do Sistema', 'manual.php');
     display: flex;
     gap: 12px;
     font-size: 13.5px;
-    color: var(--gray-600);
+    color: rgba(255,255,255,.65);
     line-height: 1.6;
     align-items: flex-start;
 }
