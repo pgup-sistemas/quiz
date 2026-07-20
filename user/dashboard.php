@@ -9,9 +9,17 @@ if (!isUserLoggedIn()) {
     exit;
 }
 
-$user    = currentUser();
-$tenant  = resolveTenant();
-$cid     = $tenant ? (int)$tenant['id'] : 0;
+$user   = currentUser();
+$tenant = resolveTenant(); // mantém a sessão do tenant consistente
+
+// company_id gravado no login é a fonte de verdade para usuários autenticados.
+// Não confiamos em ?c= nem no subdomínio para determinar a empresa do colaborador.
+$cid = (int)($user['company_id'] ?? 0);
+
+// Validação defensiva: se o tenant da URL for de empresa diferente, ignora o tenant.
+if ($tenant && $cid > 0 && (int)$tenant['id'] !== $cid) {
+    $tenant = null;
+}
 
 // ── Quizzes disponíveis (filtrado por visibility + quiz_assignments) ──────────
 $userSector = $user['sector'] ?? '';
@@ -39,15 +47,8 @@ if ($cid) {
         ORDER BY q.created_at DESC
     ", [$cid, $userSectorId]);
 } else {
-    $available = dbRows("
-        SELECT DISTINCT q.id, q.title, q.description, q.sector, q.time_per_question,
-               q.pass_percentage, q.has_certificate, q.visibility,
-               (SELECT COUNT(*) FROM questions qs WHERE qs.quiz_id = q.id) AS question_count
-        FROM quizzes q
-        WHERE q.active = 1
-          AND (q.expires_at IS NULL OR q.expires_at = '' OR q.expires_at >= date('now','localtime'))
-        ORDER BY q.created_at DESC
-    ");
+    // Colaborador sem company_id não deve ver quizzes de outras empresas.
+    $available = [];
 }
 
 // ── Histórico de participações ─────────────────────────────────────────────────
@@ -66,15 +67,7 @@ if ($cid) {
         LIMIT 50
     ", [$uid, $user['email'], $cid]);
 } else {
-    $history = dbRows("
-        SELECT p.*, q.title AS quiz_title, q.pass_percentage AS pass_pct, q.has_certificate
-        FROM participants p
-        JOIN quizzes q ON q.id = p.quiz_id
-        WHERE (p.user_id = ? OR (p.user_id IS NULL AND p.email != '' AND p.email = ?))
-          AND p.completed_at IS NOT NULL
-        ORDER BY p.completed_at DESC
-        LIMIT 50
-    ", [$uid, $user['email']]);
+    $history = [];
 }
 
 $totalDone   = count($history);
@@ -119,7 +112,15 @@ $sectors = $cid
     ? dbRows("SELECT name FROM sectors WHERE company_id = ? ORDER BY name ASC", [$cid])
     : dbRows("SELECT name FROM sectors ORDER BY name ASC");
 
-$orgName = $tenant ? htmlspecialchars($tenant['name']) : 'PageQuiz';
+// Nome da empresa: usa o tenant se disponível, senão busca pelo company_id do usuário
+if ($tenant) {
+    $orgName = htmlspecialchars($tenant['name']);
+} elseif ($cid) {
+    $orgRow  = dbRow("SELECT name FROM companies WHERE id = ?", [$cid]);
+    $orgName = $orgRow ? htmlspecialchars($orgRow['name']) : 'PageQuiz';
+} else {
+    $orgName = 'PageQuiz';
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">

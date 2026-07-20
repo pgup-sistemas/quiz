@@ -6,13 +6,24 @@ require_once __DIR__ . '/../includes/tenant.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 $tenant = resolveTenant();
 
+// company_id do colaborador logado (gravado no login — não pode ser forjado via URL)
+$loggedUserCid = (int)($_SESSION['pageup_user']['company_id'] ?? 0);
+
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { echo json_encode(['error' => 'ID inválido']); exit; }
 
 if ($tenant) {
-    $quiz = dbRow("SELECT * FROM quizzes WHERE id = ? AND active = 1 AND company_id = ?", [$id, (int)$tenant['id']]);
+    $tenantCid = (int)$tenant['id'];
+    // Colaborador logado de empresa diferente não pode acessar quiz desta empresa
+    if ($loggedUserCid > 0 && $loggedUserCid !== $tenantCid) {
+        echo json_encode(['error' => 'Acesso não autorizado']); exit;
+    }
+    $quiz = dbRow("SELECT * FROM quizzes WHERE id = ? AND active = 1 AND company_id = ?", [$id, $tenantCid]);
+} elseif ($loggedUserCid > 0) {
+    // Usuário logado sem tenant na URL → filtra pela empresa do usuário
+    $quiz = dbRow("SELECT * FROM quizzes WHERE id = ? AND active = 1 AND company_id = ?", [$id, $loggedUserCid]);
 } else {
-    // Sem tenant resolvido (acesso local/admin): carrega o quiz sem filtro de empresa
+    // Sem tenant e sem usuário logado (acesso local/admin): sem filtro de empresa
     $quiz = dbRow("SELECT * FROM quizzes WHERE id = ? AND active = 1", [$id]);
 }
 if (!$quiz) { echo json_encode(['error' => 'Quiz não encontrado']); exit; }
