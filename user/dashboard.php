@@ -551,20 +551,25 @@ body { background: #0b1e35; font-family: 'DM Sans', sans-serif; margin: 0; }
 
     <!-- Header -->
     <div class="dash-header">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--yellow);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+            <i class="fa-solid fa-building" aria-hidden="true"></i>
+            <?= $orgName ?>
+        </div>
         <div class="dash-greeting">
-            Olá, <span><?= htmlspecialchars($user['name']) ?></span>!
+            Bem-vindo(a), <span><?= htmlspecialchars($user['name']) ?></span>!
         </div>
         <div class="dash-sub">
-            <span class="dash-sub-item">
-                <i class="fa-solid fa-envelope" aria-hidden="true"></i>
-                <?= htmlspecialchars($user['email']) ?>
-            </span>
             <?php if ($user['sector']): ?>
             <span class="dash-sub-item">
                 <i class="fa-solid fa-sitemap" aria-hidden="true"></i>
                 <?= htmlspecialchars($user['sector']) ?>
             </span>
+            <span style="color:rgba(255,255,255,.2)">·</span>
             <?php endif; ?>
+            <span class="dash-sub-item">
+                <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+                <?= htmlspecialchars($user['email']) ?>
+            </span>
         </div>
     </div>
 
