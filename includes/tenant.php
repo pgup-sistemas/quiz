@@ -123,6 +123,24 @@ function tenantCanCreateQuiz(): bool {
 }
 
 /**
+ * Verifica se uma empresa (por id) pode criar mais um quiz — versão sem dependência
+ * de sessão de tenant, usada no portal admin (que resolve company_id via adminCompanyId()).
+ */
+function companyCanCreateQuiz(int $companyId): bool {
+    $company = dbRow("SELECT plan FROM companies WHERE id = ?", [$companyId]);
+    $limits  = planLimits($company['plan'] ?? 'free');
+
+    if ($limits['unlimited']) return true;
+
+    $count = (int)(dbRow(
+        "SELECT COUNT(*) AS c FROM quizzes WHERE company_id = ? AND active = 1",
+        [$companyId]
+    )['c'] ?? 0);
+
+    return $count < $limits['quizzes'];
+}
+
+/**
  * Verifica uso atual de quizzes vs. limite (para exibição de banner).
  * Retorna ['used' => N, 'limit' => N, 'pct' => 0-100, 'unlimited' => bool]
  */

@@ -14,6 +14,13 @@ function adminHead(string $title, string $activeNav = ''): void {
     $quizUsed  = (int)(dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE company_id=? AND active=1", [$companyId])['c'] ?? 0);
     $quizPct   = ($plan === 'free' && $freeLimit > 0) ? (int)round($quizUsed / $freeLimit * 100) : 0;
 
+    // T30: banner de rebaixamento — quizzes inativados por downgrade automático ainda não revistos
+    $quizInativos = (int)(dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE company_id=? AND active=0", [$companyId])['c'] ?? 0);
+    $lastDowngrade = $companyId ? dbRow(
+        "SELECT detail, created_at FROM audit_log WHERE action='auto_downgrade' AND target_company_id=? ORDER BY id DESC LIMIT 1",
+        [$companyId]
+    ) : null;
+
     $nav = [
         'index.php'    => ['fa-table-columns', 'Dashboard',  'index.php'],
         'quizzes.php'  => ['fa-list-check',    'Quizzes',    'quizzes.php'],
@@ -50,11 +57,12 @@ body { background: var(--gray-100); min-height:100vh; }
 .card { margin-bottom:24px; }
 @keyframes adminFadeIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform:none; } }
 
-/* Topbar */
-.topbar { background: var(--prussian); }
+/* Topbar — tonalidade alinhada ao template Super Admin */
+.topbar { background: #05111f; border-bottom: 2px solid var(--yellow); }
 .topbar-logo img { mix-blend-mode: screen; background: transparent; }
-.topbar-nav a.active { background: rgba(255,255,255,.15); color: #fff; border-bottom: 2px solid var(--yellow); }
-.topbar-nav a:hover  { background: rgba(255,255,255,.08); }
+.topbar-logo-sub { color: var(--yellow) !important; }
+.topbar-nav a.active { background: rgba(255,183,3,.15); color: var(--yellow); border-bottom: 2px solid var(--yellow); }
+.topbar-nav a:hover  { background: rgba(255,255,255,.07); }
 .topbar-nav a i      { width: 16px; text-align: center; }
 
 /* Row actions (tabela de quizzes) */
@@ -260,6 +268,17 @@ if ($company && $company['status'] === 'pending_payment'): ?>
     <a href="upgrade.php" style="color:#92400e;font-weight:700;text-decoration:none">Ver detalhes →</a>
 </div>
 <?php endif; ?>
+
+<?php // Banner de rebaixamento (T30) — quizzes desativados por downgrade automático Pro → Free
+if ($plan === 'free' && $lastDowngrade && $quizInativos > 0):
+    $ddetail = json_decode($lastDowngrade['detail'] ?? '{}', true) ?: [];
+    $ninativados = (int)($ddetail['inactivated'] ?? 0);
+    if ($ninativados > 0): ?>
+<div style="background:#fef3c7;color:#92400e;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;font-size:13px">
+    <span><i class="fa-solid fa-circle-exclamation"></i> Sua assinatura <strong>Pro</strong> expirou e <strong><?= $ninativados ?> quiz<?= $ninativados > 1 ? 'zes foram desativados' : ' foi desativado' ?></strong> por exceder o limite do plano Free. Faça upgrade para reativá-los.</span>
+    <a href="quizzes.php" style="color:#92400e;font-weight:700;text-decoration:none">Ver quizzes desativados →</a>
+</div>
+<?php endif; endif; ?>
 
 <?php // Banner de uso (≥80% do limite Free)
 if ($plan === 'free' && $quizPct >= 80): ?>

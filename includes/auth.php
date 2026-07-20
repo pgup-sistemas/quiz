@@ -19,6 +19,16 @@ function requireLogin(): void {
         header('Location: ' . adminUrl('login.php'));
         exit;
     }
+    // Corta sessões de admins de empresas suspensas mesmo se já autenticadas antes da suspensão
+    require_once __DIR__ . '/db.php';
+    $status = dbRow("SELECT status FROM companies WHERE id = ?", [adminCompanyId()])['status'] ?? null;
+    if ($status === 'suspended') {
+        sessionStart();
+        $_SESSION = [];
+        session_destroy();
+        header('Location: ' . adminUrl('login.php') . '?suspended=1');
+        exit;
+    }
 }
 
 function adminId(): int {

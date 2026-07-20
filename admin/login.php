@@ -6,16 +6,26 @@ sessionStart();
 if (isLoggedIn()) redirect('index.php');
 
 $error = '';
+if (!empty($_GET['suspended'])) {
+    $error = 'Sua empresa foi suspensa. Entre em contato com o suporte para mais informações.';
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = trim($_POST['username'] ?? '');
     $pass = $_POST['password'] ?? '';
     if (adminLogin($user, $pass)) {
-        // Novos admins de tenant (first_login=1) vão para onboarding
-        $adminRow = dbRow("SELECT first_login FROM admins WHERE id=?", [adminId()]);
-        if (!empty($adminRow['first_login'])) {
-            redirect('onboarding.php');
+        $companyStatus = dbRow("SELECT status FROM companies WHERE id=?", [adminCompanyId()])['status'] ?? null;
+        if ($companyStatus === 'suspended') {
+            $_SESSION = [];
+            session_destroy();
+            $error = 'Sua empresa foi suspensa. Entre em contato com o suporte para mais informações.';
+        } else {
+            // Novos admins de tenant (first_login=1) vão para onboarding
+            $adminRow = dbRow("SELECT first_login FROM admins WHERE id=?", [adminId()]);
+            if (!empty($adminRow['first_login'])) {
+                redirect('onboarding.php');
+            }
+            redirect('index.php');
         }
-        redirect('index.php');
     } else {
         $error = 'Usuário ou senha incorretos.';
     }

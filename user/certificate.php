@@ -4,7 +4,10 @@ require_once __DIR__ . '/../includes/user-auth.php';
 require_once __DIR__ . '/../includes/tenant.php';
 
 userSessionStart();
-requireUserLogin();
+if (!isUserLoggedIn()) {
+    header('Location: login.php?redirect=' . urlencode('certificate.php?id=' . ($_GET['id'] ?? '')));
+    exit;
+}
 
 $user   = currentUser();
 $cid    = _userCompanyId();
@@ -51,7 +54,8 @@ $date   = $p['completed_at'] ? date('d/m/Y', strtotime($p['completed_at'])) : da
 body { background: #f0f4f8; min-height: 100vh; }
 
 .cert-page-nav {
-    background: var(--prussian);
+    background: #05111f;
+    border-bottom: 2px solid var(--yellow);
     padding: 14px 24px;
     display: flex;
     align-items: center;
@@ -66,7 +70,7 @@ body { background: #f0f4f8; min-height: 100vh; }
     gap: 6px;
     transition: color .2s;
 }
-.cert-page-nav a:hover { color: #fff; }
+.cert-page-nav a:hover { color: var(--yellow); }
 .cert-page-nav .spacer { flex: 1; }
 
 .cert-outer {

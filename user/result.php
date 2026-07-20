@@ -66,7 +66,8 @@ $scoreColor = $p['passed'] ? '#00875a' : '#c53030';
 body { background: #eef4f7; font-family: 'DM Sans', sans-serif; margin: 0; }
 
 .dash-nav {
-    background: var(--prussian);
+    background: #05111f;
+    border-bottom: 2px solid var(--yellow);
     padding: 0 24px;
     display: flex; align-items: center; justify-content: space-between;
     height: 56px; position: sticky; top: 0; z-index: 100;
@@ -81,7 +82,7 @@ body { background: #eef4f7; font-family: 'DM Sans', sans-serif; margin: 0; }
     padding:7px 12px; border-radius:8px; transition:.2s;
     display:flex; align-items:center; gap:6px;
 }
-.dash-nav-right a:hover { color:#fff; background:rgba(255,255,255,.1); }
+.dash-nav-right a:hover { color:var(--yellow); background:rgba(255,183,3,.15); }
 
 .wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px; }
 

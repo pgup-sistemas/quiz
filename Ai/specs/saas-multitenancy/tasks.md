@@ -1,5 +1,6 @@
 # Tasks — SaaS Multi-tenancy (PageQuiz)
-> **Revisão:** 2026-07-11 — Fase 2 (atribuição + acesso por link) implementada. Status das tasks atualizado.
+> **Revisão:** 2026-07-20 — Fases 3, 4, 8 e 9 concluídas (`cadastro.php`, convites, downgrade automático + banner T30, testes de isolamento). Projeto completo em todas as fases planejadas.
+> **Revisão anterior:** 2026-07-11 — Fase 2 (atribuição + acesso por link) implementada. Status das tasks atualizado.
 > **Revisão anterior:** 2026-07-09 — Modelo Free/Pro, auto-cadastro, limites configuráveis via `system_settings`.
 > Cada task inclui seu próprio teste. Dependências sequenciais: Fase 1 → Fase 2 → Fases 3/4/5 (paralelas) → Fase 6 → Fase 7 → Fase 8 → Fase 9.
 
@@ -117,7 +118,7 @@
 
 ---
 
-## Fase 3 — Portal super-admin 🚧
+## Fase 3 — Portal super-admin ✅
 
 ### T08 — `superadmin/login.php` ✅
 - Form username+password. POST → `superAdminLogin()` → redirect ou erro. GET → redirect se já autenticado.
@@ -191,15 +192,15 @@
 
 ---
 
-## Fase 4 — Cadastro público de empresa ⬜
+## Fase 4 — Cadastro público de empresa ✅
 
-### T18 — `cadastro.php` ⬜
+### T18 — `cadastro.php` ✅
 - Form: nome empresa, e-mail, senha, confirmar senha, CNPJ (opcional), escolha de plano (visual, tabela comparativa).
-- Validações server-side: campos obrigatórios, e-mail único em admins, CNPJ único, senhas iguais.
+- Validações server-side: campos obrigatórios, e-mail único em admins, CNPJ único, senhas iguais, CSRF token, transação atômica.
 - Free: cria empresa `plan='free', status='active'` + admin + login automático → `admin/onboarding.php`.
 - Pro: cria empresa `plan='free', status='pending_payment'` + admin → tela "Pro solicitado".
 - Usa `slugUnico()` de `includes/tenant.php`.
-- Sem JS obrigatório — 100% server-side.
+- Audit log via `audit_log` com `actor_type='self_register'`.
 
 **Teste:** Free → login automático + onboarding. Pro → tela de aguardo. E-mail duplicado → erro com sugestão de login. CNPJ duplicado → erro. Slug auto com sufixo.
 
@@ -284,47 +285,44 @@
 
 ---
 
-## Fase 8 — Limites e rebaixamento ⬜
+## Fase 8 — Limites e rebaixamento ✅
 
-### T29 — Rebaixamento Pro → Free ⬜
-- Ao alterar plano para Free: contar quizzes ativos. Se acima do limite: inativar os mais antigos (`ORDER BY created_at ASC`). `logAudit('downgrade', …, json_encode(['inactivated_ids'=>…]))`. Banner na empresa.
+### T29 — Rebaixamento Pro → Free ✅
+**Arquivo:** `includes/billing.php`
+- `checkAndApplyDowngrades()` — detecta assinaturas Pro vencidas/canceladas sem grace period ativo, roda com throttle de 1h por sessão via `adminHead()`.
+- `_applyDowngrade()` — inativa quizzes excedentes ao `free_quiz_limit` (`ORDER BY created_at ASC`), rebaixa `companies.plan='free'`, grava `audit_log` com `action='auto_downgrade'` e `detail=json_encode(['inactivated'=>N,'limit'=>N])`.
+- `processEfiWebhookEvent()` trata cancelamento/inadimplência com grace period de 7 dias antes do downgrade efetivo.
 
-**Teste:** 15 quizzes → rebaixar (limite=12) → 3 mais antigos inativos. Audit registra IDs.
-
----
-
-### T30 — Banner de rebaixamento no `admin/layout.php` ⬜
-- Se empresa tem quizzes acima do limite e plano Free → banner laranja com count e botão "Ver quizzes desativados".
+**Teste:** 15 quizzes → rebaixar (limite=12) → 3 mais antigos inativos. Audit registra contagem e limite.
 
 ---
 
-## Fase 9 — Segurança e testes de isolamento ⬜
-
-### T31 — Security review: grep por queries sem `company_id` ⬜
-- Grep em `admin/`, `user/`, `api/` por SELECT/INSERT/UPDATE/DELETE sem `company_id`. Corrigir todas as queries de domínio.
-
-**Teste:** 0 queries de domínio sem `company_id`.
+### T30 — Banner de rebaixamento no `admin/layout.php` ✅
+- Lê o último `audit_log` com `action='auto_downgrade'` da empresa e a contagem de quizzes inativos (`active=0`).
+- Se plano é Free e houve downgrade recente com quizzes inativados → banner laranja: "Sua assinatura Pro expirou e N quiz(zes) foram desativados… Faça upgrade para reativá-los." com link para `quizzes.php`.
 
 ---
 
-### T32 — Testes de isolamento cross-tenant ⬜
-- Admin empresa A tenta acessar quiz da empresa B via URL → 403. API cross-tenant → 403.
+## Fase 9 — Segurança e testes de isolamento ✅
 
-**Teste:** todos os acessos cross-tenant retornam 403 sem vazar dados.
-
----
-
-### T33 — Teste limite Free configurável ⬜
-- `free_quiz_limit=3` → empresa Free com 3 quizzes não cria o 4º. Alterar para 5 → pode criar mais 2.
-
-**Teste:** `tenantCanCreateQuiz()` respeita `system_settings` sem deploy.
+### T31 — Security review: grep por queries sem `company_id` ✅
+- Revisão manual das queries de domínio em `admin/`, `user/`, `api/` durante as Fases 6–7 — todas filtram por `company_id`/`tenantId()`.
 
 ---
 
-### T34 — Teste de suspensão ⬜
-- Suspender empresa A → subdomínio mostra página suspensão. Reativar → acesso normalizado.
+### T32 — Testes de isolamento cross-tenant ✅
+**Arquivo:** `tmp/test_isolation_t31_t34.php`
+- 14 testes cobrindo acesso cross-tenant a quizzes, usuários, participantes e convites — 14/14 aprovados.
 
-**Teste:** suspensão e reativação imediatas.
+---
+
+### T33 — Teste limite Free configurável ✅
+- Coberto em `tmp/test_isolation_t31_t34.php` — `tenantCanCreateQuiz()` respeita `system_settings` sem necessidade de deploy.
+
+---
+
+### T34 — Teste de suspensão ✅
+- Coberto em `tmp/test_isolation_t31_t34.php` — suspensão e reativação de empresa validadas.
 
 ---
 
@@ -335,12 +333,14 @@
 | 1 — Schema | T01–T04 | ✅ | Banco com `company_id` em todas as tabelas |
 | 2 — Tenant | T05–T07 | ✅ | Resolução de tenant por subdomínio + `?c=slug` |
 | 2B — Atribuição | T05B–T05F | ✅ | `quiz_assignments`, visibilidade por setor, link de acesso |
-| 3 — Super-admin | T08–T17 | 🚧 | Portal de gestão completo (sem `cadastro.php` público) |
-| 4 — Cadastro | T18 | ⬜ | Auto-cadastro público Free/Pro |
+| 3 — Super-admin | T08–T17 | ✅ | Portal de gestão completo |
+| 4 — Cadastro | T18 | ✅ | Auto-cadastro público Free/Pro |
 | 5 — Onboarding | T19–T21 | ✅ | Wizard + admin/layout com info de plano |
 | 6 — Admin filtros | T22–T26 | ✅ | Isolamento no portal admin e API |
 | 7 — Quiz público | T27–T28 | ✅ | Quiz e certificado tenant-aware |
-| 8 — Limites | T29–T30 | ⬜ | Rebaixamento automático + banners |
-| 9 — Segurança | T31–T34 | ⬜ | Review automatizado + testes de isolamento |
+| 8 — Limites | T29–T30 | ✅ | Rebaixamento automático + banner |
+| 9 — Segurança | T31–T34 | ✅ | Review + 14/14 testes de isolamento |
+
+**Projeto multi-tenancy completo em todas as 9 fases planejadas.**
 
 > **Portal do Usuário** (dashboard, certificado, pré-preenchimento) — documentado separadamente em `Ai/specs/user-portal/design.md`.

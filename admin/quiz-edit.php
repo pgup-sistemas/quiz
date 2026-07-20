@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/tenant.php';
 require_once __DIR__ . '/layout.php';
 requireLogin();
 
@@ -11,6 +12,10 @@ $isNew  = !$quiz;
 
 /* ── Importação Completa (CSV com config + questões) ───────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['full_csv']) && $isNew) {
+    if (!companyCanCreateQuiz($cid)) {
+        flash('Você atingiu o limite de quizzes do plano Free. Faça upgrade para criar mais.', 'error');
+        redirect('quiz-edit.php');
+    }
     $file = $_FILES['full_csv'];
 
     if ($file['error'] !== UPLOAD_ERR_OK) {
@@ -160,6 +165,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_quiz'])) {
     if (!$title) {
         flash('O título é obrigatório.', 'error');
         redirect($isNew ? 'quiz-edit.php' : "quiz-edit.php?id=$quizId");
+    }
+
+    if ($isNew && !companyCanCreateQuiz($cid)) {
+        flash('Você atingiu o limite de quizzes do plano Free. Faça upgrade para criar mais.', 'error');
+        redirect('quiz-edit.php');
     }
 
     if ($isNew) {

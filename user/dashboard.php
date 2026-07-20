@@ -138,9 +138,10 @@ $orgName = $tenant ? htmlspecialchars($tenant['name']) : 'PageQuiz';
 <style>
 body { background: #eef4f7; font-family: 'DM Sans', sans-serif; margin: 0; }
 
-/* ── Navbar ── */
+/* ── Navbar — tonalidade alinhada ao template Super Admin ── */
 .dash-nav {
-    background: var(--prussian);
+    background: #05111f;
+    border-bottom: 2px solid var(--yellow);
     padding: 0 24px;
     display: flex;
     align-items: center;
@@ -154,7 +155,7 @@ body { background: #eef4f7; font-family: 'DM Sans', sans-serif; margin: 0; }
 .dash-nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
 .dash-nav-logo img { height: 28px; }
 .dash-nav-brand { color: #fff; font-size: 16px; font-weight: 700; }
-.dash-nav-brand span { color: #8ECAE6; }
+.dash-nav-brand span { color: var(--yellow); }
 .dash-nav-right { display: flex; align-items: center; gap: 6px; }
 .dash-nav-right a {
     color: rgba(255,255,255,.75);
@@ -167,7 +168,7 @@ body { background: #eef4f7; font-family: 'DM Sans', sans-serif; margin: 0; }
     align-items: center;
     gap: 6px;
 }
-.dash-nav-right a:hover { color: #fff; background: rgba(255,255,255,.1); }
+.dash-nav-right a:hover { color: var(--yellow); background: rgba(255,183,3,.15); }
 .dash-nav-right .btn-out { border: 1px solid rgba(255,255,255,.2); }
 
 /* ── Layout ── */
