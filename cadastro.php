@@ -40,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'E-mail inválido.';
         if (strlen($pass) < 8) $errors[] = 'A senha deve ter ao menos 8 caracteres.';
         if ($pass !== $pass2)  $errors[] = 'As senhas não coincidem.';
+        if (empty($_POST['terms'])) $errors[] = 'Você precisa aceitar os Termos de Uso e a Política de Privacidade para continuar.';
     }
 
     if ($email && empty($errors)) {
@@ -269,7 +270,22 @@ h2 { font-family:var(--font-heading,'Syne',sans-serif); font-size:20px; color:va
             </label>
         </div>
 
-        <button type="submit" class="btn-reg">
+        <hr class="divider"/>
+        <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;padding:4px 0">
+            <input type="checkbox" name="terms" value="1"
+                   <?= !empty($_POST['terms']) ? 'checked' : '' ?>
+                   style="margin-top:3px;width:17px;height:17px;flex-shrink:0;accent-color:var(--prussian,#023047);cursor:pointer"
+                   required/>
+            <span style="font-size:13px;color:var(--gray-700,#374151);line-height:1.6">
+                Li e concordo com os
+                <a href="privacidade.php" target="_blank" style="color:var(--pacific,#219EBC);font-weight:600;text-decoration:none">Termos de Uso e Política de Privacidade</a>
+                e com a
+                <a href="lgpd.php" target="_blank" style="color:var(--pacific,#219EBC);font-weight:600;text-decoration:none">Política de Proteção de Dados (LGPD)</a>
+                do PageQuiz.
+            </span>
+        </label>
+
+        <button type="submit" class="btn-reg" style="margin-top:16px">
             <i class="fa-solid fa-rocket"></i> Criar minha conta
         </button>
     </form>
