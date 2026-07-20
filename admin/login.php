@@ -231,7 +231,12 @@ body {
         <!-- Formulário -->
         <div class="form-title">
             <i class="fa-solid fa-lock" aria-hidden="true"></i>
-            Área administrativa
+            Área administrativa — gestores
+        </div>
+        <div style="background:#f0f7fa;border:1px solid #bde3ef;border-radius:10px;padding:10px 14px;margin-bottom:18px;font-size:12.5px;color:#2c6e84;line-height:1.55">
+            <i class="fa-solid fa-circle-info" style="margin-right:5px"></i>
+            Este portal é para <strong>gestores e administradores de empresa</strong>.<br/>
+            Se você é colaborador ou participante, <a href="../user/login.php" style="color:var(--prussian);font-weight:700;text-decoration:underline">acesse o portal do colaborador</a>.
         </div>
 
         <?php if ($error): ?>

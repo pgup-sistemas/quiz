@@ -55,7 +55,14 @@ userPageHead('Criar Conta');
       <div class="u-brand-sub">by PageUp Sistemas</div>
     </div>
 
-    <div class="u-title"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Criar conta</div>
+    <div class="u-title"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Criar conta de colaborador</div>
+    <?php if (!$_tenant): ?>
+    <div style="background:#f0f7fa;border:1px solid #bde3ef;border-radius:10px;padding:10px 14px;margin-bottom:18px;font-size:12.5px;color:#2c6e84;line-height:1.55">
+      <i class="fa-solid fa-circle-info" style="margin-right:5px"></i>
+      Este cadastro é para <strong>colaboradores e participantes</strong> de treinamentos.<br/>
+      Para <strong>cadastrar sua empresa</strong> como cliente do PageQuiz, <a href="../cadastro.php" style="color:var(--prussian);font-weight:700;text-decoration:underline">clique aqui</a>.
+    </div>
+    <?php endif; ?>
 
     <?php if ($success): ?>
     <div class="u-alert ok">

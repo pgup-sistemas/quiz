@@ -344,11 +344,17 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
       </a>
     <?php else: ?>
       <a href="user/login.php" class="btn-ghost">
-        <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Entrar
+        <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Colaborador
       </a>
+      <?php if ($tenant): ?>
       <a href="user/register.php" class="btn-cta">
         <i class="fa-solid fa-user-plus" aria-hidden="true"></i> Criar conta
       </a>
+      <?php else: ?>
+      <a href="cadastro.php" class="btn-cta">
+        <i class="fa-solid fa-building" aria-hidden="true"></i> Cadastrar empresa
+      </a>
+      <?php endif; ?>
     <?php endif; ?>
   </div>
 </nav>
@@ -400,12 +406,21 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
           <i class="fa-solid fa-chart-line" aria-hidden="true"></i> Meu painel
         </a>
       <?php else: ?>
+        <?php if ($tenant): ?>
         <a href="user/register.php" class="btn-hero-primary">
-          <i class="fa-solid fa-rocket" aria-hidden="true"></i> Começar agora
+          <i class="fa-solid fa-rocket" aria-hidden="true"></i> Criar conta grátis
         </a>
-        <a href="#quizzes" class="btn-hero-secondary">
-          <i class="fa-solid fa-eye" aria-hidden="true"></i> Ver quizzes
+        <a href="user/login.php" class="btn-hero-secondary">
+          <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Entrar
         </a>
+        <?php else: ?>
+        <a href="cadastro.php" class="btn-hero-primary">
+          <i class="fa-solid fa-building" aria-hidden="true"></i> Cadastrar minha empresa
+        </a>
+        <a href="user/login.php" class="btn-hero-secondary">
+          <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Sou colaborador
+        </a>
+        <?php endif; ?>
       <?php endif; ?>
     </div>
   </div>
@@ -693,13 +708,13 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
 <section class="lp-cta" aria-labelledby="cta-title">
   <div class="cta-inner reveal">
     <h2 id="cta-title">Pronto para capacitar sua equipe?</h2>
-    <p>Crie uma conta gratuita e publique seu primeiro quiz em menos de 5 minutos. Sem cartão de crédito.</p>
+    <p>Cadastre sua empresa gratuitamente e publique seu primeiro quiz em menos de 5 minutos. Sem cartão de crédito.</p>
     <div class="cta-actions">
-      <a href="user/register.php" class="btn-hero-primary">
-        <i class="fa-solid fa-rocket"></i> Criar conta grátis
+      <a href="cadastro.php" class="btn-hero-primary">
+        <i class="fa-solid fa-building"></i> Cadastrar minha empresa
       </a>
-      <a href="verify.php" class="btn-hero-secondary">
-        <i class="fa-solid fa-shield-halved"></i> Verificar certificado
+      <a href="user/login.php" class="btn-hero-secondary">
+        <i class="fa-solid fa-right-to-bracket"></i> Sou colaborador
       </a>
     </div>
   </div>
@@ -742,11 +757,15 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
         <a href="user/dashboard.php">Meu painel</a>
         <a href="user/logout.php">Sair</a>
       <?php else: ?>
-        <a href="user/login.php">Entrar</a>
-        <a href="user/register.php">Criar conta</a>
+        <a href="user/login.php">Portal do colaborador</a>
+        <?php if ($tenant): ?>
+        <a href="user/register.php">Criar conta de colaborador</a>
+        <?php else: ?>
+        <a href="cadastro.php">Cadastrar empresa</a>
+        <?php endif; ?>
         <a href="user/forgot-password.php">Esqueci a senha</a>
       <?php endif; ?>
-      <a href="admin/login.php" style="margin-top:16px;opacity:.4">Área administrativa</a>
+      <a href="admin/login.php" style="margin-top:16px;opacity:.4">Admin — gestores</a>
     </div>
   </div>
   <div style="max-width:1100px;margin:32px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
