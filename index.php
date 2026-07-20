@@ -39,6 +39,7 @@ if ($tenant) {
     $quizzes = dbRows("
         SELECT q.*, COUNT(DISTINCT p.id) AS participant_count, COUNT(DISTINCT qs.id) AS question_count
         FROM quizzes q
+        JOIN companies c ON c.id = q.company_id AND c.status = 'active'
         LEFT JOIN participants p  ON p.quiz_id = q.id
         LEFT JOIN questions   qs  ON qs.quiz_id = q.id
         WHERE q.active = 1
@@ -48,10 +49,10 @@ if ($tenant) {
     ");
 
     $stats = [
-        'quizzes'  => dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE active=1")['c'],
-        'done'     => dbRow("SELECT COUNT(*) AS c FROM participants WHERE completed_at IS NOT NULL")['c'],
-        'sectors'  => dbRow("SELECT COUNT(*) AS c FROM sectors")['c'],
-        'pass_rate'=> dbRow("SELECT ROUND(AVG(passed)*100) AS r FROM participants WHERE completed_at IS NOT NULL")['r'] ?? 0,
+        'quizzes'  => dbRow("SELECT COUNT(*) AS c FROM quizzes q JOIN companies c ON c.id=q.company_id AND c.status='active' WHERE q.active=1")['c'],
+        'done'     => dbRow("SELECT COUNT(*) AS c FROM participants p JOIN companies c ON c.id=p.company_id AND c.status='active' WHERE p.completed_at IS NOT NULL")['c'],
+        'sectors'  => dbRow("SELECT COUNT(*) AS c FROM sectors s JOIN companies c ON c.id=s.company_id AND c.status='active'")['c'],
+        'pass_rate'=> dbRow("SELECT ROUND(AVG(p.passed)*100) AS r FROM participants p JOIN companies c ON c.id=p.company_id AND c.status='active' WHERE p.completed_at IS NOT NULL")['r'] ?? 0,
     ];
 
     $companyName   = 'PageQuiz';
@@ -143,7 +144,8 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
 .btn-hero-secondary{padding:15px 28px;background:rgba(255,255,255,.08);color:#fff;border:1.5px solid rgba(255,255,255,.22);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:background .2s,border-color .2s}
 .btn-hero-secondary:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4)}
 /* floating cards decoration */
-.hero-float{position:absolute;border-radius:16px;border:1px solid rgba(255,255,255,.12);padding:14px 18px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:#fff;pointer-events:none;z-index:1;will-change:transform;animation:float 4s ease-in-out infinite}
+.hero-floats{position:absolute;inset:0;pointer-events:none;transform:translateZ(0);isolation:isolate}
+.hero-float{position:absolute;border-radius:16px;border:1px solid rgba(255,255,255,.12);padding:14px 18px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:#fff;will-change:transform;animation:float 4s ease-in-out infinite;transform:translateZ(0)}
 .hero-float-1{background:rgba(33,158,188,.25);left:5%;top:20%;animation-delay:0s}
 .hero-float-2{background:rgba(255,183,3,.2);right:5%;top:30%;animation-delay:1.5s}
 .hero-float-3{background:rgba(2,48,71,.5);left:8%;bottom:15%;animation-delay:.8s}
@@ -289,8 +291,11 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
   .stat-item:nth-child(3){border-top:1px solid #dce8ef}
   .footer-inner{grid-template-columns:1fr}
   .lp-hero{padding:72px 20px 96px}
-  .hero-float{display:none}
+  .hero-floats{display:none}
   .quiz-cards-grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero-float,.reveal{animation:none;transition:none;opacity:1;transform:none}
 }
 </style>
 </head>
@@ -336,18 +341,20 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
   <div class="hero-glow hero-glow-1"></div>
   <div class="hero-glow hero-glow-2"></div>
   <div class="hero-glow hero-glow-3"></div>
-  <!-- decorative floating cards -->
-  <div class="hero-float hero-float-1">
-    <i class="fa-solid fa-award" style="color:#FFB703"></i>
-    <span>Certificado emitido!</span>
-  </div>
-  <div class="hero-float hero-float-2">
-    <i class="fa-solid fa-chart-line" style="color:#8ECAE6"></i>
-    <span>92% aprovação</span>
-  </div>
-  <div class="hero-float hero-float-3">
-    <i class="fa-solid fa-users" style="color:#8ECAE6"></i>
-    <span>+<?= max((int)$stats['done'], 1) ?> participações</span>
+  <!-- decorative floating cards (container isolado para não vazar repaint) -->
+  <div class="hero-floats">
+    <div class="hero-float hero-float-1">
+      <i class="fa-solid fa-award" style="color:#FFB703"></i>
+      <span>Certificado emitido!</span>
+    </div>
+    <div class="hero-float hero-float-2">
+      <i class="fa-solid fa-chart-line" style="color:#8ECAE6"></i>
+      <span>92% aprovação</span>
+    </div>
+    <div class="hero-float hero-float-3">
+      <i class="fa-solid fa-users" style="color:#8ECAE6"></i>
+      <span>+<?= max((int)$stats['done'], 1) ?> participações</span>
+    </div>
   </div>
   <div class="hero-inner">
     <div class="hero-badge">
