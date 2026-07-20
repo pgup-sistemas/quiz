@@ -17,11 +17,16 @@ $totalPending    = (int)dbRow("SELECT COUNT(*) AS c FROM companies WHERE status=
 $totalQuizzes    = (int)dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE active=1")['c'];
 $totalUsers      = (int)dbRow("SELECT COUNT(*) AS c FROM users")['c'];
 
-// Empresas recentes
+// Empresas recentes (paginado)
+$perPage    = 10;
+$page       = max(1, (int)($_GET['p'] ?? 1));
+$offset     = ($page - 1) * $perPage;
+$totalPages = (int)ceil($totalCompanies / $perPage);
+
 $recentes = dbRows("SELECT c.*,
     (SELECT COUNT(*) FROM quizzes q WHERE q.company_id=c.id AND q.active=1) AS quiz_count,
     (SELECT COUNT(*) FROM users u WHERE u.company_id=c.id) AS user_count
-    FROM companies c ORDER BY c.created_at DESC LIMIT 10");
+    FROM companies c ORDER BY c.created_at DESC LIMIT $perPage OFFSET $offset");
 
 superadminHead('Dashboard', 'index.php');
 ?>
@@ -76,7 +81,7 @@ superadminHead('Dashboard', 'index.php');
     <div class="card" style="border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
         <div style="padding:18px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between">
             <strong style="color:var(--prussian)"><i class="fa-solid fa-building"></i> Empresas Recentes</strong>
-            <a href="companies.php" class="btn btn-sm" style="font-size:13px">Ver todas <i class="fa-solid fa-arrow-right"></i></a>
+            <a href="companies.php" class="btn btn-sm" style="font-size:13px">Ver na tela de gestão <i class="fa-solid fa-arrow-right"></i></a>
         </div>
         <div style="overflow-x:auto">
         <table class="tbl">
@@ -130,6 +135,31 @@ superadminHead('Dashboard', 'index.php');
             </tbody>
         </table>
         </div>
+        <?php if ($totalPages > 1): ?>
+        <div style="padding:14px 16px;border-top:1px solid var(--gray-100);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <?php if ($page > 1): ?>
+            <a href="?p=<?= $page - 1 ?>" style="padding:4px 10px;border-radius:6px;font-size:13px;text-decoration:none;background:var(--gray-100);color:var(--gray-600)">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+            <?php endif; ?>
+            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+            <a href="?p=<?= $i ?>"
+               style="padding:4px 10px;border-radius:6px;font-size:13px;text-decoration:none;
+                      background:<?= $i===$page?'var(--pacific)':'var(--gray-100)' ?>;
+                      color:<?= $i===$page?'#fff':'var(--gray-600)' ?>">
+                <?= $i ?>
+            </a>
+            <?php endfor; ?>
+            <?php if ($page < $totalPages): ?>
+            <a href="?p=<?= $page + 1 ?>" style="padding:4px 10px;border-radius:6px;font-size:13px;text-decoration:none;background:var(--gray-100);color:var(--gray-600)">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+            <?php endif; ?>
+            <span style="margin-left:auto;font-size:12px;color:var(--gray-400)">
+                Página <?= $page ?> de <?= $totalPages ?> · <?= $totalCompanies ?> empresa<?= $totalCompanies!==1?'s':'' ?>
+            </span>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 <?php superadminFoot(); ?>
