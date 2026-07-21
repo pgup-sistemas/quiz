@@ -54,8 +54,19 @@ if ($cid) {
 // ── Histórico de participações ─────────────────────────────────────────────────
 // Critério primário: user_id (vinculado ao criar sessão quando logado)
 // Fallback:         email igual ao da conta (retrocompat com registros antigos)
-$uid = (int)$user['id'];
+$uid        = (int)$user['id'];
+$histPage   = max(1, (int)($_GET['hp'] ?? 1));
+$histPerPg  = 10;
+$histOffset = ($histPage - 1) * $histPerPg;
+
 if ($cid) {
+    $histTotal = (int)(dbRow("
+        SELECT COUNT(*) AS c FROM participants p
+        JOIN quizzes q ON q.id = p.quiz_id
+        WHERE (p.user_id = ? OR (p.user_id IS NULL AND p.email != '' AND p.email = ?))
+          AND q.company_id = ? AND p.completed_at IS NOT NULL
+    ", [$uid, $user['email'], $cid])['c'] ?? 0);
+
     $history = dbRows("
         SELECT p.*, q.title AS quiz_title, q.pass_percentage AS pass_pct, q.has_certificate
         FROM participants p
@@ -64,18 +75,34 @@ if ($cid) {
           AND q.company_id = ?
           AND p.completed_at IS NOT NULL
         ORDER BY p.completed_at DESC
-        LIMIT 50
+        LIMIT $histPerPg OFFSET $histOffset
     ", [$uid, $user['email'], $cid]);
 } else {
-    $history = [];
+    $histTotal = 0;
+    $history   = [];
 }
+$histPages = (int)ceil($histTotal / $histPerPg);
 
-$totalDone   = count($history);
-$totalPassed = count(array_filter($history, fn($h) => $h['passed']));
-$avgPct      = $totalDone > 0 ? round(array_sum(array_column($history, 'percentage')) / $totalDone) : 0;
+// Stats sobre TODOS os resultados (não só a página atual)
+$histStats = $cid ? dbRow("
+    SELECT COUNT(*) AS total_done, SUM(p.passed) AS total_passed,
+           AVG(p.percentage) AS avg_pct
+    FROM participants p JOIN quizzes q ON q.id=p.quiz_id
+    WHERE (p.user_id=? OR (p.user_id IS NULL AND p.email!='' AND p.email=?))
+      AND q.company_id=? AND p.completed_at IS NOT NULL
+", [$uid, $user['email'], $cid]) : null;
 
-// IDs de quizzes já feitos pelo usuário (para badge "Feito")
-$doneIds = array_unique(array_column($history, 'quiz_id'));
+$totalDone   = (int)($histStats['total_done']   ?? 0);
+$totalPassed = (int)($histStats['total_passed'] ?? 0);
+$avgPct      = $histStats ? round((float)($histStats['avg_pct'] ?? 0)) : 0;
+
+// IDs de quizzes já feitos pelo usuário (para badge "Feito") — busca todos, não só a página atual
+$doneIds = $cid ? array_column(dbRows(
+    "SELECT DISTINCT p.quiz_id FROM participants p JOIN quizzes q ON q.id=p.quiz_id
+     WHERE (p.user_id=? OR (p.user_id IS NULL AND p.email!='' AND p.email=?))
+       AND q.company_id=? AND p.completed_at IS NOT NULL",
+    [$uid, $user['email'], $cid]
+), 'quiz_id') : [];
 
 // ── Profile update ────────────────────────────────────────────────────────────
 $profileMsg = '';
@@ -696,6 +723,27 @@ body { background: #0b1e35; font-family: 'DM Sans', sans-serif; margin: 0; }
                 </div>
             </a>
             <?php endforeach; ?>
+
+            <?php if ($histPages > 1): ?>
+            <div style="padding:16px 0;display:flex;align-items:center;justify-content:center;gap:6px">
+                <?php if ($histPage > 1): ?>
+                <a href="?hp=<?= $histPage - 1 ?>"
+                   style="padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;background:var(--gray-100);color:var(--gray-600)">
+                    ← Anterior
+                </a>
+                <?php endif; ?>
+                <span style="font-size:13px;color:var(--gray-500)">
+                    Página <?= $histPage ?> de <?= $histPages ?>
+                </span>
+                <?php if ($histPage < $histPages): ?>
+                <a href="?hp=<?= $histPage + 1 ?>"
+                   style="padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;background:var(--pacific);color:#fff">
+                    Próxima →
+                </a>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
+
             <?php endif; ?>
         </div>
     </div>

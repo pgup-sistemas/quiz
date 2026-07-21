@@ -198,3 +198,18 @@ function slugUnico(string $name): string {
 
     return $slug;
 }
+
+function validarCnpj(string $cnpj): bool {
+    $cnpj = preg_replace('/\D/', '', $cnpj);
+    if (strlen($cnpj) !== 14 || preg_match('/^(\d)\1+$/', $cnpj)) return false;
+    $calc = function(string $s, int $n): int {
+        $sum = 0; $pos = $n - 7;
+        for ($i = $n; $i >= 1; $i--) {
+            $sum += (int)$s[$n - $i] * $pos--;
+            if ($pos < 2) $pos = 9;
+        }
+        $r = $sum % 11;
+        return $r < 2 ? 0 : 11 - $r;
+    };
+    return $calc($cnpj, 12) === (int)$cnpj[12] && $calc($cnpj, 13) === (int)$cnpj[13];
+}

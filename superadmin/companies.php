@@ -8,6 +8,31 @@ requireSuperAdmin();
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/layout.php';
 
+// Exportação CSV
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    $all = dbRows(
+        "SELECT c.name, c.slug, c.email, c.cnpj, c.plan, c.status, c.created_at,
+                (SELECT COUNT(*) FROM quizzes q WHERE q.company_id=c.id AND q.active=1) AS quiz_count,
+                (SELECT COUNT(*) FROM users u WHERE u.company_id=c.id) AS user_count
+         FROM companies c ORDER BY c.created_at DESC"
+    );
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="empresas_' . date('Ymd_His') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM para Excel
+    fputcsv($out, ['Nome','Slug','E-mail','CNPJ','Plano','Status','Cadastro','Quizzes Ativos','Colaboradores'], ';');
+    foreach ($all as $row) {
+        fputcsv($out, [
+            $row['name'], $row['slug'], $row['email'], $row['cnpj'] ?? '',
+            $row['plan'], $row['status'],
+            date('d/m/Y', strtotime($row['created_at'])),
+            $row['quiz_count'], $row['user_count'],
+        ], ';');
+    }
+    fclose($out);
+    exit;
+}
+
 // Filtros
 $search    = trim($_GET['q']      ?? '');
 $planFlt   = trim($_GET['plan']   ?? '');
@@ -86,9 +111,14 @@ superadminHead('Empresas', 'companies.php');
             <h1><i class="fa-solid fa-building" style="color:var(--yellow)"></i> Empresas</h1>
             <div class="sub"><?= $total ?> empresa<?= $total !== 1 ? 's' : '' ?> encontrada<?= $total !== 1 ? 's' : '' ?></div>
         </div>
-        <a href="company-edit.php" class="btn" style="background:var(--pacific);color:#fff;font-weight:700">
-            <i class="fa-solid fa-plus"></i> Nova Empresa
-        </a>
+        <div style="display:flex;gap:8px">
+            <a href="companies.php?export=csv" class="btn" style="background:var(--gray-100);color:var(--gray-700);font-weight:600">
+                <i class="fa-solid fa-file-csv"></i> Exportar CSV
+            </a>
+            <a href="company-edit.php" class="btn" style="background:var(--pacific);color:#fff;font-weight:700">
+                <i class="fa-solid fa-plus"></i> Nova Empresa
+            </a>
+        </div>
     </div>
 
     <?php if ($msg): ?>

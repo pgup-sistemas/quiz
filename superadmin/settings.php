@@ -30,6 +30,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             logAudit('update_settings', 0, json_encode($updates));
             $msg = 'Configurações gerais salvas.';
         }
+    } elseif ($section === 'email') {
+        $emailUpdates = [
+            'resend_api_key' => trim($_POST['resend_api_key'] ?? ''),
+            'mail_from'      => trim($_POST['mail_from']      ?? 'noreply@quiz.pageup.net.br'),
+            'mail_from_name' => trim($_POST['mail_from_name'] ?? 'PageQuiz'),
+        ];
+        foreach ($emailUpdates as $key => $val) {
+            dbExec("UPDATE system_settings SET value=?, updated_at=datetime('now','localtime') WHERE key=?", [$val, $key]);
+        }
+        logAudit('update_email_settings', 0, json_encode(['mail_from' => $emailUpdates['mail_from'], 'has_key' => (bool)$emailUpdates['resend_api_key']]));
+        $msg = 'Configurações de e-mail salvas.';
+
     } elseif ($section === 'efi') {
         $priceRaw = str_replace(',', '.', trim($_POST['pro_price_monthly'] ?? '49.90'));
         $priceCents = (int)round((float)$priceRaw * 100);
@@ -117,6 +129,50 @@ superadminHead('Configurações', 'settings.php');
             </div>
             <button type="submit" class="btn" style="background:var(--pacific);color:#fff;font-weight:700">
                 <i class="fa-solid fa-floppy-disk"></i> Salvar configurações gerais
+            </button>
+        </form>
+    </div>
+
+    <!-- Configurações de E-mail -->
+    <div class="card" style="border-radius:var(--radius);padding:28px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px">
+        <form method="POST">
+            <input type="hidden" name="section" value="email"/>
+            <h3 style="font-size:15px;color:var(--prussian);margin:0 0 20px">
+                <i class="fa-solid fa-envelope" style="color:var(--pacific)"></i> E-mail Transacional
+            </h3>
+            <?php $hasResend = !empty($settings['resend_api_key']['value']); ?>
+            <div style="background:<?= $hasResend ? '#f0fff4' : '#fffbeb' ?>;border:1px solid <?= $hasResend ? '#9ae6b4' : '#fbbf24' ?>;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:<?= $hasResend ? '#276749' : '#92400e' ?>">
+                <i class="fa-solid fa-<?= $hasResend ? 'circle-check' : 'triangle-exclamation' ?>"></i>
+                <?= $hasResend ? 'Resend configurado — e-mails serão enviados via API.' : 'API Resend não configurada — e-mails serão enviados via PHP mail() (requer SMTP no servidor).' ?>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+                <div style="grid-column:1/-1">
+                    <label style="font-size:13px;font-weight:600;color:var(--gray-700);display:block;margin-bottom:6px">
+                        API Key Resend
+                        <a href="https://resend.com/api-keys" target="_blank" style="font-weight:400;color:var(--pacific);font-size:11px;margin-left:6px">obter chave →</a>
+                    </label>
+                    <input type="password" name="resend_api_key"
+                           value="<?= htmlspecialchars($settings['resend_api_key']['value'] ?? '') ?>"
+                           placeholder="re_xxxxxxxxxxxxxxxxxxxx"
+                           autocomplete="off"
+                           style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:monospace"/>
+                    <div style="font-size:11px;color:var(--gray-400);margin-top:4px">Deixe vazio para usar PHP mail() configurado no servidor.</div>
+                </div>
+                <div>
+                    <label style="font-size:13px;font-weight:600;color:var(--gray-700);display:block;margin-bottom:6px">E-mail remetente</label>
+                    <input type="email" name="mail_from"
+                           value="<?= htmlspecialchars($settings['mail_from']['value'] ?? 'noreply@quiz.pageup.net.br') ?>"
+                           style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:14px"/>
+                </div>
+                <div>
+                    <label style="font-size:13px;font-weight:600;color:var(--gray-700);display:block;margin-bottom:6px">Nome do remetente</label>
+                    <input type="text" name="mail_from_name"
+                           value="<?= htmlspecialchars($settings['mail_from_name']['value'] ?? 'PageQuiz') ?>"
+                           style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:14px"/>
+                </div>
+            </div>
+            <button type="submit" class="btn" style="background:var(--pacific);color:#fff;font-weight:700">
+                <i class="fa-solid fa-floppy-disk"></i> Salvar configurações de e-mail
             </button>
         </form>
     </div>

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/mailer.php';
 
 sessionStart();
 if (isLoggedIn()) redirect('index.php');
@@ -26,9 +27,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                       . dirname($_SERVER['SCRIPT_NAME'])
                       . '/reset-password.php?token=' . $token;
 
-            $subject = 'Redefinição de senha · Admin PageQuiz';
-            $body    = "Olá, {$admin['name']}!\n\nClique no link abaixo para redefinir sua senha (válido por 1 hora):\n\n$resetUrl\n\nSe não foi você, ignore este e-mail.\n\nPageQuiz · PageUp Sistemas";
-            @mail($email, $subject, $body, 'From: noreply@quiz.pageup.net.br');
+            $html = mailTemplate(
+                'Redefinição de senha',
+                "<p>Olá, <strong>" . htmlspecialchars($admin['name']) . "</strong>!</p>"
+                . "<p>Recebemos uma solicitação para redefinir a senha da sua conta de administrador.</p>"
+                . "<p>Clique no botão abaixo para criar uma nova senha (link válido por <strong>1 hora</strong>).</p>"
+                . mailBtnHtml(htmlspecialchars($resetUrl), 'Redefinir minha senha →')
+                . "<p style='font-size:12px;color:#94a3b8'>Se você não solicitou isso, ignore este e-mail. Sua senha permanece a mesma.</p>"
+            );
+            sendMail($email, 'Redefinição de senha · Admin · PageQuiz', $html, $admin['name']);
         }
         // Sempre exibe a mesma mensagem (não revela se e-mail existe)
         $sent = true;

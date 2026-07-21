@@ -4,7 +4,7 @@ require_once __DIR__ . '/db.php';
 if (!defined('SUPER_ADMIN_SESS')) define('SUPER_ADMIN_SESS', 'SUPER_ADMIN_SESS');
 
 function superAdminLogin(string $username, string $password): bool {
-    $row = dbRow("SELECT * FROM super_admins WHERE username = ?", [$username]);
+    $row = dbRow("SELECT * FROM super_admins WHERE username = ? AND active = 1", [$username]);
     if (!$row || !password_verify($password, $row['password_hash'])) return false;
 
     if (session_name() !== SUPER_ADMIN_SESS) {

@@ -47,6 +47,7 @@ function initDB(PDO $db): void {
         username      TEXT    UNIQUE NOT NULL,
         password_hash TEXT    NOT NULL,
         name          TEXT    DEFAULT '',
+        active        INTEGER DEFAULT 1,
         created_at    TEXT    DEFAULT (datetime('now','localtime'))
     );
 
@@ -100,6 +101,10 @@ function initDB(PDO $db): void {
         ['free_quiz_limit',   '12',                       'Limite de quizzes no plano Free'],
         ['app_name',          'PageQuiz',                 'Nome da plataforma'],
         ['support_email',     'contato@pageup.net.br',    'E-mail de suporte exibido no upgrade'],
+        // E-mail transacional
+        ['resend_api_key',    '',                         'API Key da Resend (resend.com) — deixe vazio para usar PHP mail()'],
+        ['mail_from',         'noreply@quiz.pageup.net.br','Endereço remetente dos e-mails transacionais'],
+        ['mail_from_name',    'PageQuiz',                 'Nome exibido como remetente'],
         // EFI Bank
         ['pro_price_monthly', '4990',                     'Preço mensal do Pro em centavos (4990 = R$49,90)'],
         ['efi_client_id',     '',                         'Client ID EFI Bank'],
@@ -241,6 +246,10 @@ function initDB(PDO $db): void {
             $db->exec("ALTER TABLE $tbl ADD COLUMN company_id INTEGER NOT NULL DEFAULT 1");
         }
     }
+
+    // Colunas extras em super_admins
+    $saCols = array_column($db->query("PRAGMA table_info(super_admins)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    if (!in_array('active', $saCols)) $db->exec("ALTER TABLE super_admins ADD COLUMN active INTEGER NOT NULL DEFAULT 1");
 
     // Colunas extras em admins
     $aCols = array_column($db->query("PRAGMA table_info(admins)")->fetchAll(PDO::FETCH_ASSOC), 'name');

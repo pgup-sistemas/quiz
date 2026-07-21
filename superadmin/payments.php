@@ -9,6 +9,35 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/billing.php';
 require_once __DIR__ . '/layout.php';
 
+// Exportação CSV
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    $all = dbRows(
+        "SELECT s.created_at, c.name AS company_name, s.type, s.amount, s.status,
+                s.efi_charge_id, s.pix_txid, s.efi_subscription_id, s.next_billing_at
+         FROM subscriptions s LEFT JOIN companies c ON c.id=s.company_id
+         ORDER BY s.created_at DESC"
+    );
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="pagamentos_' . date('Ymd_His') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF));
+    fputcsv($out, ['Data','Empresa','Método','Valor (R$)','Status','Ref. EFI','Próxima cobrança'], ';');
+    $typeMap = ['pix'=>'PIX','card_once'=>'Cartão único','card_recurring'=>'Assinatura','payment_link'=>'Link','manual'=>'Manual'];
+    foreach ($all as $row) {
+        fputcsv($out, [
+            date('d/m/Y H:i', strtotime($row['created_at'])),
+            $row['company_name'] ?? '',
+            $typeMap[$row['type']] ?? $row['type'],
+            number_format(($row['amount'] ?? 0) / 100, 2, ',', '.'),
+            $row['status'],
+            $row['efi_charge_id'] ?? $row['pix_txid'] ?? $row['efi_subscription_id'] ?? '',
+            $row['next_billing_at'] ? date('d/m/Y', strtotime($row['next_billing_at'])) : '',
+        ], ';');
+    }
+    fclose($out);
+    exit;
+}
+
 // Retry de evento de webhook com falha
 if (isset($_GET['retry'])) {
     $retryId = (int)$_GET['retry'];
@@ -98,9 +127,14 @@ superadminHead('Pagamentos', 'payments.php');
             <h1><i class="fa-solid fa-money-bill-wave" style="color:var(--yellow)"></i> Pagamentos</h1>
             <div class="sub"><?= $total ?> transaç<?= $total===1?'ão':'ões' ?> encontrada<?= $total===1?'':'s' ?></div>
         </div>
-        <a href="payment-link.php" class="btn" style="background:var(--pacific);color:#fff;font-weight:700">
-            <i class="fa-solid fa-link"></i> Gerar Link de Pagamento
-        </a>
+        <div style="display:flex;gap:8px">
+            <a href="payments.php?export=csv" class="btn" style="background:var(--gray-100);color:var(--gray-700);font-weight:600">
+                <i class="fa-solid fa-file-csv"></i> Exportar CSV
+            </a>
+            <a href="payment-link.php" class="btn" style="background:var(--pacific);color:#fff;font-weight:700">
+                <i class="fa-solid fa-link"></i> Gerar Link de Pagamento
+            </a>
+        </div>
     </div>
 
     <div class="stat-cards">
