@@ -318,7 +318,7 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
   .section-sub{margin-bottom:36px}
   .footer-brand p{max-width:none}
 }
-@media(max-width:420px){
+@media(max-width:600px){
   .lp-nav{padding:0 10px}
   .btn-ghost,.btn-cta{padding:9px;font-size:0}
   .btn-ghost i,.btn-cta i{font-size:16px}
@@ -364,8 +364,11 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
         <i class="fa-solid fa-user-plus" aria-hidden="true"></i> Criar conta
       </a>
       <?php else: ?>
+      <a href="admin/login.php" class="btn-ghost">
+        <i class="fa-solid fa-building" aria-hidden="true"></i> Empresa
+      </a>
       <a href="cadastro.php" class="btn-cta">
-        <i class="fa-solid fa-building" aria-hidden="true"></i> Cadastrar empresa
+        <i class="fa-solid fa-building-circle-arrow-right" aria-hidden="true"></i> Cadastrar empresa
       </a>
       <?php endif; ?>
     <?php endif; ?>

@@ -690,7 +690,10 @@ tr:last-child td { border-bottom: none; }
 /* ── Certificate screen ─────────────────── */
 .cert-wrap  { max-width:820px; margin:0 auto; }
 .cert { background:#fff; width:100%; max-width:800px; min-height:560px; border-radius:4px; padding:40px 60px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.35); border:1px solid var(--gray-200); color:var(--gray-800); position:relative; overflow:hidden; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:space-between; margin:0 auto; }
-.cert::before { content:''; position:absolute; inset:15px; border:2px solid var(--pacific); pointer-events:none; opacity:.15; }
+.cert::before { content:''; position:absolute; inset:14px; border:2px solid var(--pacific); pointer-events:none; opacity:.18; }
+.cert::after  { content:''; position:absolute; inset:20px; border:1px solid var(--yellow); pointer-events:none; opacity:.35; }
+.cert > *      { position:relative; z-index:1; }
+.cert-topbar   { position:absolute; top:0; left:0; right:0; height:8px; background:linear-gradient(90deg,var(--prussian),var(--pacific),var(--yellow)); }
 .cert-logo       { height:48px; margin-bottom:5px; }
 .cert h1         { font-size:var(--text-xs); font-weight:700; text-transform:uppercase; letter-spacing:3px; color:var(--pacific); margin-bottom:2px; }
 .cert h2         { font-size:20px; font-weight:700; color:var(--gray-700); margin-bottom:15px; font-family:var(--font-heading); }
@@ -714,14 +717,18 @@ tr:last-child td { border-bottom: none; }
 
 /* ── Print ──────────────────────────────── */
 @media print {
-    @page { size:A5 landscape; margin:0; }
+    @page { size:A4 landscape; margin:0; }
+    html, body { width:297mm; height:210mm; margin:0; padding:0; }
     .quiz-body  { background:#fff !important; padding:0; display:block; }
     .screen     { display:block !important; }
     #screen-login, #screen-quiz, #screen-result, #loading-overlay { display:none !important; }
-    #screen-cert { display:block !important; max-width:100% !important; }
+    #screen-cert { display:block !important; position:relative; width:297mm; height:210mm; max-width:100% !important; }
     .btn-print, .btn-cert, .btn-retry, .cert-actions { display:none !important; }
-    .cert-wrap  { max-width:100%; margin:0; }
-    .cert       { width:100%; min-height:100vh; box-shadow:none; border:none; border-radius:0; }
+    .cert-wrap  {
+        max-width:none; width:277mm; margin:0;
+        position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    }
+    .cert       { width:100%; height:187mm; min-height:unset; box-shadow:none; border:none; border-radius:0; padding:14mm 20mm; margin:0; }
 }
 
 /* ── Quiz responsive ────────────────────── */

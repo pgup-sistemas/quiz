@@ -228,6 +228,7 @@ $_seoUrl     = $_seoBase.'/quiz.php?id='.(int)$quiz['id'];
 <div class="screen" id="screen-cert">
     <div class="cert-wrap">
         <div class="cert" id="cert-print">
+            <div class="cert-topbar"></div>
             <div style="display:flex;flex-direction:column;align-items:center;width:100%">
                 <img src="assets/logo.svg" class="cert-logo" alt="PageUp Sistemas"/>
                 <h1>Certificado de Conclusão</h1>

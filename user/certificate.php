@@ -142,9 +142,18 @@ body { background: #0b1e35; min-height: 100vh; }
 .btn-back:hover { background: var(--gray-300); }
 
 @media print {
+    @page { size: A4 landscape; margin: 0; }
+    html, body { width: 297mm; height: 210mm; margin: 0; padding: 0; background: #fff; }
     .cert-page-nav, .cert-actions, .cert-outer > *:not(.cert-wrap) { display: none !important; }
-    body { background: #fff; }
-    .cert-outer { margin: 0; padding: 0; max-width: 100%; }
+    .cert-outer {
+        margin: 0; padding: 0; max-width: none; width: 297mm; height: 210mm;
+        position: relative;
+    }
+    .cert-wrap {
+        max-width: none; width: 277mm; margin: 0;
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    }
+    .cert { width: 100%; height: 187mm; min-height: unset; padding: 14mm 20mm; box-shadow: none; border: none; border-radius: 0; margin: 0; }
 }
 </style>
 </head>
@@ -177,6 +186,7 @@ body { background: #0b1e35; min-height: 100vh; }
 
     <div class="cert-wrap">
         <div class="cert" id="cert-print">
+            <div class="cert-topbar"></div>
             <div style="display:flex;flex-direction:column;align-items:center;width:100%">
                 <img src="../assets/logo.svg" class="cert-logo" alt="PageUp Sistemas"/>
                 <h1>Certificado de Conclusão</h1>
