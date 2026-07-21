@@ -10,7 +10,7 @@ require_once __DIR__ . '/db.php';
 function resolveTenant(): ?array {
     $host = strtolower($_SERVER['HTTP_HOST'] ?? '');
     $host = explode(':', $host)[0];
-    $noTenantHosts = ['localhost', 'pagequiz', '127.0.0.1'];
+    $noTenantHosts = ['localhost', 'pagequiz', '127.0.0.1', 'quiz.pageup.net.br', 'www.quiz.pageup.net.br'];
     $isNoTenantHost = in_array($host, $noTenantHosts) || filter_var($host, FILTER_VALIDATE_IP);
 
     // Se estamos num host sem tenant e não há ?c=slug, limpa sessão e retorna null

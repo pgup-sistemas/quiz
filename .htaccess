@@ -3,13 +3,11 @@ DirectoryIndex index.php
 
 # ── Proteção de arquivos sensíveis ────────────────────────────────────────────
 <FilesMatch "\.db$">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
 
 <FilesMatch "^\.env">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
 
 # ── Rewrite rules ─────────────────────────────────────────────────────────────
@@ -72,6 +70,10 @@ DirectoryIndex index.php
 </IfModule>
 
 # ── PHP settings ──────────────────────────────────────────────────────────────
-php_value upload_max_filesize 8M
-php_value post_max_size 10M
-php_value memory_limit 128M
+# php_value só funciona com mod_php; em PHP via FastCGI/CGI (comum em hosting
+# compartilhado) causa 500 imediato. Isolado em IfModule para não quebrar nesses casos.
+<IfModule mod_php.c>
+    php_value upload_max_filesize 8M
+    php_value post_max_size 10M
+    php_value memory_limit 128M
+</IfModule>
