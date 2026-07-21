@@ -38,7 +38,15 @@ function adminId(): int {
 
 function adminCompanyId(): int {
     sessionStart();
-    return (int)($_SESSION['admin_company_id'] ?? $_SESSION['pageup_admin']['company_id'] ?? 1);
+    $cid = $_SESSION['admin_company_id'] ?? $_SESSION['pageup_admin']['company_id'] ?? null;
+    if ($cid === null) {
+        // Sessão sem company_id definido é sessão corrompida/incompleta — nunca assumir empresa 1 silenciosamente
+        $_SESSION = [];
+        session_destroy();
+        header('Location: ' . adminUrl('login.php'));
+        exit;
+    }
+    return (int)$cid;
 }
 
 function adminLogin(string $username, string $password): bool {
@@ -94,8 +102,37 @@ function absoluteUrl(string $page = ''): string {
 }
 
 function redirect(string $url): void {
+    // Só permite redirects internos (path relativo/absoluto sem host) — evita open redirect e injeção de headers
+    if (preg_match('#^https?://#i', $url) || str_starts_with($url, '//')) {
+        $url = 'index.php';
+    }
+    $url = str_replace(["\r", "\n"], '', $url);
     header('Location: ' . $url);
     exit;
+}
+
+function csrfToken(string $key = 'csrf_token'): string {
+    sessionStart();
+    if (empty($_SESSION[$key])) {
+        $_SESSION[$key] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION[$key];
+}
+
+function csrfField(string $key = 'csrf_token'): string {
+    return '<input type="hidden" name="' . $key . '" value="' . e(csrfToken($key)) . '"/>';
+}
+
+function csrfCheck(?string $token, string $key = 'csrf_token'): bool {
+    sessionStart();
+    return isset($_SESSION[$key]) && is_string($token) && hash_equals($_SESSION[$key], $token);
+}
+
+function requireCsrf(string $key = 'csrf_token'): void {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrfCheck($_POST['csrf_token'] ?? null, $key)) {
+        http_response_code(403);
+        die('Requisição inválida (CSRF). Recarregue a página e tente novamente.');
+    }
 }
 
 function e(mixed $v): string {

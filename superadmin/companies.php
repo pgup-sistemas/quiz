@@ -6,6 +6,7 @@ if (session_name() !== 'SUPER_ADMIN_SESS') {
 require_once __DIR__ . '/../includes/superadmin-auth.php';
 requireSuperAdmin();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/layout.php';
 
 // Exportação CSV
@@ -56,14 +57,15 @@ $companies = dbRows(
     "SELECT c.*,
         (SELECT COUNT(*) FROM quizzes q WHERE q.company_id=c.id AND q.active=1) AS quiz_count,
         (SELECT COUNT(*) FROM users u WHERE u.company_id=c.id) AS user_count
-     FROM companies c WHERE $whereSql ORDER BY c.created_at DESC LIMIT $perPage OFFSET $offset",
-    $params
+     FROM companies c WHERE $whereSql ORDER BY c.created_at DESC LIMIT ? OFFSET ?",
+    array_merge($params, [$perPage, $offset])
 );
 $totalPages = (int)ceil($total / $perPage);
 
 // Ações POST
 $msg = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrf();
     $act = $_POST['action'] ?? '';
     $cid = (int)($_POST['company_id'] ?? 0);
 
@@ -213,6 +215,7 @@ superadminHead('Empresas', 'companies.php');
 
                         <?php if ($c['status'] === 'pending_payment'): ?>
                         <form method="POST" style="display:inline">
+                            <?= csrfField() ?>
                             <input type="hidden" name="action" value="approve_pro"/>
                             <input type="hidden" name="company_id" value="<?= $c['id'] ?>"/>
                             <input type="hidden" name="q" value="<?= htmlspecialchars($search) ?>"/>
@@ -223,6 +226,7 @@ superadminHead('Empresas', 'companies.php');
                         </form>
                         <?php elseif ($c['plan'] === 'pro'): ?>
                         <form method="POST" style="display:inline">
+                            <?= csrfField() ?>
                             <input type="hidden" name="action" value="downgrade_free"/>
                             <input type="hidden" name="company_id" value="<?= $c['id'] ?>"/>
                             <button type="submit" class="btn-xs ghost" title="Rebaixar para Free"
@@ -234,6 +238,7 @@ superadminHead('Empresas', 'companies.php');
 
                         <?php if ($c['status'] !== 'suspended'): ?>
                         <form method="POST" style="display:inline">
+                            <?= csrfField() ?>
                             <input type="hidden" name="action" value="suspend"/>
                             <input type="hidden" name="company_id" value="<?= $c['id'] ?>"/>
                             <button type="submit" class="btn-xs danger" title="Suspender"
@@ -243,6 +248,7 @@ superadminHead('Empresas', 'companies.php');
                         </form>
                         <?php else: ?>
                         <form method="POST" style="display:inline">
+                            <?= csrfField() ?>
                             <input type="hidden" name="action" value="activate"/>
                             <input type="hidden" name="company_id" value="<?= $c['id'] ?>"/>
                             <button type="submit" class="btn-xs success" title="Reativar"

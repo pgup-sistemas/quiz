@@ -8,16 +8,18 @@ $cid     = adminCompanyId();
 $adminId = adminId();
 
 /* ── Toggle active ───────────────────────────────────────── */
-if (isset($_GET['toggle']) && is_numeric($_GET['toggle'])) {
-    $uid = (int)$_GET['toggle'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle']) && is_numeric($_POST['toggle'])) {
+    requireCsrf();
+    $uid = (int)$_POST['toggle'];
     dbExec("UPDATE users SET active = 1 - active WHERE id = ? AND company_id = ?", [$uid, $cid]);
     flash('Status do usuário atualizado.', 'success');
     redirect('users.php#tab-usuarios');
 }
 
 /* ── Delete user ─────────────────────────────────────────── */
-if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
-    $uid = (int)$_GET['delete'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && is_numeric($_POST['delete'])) {
+    requireCsrf();
+    $uid = (int)$_POST['delete'];
     dbExec("DELETE FROM users WHERE id = ? AND company_id = ?", [$uid, $cid]);
     flash('Usuário excluído.', 'success');
     redirect('users.php#tab-usuarios');
@@ -25,6 +27,7 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
 
 /* ── Create user ─────────────────────────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_user'])) {
+    requireCsrf();
     $name   = trim($_POST['name']   ?? '');
     $email  = strtolower(trim($_POST['email']  ?? ''));
     $sector = trim($_POST['sector'] ?? '');
@@ -49,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_user'])) {
 
 /* ── Reset password ──────────────────────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_pass'])) {
+    requireCsrf();
     $uid     = (int)($_POST['uid'] ?? 0);
     $newPass = $_POST['new_pass'] ?? '';
     if ($uid && strlen($newPass) >= 6) {
@@ -63,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_pass'])) {
 
 /* ── Convite: Criar ──────────────────────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_invite'])) {
+    requireCsrf();
     $email  = strtolower(trim($_POST['email']  ?? ''));
     $sector = trim($_POST['sector'] ?? '');
     $ttl    = (int)($_POST['ttl'] ?? 48);
@@ -82,8 +87,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_invite'])) {
 }
 
 /* ── Convite: Revogar ────────────────────────────────────── */
-if (isset($_GET['revoke']) && is_numeric($_GET['revoke'])) {
-    $iid = (int)$_GET['revoke'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['revoke']) && is_numeric($_POST['revoke'])) {
+    requireCsrf();
+    $iid = (int)$_POST['revoke'];
     dbExec("DELETE FROM invites WHERE id = ? AND company_id = ? AND used_at IS NULL", [$iid, $cid]);
     flash('Convite revogado.', 'success');
     redirect('users.php#tab-convites');
@@ -101,6 +107,7 @@ if (isset($_GET['template'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
+    requireCsrf();
     $file = $_FILES['csv_file'];
     if ($file['error'] !== UPLOAD_ERR_OK) {
         flash('Erro no upload do arquivo.', 'error');
@@ -166,7 +173,7 @@ $users = dbRows("
            SUM(CASE WHEN p.passed = 1 THEN 1 ELSE 0 END) AS pass_count,
            MAX(p.completed_at) AS last_quiz
     FROM users u
-    LEFT JOIN participants p ON p.email = u.email
+    LEFT JOIN participants p ON p.email = u.email AND p.company_id = u.company_id
     $whereSql
     GROUP BY u.id
     ORDER BY u.created_at DESC
@@ -324,9 +331,13 @@ adminHead('Usuários', 'users.php');
                 <td>
                     <div class="row-actions">
                         <button onclick="openResetModal(<?= $u['id'] ?>, '<?= e($u['name']) ?>')" class="row-action" title="Redefinir senha"><i class="fa-solid fa-key"></i></button>
-                        <a href="users.php?toggle=<?= $u['id'] ?>" class="row-action <?= $u['active'] ? 'row-action--danger' : 'row-action--success' ?>" title="<?= $u['active'] ? 'Desativar' : 'Ativar' ?>">
-                            <i class="fa-solid <?= $u['active'] ? 'fa-ban' : 'fa-circle-check' ?>"></i>
-                        </a>
+                        <form method="post" style="display:inline">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="toggle" value="<?= $u['id'] ?>"/>
+                            <button type="submit" class="row-action <?= $u['active'] ? 'row-action--danger' : 'row-action--success' ?>" title="<?= $u['active'] ? 'Desativar' : 'Ativar' ?>">
+                                <i class="fa-solid <?= $u['active'] ? 'fa-ban' : 'fa-circle-check' ?>"></i>
+                            </button>
+                        </form>
                         <a href="#" onclick="confirmDelete(<?= $u['id'] ?>, '<?= e($u['name']) ?>')" class="row-action row-action--delete" title="Excluir">
                             <i class="fa-solid fa-trash"></i>
                         </a>
@@ -347,6 +358,7 @@ adminHead('Usuários', 'users.php');
     <div class="card" style="margin-bottom:24px">
         <div class="card-header"><h2><i class="fa-solid fa-plus"></i> Novo Convite</h2></div>
         <form method="POST" style="display:grid;grid-template-columns:2fr 1.5fr 1fr auto;gap:12px;align-items:end">
+            <?= csrfField() ?>
             <input type="hidden" name="create_invite" value="1"/>
             <div>
                 <label class="form-label">E-mail <span style="font-weight:400;color:var(--gray-400)">(opcional — deixe vazio para link aberto)</span></label>
@@ -418,10 +430,13 @@ adminHead('Usuários', 'users.php');
                 </td>
                 <td>
                     <?php if (!$used && !$expired): ?>
-                    <a href="users.php?revoke=<?= $inv['id'] ?>" class="row-action row-action--danger" title="Revogar"
-                       onclick="return confirm('Revogar este convite?')">
-                        <i class="fa-solid fa-ban"></i>
-                    </a>
+                    <form method="post" style="display:inline" onsubmit="return confirm('Revogar este convite?')">
+                        <?= csrfField() ?>
+                        <input type="hidden" name="revoke" value="<?= $inv['id'] ?>"/>
+                        <button type="submit" class="row-action row-action--danger" title="Revogar">
+                            <i class="fa-solid fa-ban"></i>
+                        </button>
+                    </form>
                     <?php else: ?>
                     <span style="color:var(--gray-200)">—</span>
                     <?php endif; ?>
@@ -500,6 +515,7 @@ adminHead('Usuários', 'users.php');
     <div class="card">
         <div class="card-header"><h2><i class="fa-solid fa-upload"></i> Enviar Arquivo</h2></div>
         <form method="POST" enctype="multipart/form-data">
+            <?= csrfField() ?>
             <div class="form-group">
                 <label class="form-label">Arquivo CSV *</label>
                 <input class="form-control" type="file" name="csv_file" accept=".csv,.txt" required/>
@@ -519,6 +535,7 @@ adminHead('Usuários', 'users.php');
     <div class="modal-box">
         <h3><i class="fa-solid fa-user-plus"></i> Novo Usuário</h3>
         <form method="POST" action="users.php">
+            <?= csrfField() ?>
             <input type="hidden" name="create_user" value="1"/>
             <div class="modal-form-group"><label>Nome completo *</label><input type="text" name="name" required placeholder="Nome do usuário" maxlength="120"/></div>
             <div class="modal-form-group"><label>E-mail *</label><input type="email" name="email" required placeholder="email@empresa.com" maxlength="180"/></div>
@@ -537,6 +554,7 @@ adminHead('Usuários', 'users.php');
     <div class="modal-box">
         <h3><i class="fa-solid fa-key"></i> Redefinir Senha — <span id="reset-name"></span></h3>
         <form method="POST" action="users.php">
+            <?= csrfField() ?>
             <input type="hidden" name="reset_pass" value="1"/>
             <input type="hidden" name="uid" id="reset-uid"/>
             <div class="modal-form-group"><label>Nova senha *</label><input type="text" name="new_pass" required placeholder="Mínimo 6 caracteres" maxlength="80"/></div>
@@ -554,10 +572,14 @@ adminHead('Usuários', 'users.php');
         <div class="confirm-icon"><i class="fa-solid fa-trash" style="color:var(--red)"></i></div>
         <div class="confirm-title">Excluir usuário?</div>
         <div class="confirm-msg">O usuário <strong id="del-name"></strong> será removido permanentemente.</div>
-        <div class="confirm-actions">
-            <button class="btn btn-secondary" onclick="closeDelModal()">Cancelar</button>
-            <a id="del-link" href="#" class="btn" style="background:var(--red);color:#fff">Excluir</a>
-        </div>
+        <form method="post" id="del-form">
+            <?= csrfField() ?>
+            <input type="hidden" name="delete" id="del-uid"/>
+            <div class="confirm-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeDelModal()">Cancelar</button>
+                <button type="submit" class="btn" style="background:var(--red);color:#fff">Excluir</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -571,7 +593,7 @@ function openResetModal(uid, name){
 }
 function confirmDelete(uid, name){
     document.getElementById('del-name').textContent = name;
-    document.getElementById('del-link').href = 'users.php?delete=' + uid;
+    document.getElementById('del-uid').value = uid;
     document.getElementById('del-modal').classList.add('open');
 }
 function closeDelModal(){ document.getElementById('del-modal').classList.remove('open'); }

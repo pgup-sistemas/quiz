@@ -8,9 +8,10 @@ define('PRIMARY',    '#008bcd');
 define('ADMIN_SESS',       'pageup_admin');
 define('SUPER_ADMIN_SESS', 'SUPER_ADMIN_SESS');
 
-// Default admin credentials (change after first login via DB)
-define('DEFAULT_ADMIN_USER', 'admin');
-define('DEFAULT_ADMIN_PASS', 'alphaclin2025');
+// Credenciais do admin padrão — lidas de variável de ambiente para não versionar senha
+// Em prod: defina PAGEQUIZ_ADMIN_USER e PAGEQUIZ_ADMIN_PASS no ambiente do servidor
+define('DEFAULT_ADMIN_USER', getenv('PAGEQUIZ_ADMIN_USER') ?: 'admin');
+define('DEFAULT_ADMIN_PASS', getenv('PAGEQUIZ_ADMIN_PASS') ?: 'changeme_on_first_login');
 
 // Quiz settings
 define('DEFAULT_TIMER',      30);

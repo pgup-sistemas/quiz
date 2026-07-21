@@ -9,8 +9,10 @@ if (isUserLoggedIn()) { header('Location: dashboard.php'); exit; }
 
 $error = '';
 $_rawRedir = $_GET['redirect'] ?? 'dashboard.php';
-// Rejeita redirects para domínios externos (open redirect)
-$redirect = (preg_match('/^[a-zA-Z0-9_\-\/\.%?=&]+$/', $_rawRedir) && !str_starts_with($_rawRedir, '//'))
+// Rejeita redirects para domínios externos (open redirect) e traversal de path (../)
+$redirect = (preg_match('/^[a-zA-Z0-9_\-\/\.%?=&]+$/', $_rawRedir)
+        && !str_starts_with($_rawRedir, '//')
+        && !str_contains($_rawRedir, '..'))
     ? $_rawRedir
     : 'dashboard.php';
 

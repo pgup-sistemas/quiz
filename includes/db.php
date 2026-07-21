@@ -177,7 +177,7 @@ function initDB(PDO $db): void {
 
     CREATE TABLE IF NOT EXISTS participants (
         id              INTEGER PRIMARY KEY AUTOINCREMENT,
-        quiz_id         INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE SET NULL,
+        quiz_id         INTEGER REFERENCES quizzes(id) ON DELETE SET NULL,
         name            TEXT    NOT NULL,
         email           TEXT    DEFAULT '',
         sector          TEXT    DEFAULT '',
@@ -330,6 +330,43 @@ function initDB(PDO $db): void {
         $db->exec("DROP TABLE sectors");
         $db->exec("ALTER TABLE sectors_v2 RENAME TO sectors");
         $db->exec("CREATE INDEX IF NOT EXISTS idx_sectors_company ON sectors(company_id)");
+    }
+
+    // ── Migration: participants.quiz_id → remove NOT NULL (conflita com ON DELETE SET NULL) ──
+    $pColsInfo = $db->query("PRAGMA table_info(participants)")->fetchAll(PDO::FETCH_ASSOC);
+    $quizIdNotNull = false;
+    foreach ($pColsInfo as $c) {
+        if ($c['name'] === 'quiz_id' && (int)$c['notnull'] === 1) { $quizIdNotNull = true; break; }
+    }
+    if ($quizIdNotNull) {
+        $db->exec("PRAGMA foreign_keys=OFF");
+        $pAllCols = array_column($pColsInfo, 'name');
+        $pColsSql = implode(', ', $pAllCols);
+        $db->exec("DROP TABLE IF EXISTS participants_v2");
+        $db->exec("CREATE TABLE participants_v2 (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            quiz_id         INTEGER REFERENCES quizzes(id) ON DELETE SET NULL,
+            name            TEXT    NOT NULL,
+            email           TEXT    DEFAULT '',
+            sector          TEXT    DEFAULT '',
+            score           INTEGER DEFAULT 0,
+            total_questions INTEGER DEFAULT 0,
+            percentage      REAL    DEFAULT 0,
+            passed          INTEGER DEFAULT 0,
+            avg_time        REAL    DEFAULT 0,
+            started_at      TEXT    DEFAULT (datetime('now','localtime')),
+            last_activity   TEXT    DEFAULT (datetime('now','localtime')),
+            completed_at    TEXT,
+            verify_code     TEXT    DEFAULT NULL,
+            user_id         INTEGER DEFAULT NULL REFERENCES users(id) ON DELETE SET NULL,
+            company_id      INTEGER NOT NULL DEFAULT 1
+        )");
+        $db->exec("INSERT INTO participants_v2 ($pColsSql) SELECT $pColsSql FROM participants");
+        $db->exec("DROP TABLE participants");
+        $db->exec("ALTER TABLE participants_v2 RENAME TO participants");
+        $db->exec("CREATE INDEX IF NOT EXISTS idx_participants_user ON participants(user_id)");
+        $db->exec("CREATE INDEX IF NOT EXISTS idx_participants_company ON participants(company_id, quiz_id)");
+        $db->exec("PRAGMA foreign_keys=ON");
     }
 
     // ── Migration: quizzes → visibility + quiz_assignments ───────────────────

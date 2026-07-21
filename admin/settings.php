@@ -9,6 +9,7 @@ $cid     = adminCompanyId();
 
 /* ── Change Password ─────────────────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_pass'])) {
+    requireCsrf();
     $current = $_POST['current_pass'] ?? '';
     $new     = $_POST['new_pass']     ?? '';
     $confirm = $_POST['confirm_pass'] ?? '';
@@ -29,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_pass'])) {
 
 /* ── Update Name ─────────────────────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_name'])) {
+    requireCsrf();
     $name = trim($_POST['name'] ?? '');
     if ($name) {
         dbExec("UPDATE admins SET name = ? WHERE id = ?", [$name, $adminId]);
@@ -40,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_name'])) {
 
 /* ── Add Admin ──────────────────────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_admin'])) {
+    requireCsrf();
     $user = trim($_POST['new_username'] ?? '');
     $pass = $_POST['new_password']      ?? '';
     $name = trim($_POST['new_name']     ?? $user);
@@ -58,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_admin'])) {
 
 /* ── Branding (logo + cor) ───────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_branding'])) {
+    requireCsrf();
     $color = trim($_POST['primary_color'] ?? '');
     if ($color && !preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
         flash('Cor inválida. Use formato hexadecimal (#RRGGBB).', 'error');
@@ -66,13 +70,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_branding'])) {
 
     $logoPath = null;
     if (!empty($_FILES['logo']['tmp_name']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
-        $allowed = ['image/png','image/jpeg','image/gif','image/svg+xml','image/webp'];
-        $mime    = mime_content_type($_FILES['logo']['tmp_name']);
-        $ext     = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
-        if (!in_array($mime, $allowed, true)) {
+        $extByMime = [
+            'image/png'     => 'png',
+            'image/jpeg'    => 'jpg',
+            'image/gif'     => 'gif',
+            'image/svg+xml' => 'svg',
+            'image/webp'    => 'webp',
+        ];
+        $mime = mime_content_type($_FILES['logo']['tmp_name']);
+        if (!isset($extByMime[$mime])) {
             flash('Tipo de arquivo inválido. Use PNG, JPG, SVG ou WebP.', 'error');
             redirect('settings.php');
         }
+        // Extensão derivada do MIME real detectado no servidor — nunca do nome de arquivo enviado pelo usuário
+        $ext = $extByMime[$mime];
         if ($_FILES['logo']['size'] > 2 * 1024 * 1024) {
             flash('Logo muito grande. Limite: 2 MB.', 'error');
             redirect('settings.php');
@@ -103,7 +114,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_branding'])) {
 }
 
 /* ── Remove logo ─────────────────────────────────── */
-if (isset($_GET['remove_logo'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_logo'])) {
+    requireCsrf();
     $co = dbRow("SELECT logo_path FROM companies WHERE id = ?", [$cid]);
     if (!empty($co['logo_path'])) {
         $f = __DIR__ . '/../' . $co['logo_path'];
@@ -116,6 +128,7 @@ if (isset($_GET['remove_logo'])) {
 
 /* ── Toggle allow_self_register ────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_self_register'])) {
+    requireCsrf();
     $val = (int)($_POST['allow_self_register'] ?? 0);
     dbExec("UPDATE companies SET allow_self_register = ? WHERE id = ?", [$val, $cid]);
     flash($val ? 'Auto-cadastro habilitado.' : 'Auto-cadastro desabilitado.', 'success');
@@ -123,9 +136,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_self_register'
 }
 
 /* ── Delete Admin ──────────────────────────────────── */
-if (isset($_GET['del_admin']) && (int)$_GET['del_admin'] !== $adminId) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['del_admin']) && (int)$_POST['del_admin'] !== $adminId) {
+    requireCsrf();
     dbExec("DELETE FROM admins WHERE id = ? AND id != ? AND company_id = ?",
-        [(int)$_GET['del_admin'], $adminId, $cid]);
+        [(int)$_POST['del_admin'], $adminId, $cid]);
     flash('Administrador removido.', 'success');
     redirect('settings.php');
 }
@@ -220,6 +234,7 @@ adminHead('Configurações', 'settings.php');
             <h2><i class="fa-solid fa-id-card" style="color:var(--pacific)"></i> Dados de Perfil</h2>
         </div>
         <form method="post">
+            <?= csrfField() ?>
             <input type="hidden" name="update_name" value="1"/>
             <div class="form-group">
                 <label class="form-label">Login de acesso</label>
@@ -244,6 +259,7 @@ adminHead('Configurações', 'settings.php');
             <h2><i class="fa-solid fa-lock" style="color:var(--pacific)"></i> Alterar Senha</h2>
         </div>
         <form method="post" autocomplete="off">
+            <?= csrfField() ?>
             <input type="hidden" name="change_pass" value="1"/>
             <div class="form-group">
                 <label class="form-label">Senha atual</label>
@@ -283,6 +299,7 @@ adminHead('Configurações', 'settings.php');
         <p style="font-size:12px;color:var(--gray-400);margin:4px 0 0">Aplicados no portal do colaborador e quizzes.</p>
     </div>
     <form method="POST" enctype="multipart/form-data">
+        <?= csrfField() ?>
         <input type="hidden" name="update_branding" value="1"/>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" class="cfg-two-col">
             <!-- Logo -->
@@ -292,10 +309,13 @@ adminHead('Configurações', 'settings.php');
                     <?php if (!empty($myCompany['logo_path']) && file_exists(__DIR__.'/../'.$myCompany['logo_path'])): ?>
                     <div style="margin-bottom:10px;padding:12px;background:var(--gray-50);border-radius:8px;display:inline-flex;align-items:center;gap:12px">
                         <img src="../<?= htmlspecialchars($myCompany['logo_path']) ?>" alt="Logo atual" style="height:40px;max-width:120px;object-fit:contain"/>
-                        <a href="?remove_logo=1" class="btn btn-sm btn-danger"
-                           onclick="return confirm('Remover a logo atual?')">
-                            <i class="fa-solid fa-trash"></i>
-                        </a>
+                        <form method="post" onsubmit="return confirm('Remover a logo atual?')" style="display:inline">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="remove_logo" value="1"/>
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
                     </div>
                     <?php endif; ?>
                     <input class="form-control" type="file" name="logo" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp"/>
@@ -365,6 +385,7 @@ adminHead('Configurações', 'settings.php');
         </p>
     </div>
     <form method="POST" style="flex-shrink:0">
+        <?= csrfField() ?>
         <input type="hidden" name="toggle_self_register" value="1"/>
         <input type="hidden" name="allow_self_register" value="<?= $selfReg ? 0 : 1 ?>"/>
         <button type="submit" class="btn <?= $selfReg ? 'btn-danger' : 'btn-primary' ?> btn-sm">
@@ -389,6 +410,7 @@ adminHead('Configurações', 'settings.php');
             <h2><i class="fa-solid fa-user-plus" style="color:var(--green)"></i> Adicionar Admin</h2>
         </div>
         <form method="post">
+            <?= csrfField() ?>
             <input type="hidden" name="add_admin" value="1"/>
             <div class="form-group">
                 <label class="form-label">Usuário *</label>
@@ -437,11 +459,13 @@ adminHead('Configurações', 'settings.php');
                 </div>
             </div>
             <?php if (!$isMe): ?>
-            <a href="?del_admin=<?= $adm['id'] ?>"
-               class="btn btn-danger btn-sm"
-               onclick="return confirm('Remover o admin «<?= e($adm['username']) ?>»?')">
-                <i class="fa-solid fa-trash"></i>
-            </a>
+            <form method="post" onsubmit="return confirm('Remover o admin «<?= e($adm['username']) ?>»?')" style="display:inline">
+                <?= csrfField() ?>
+                <input type="hidden" name="del_admin" value="<?= $adm['id'] ?>"/>
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </form>
             <?php endif; ?>
         </div>
         <?php endforeach; ?>

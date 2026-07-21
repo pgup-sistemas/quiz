@@ -6,36 +6,37 @@ requireLogin();
 
 $cid = adminCompanyId();
 
-// Toggle active
-if (isset($_GET['toggle']) && is_numeric($_GET['toggle'])) {
-    $qid = (int)$_GET['toggle'];
-    dbExec("UPDATE quizzes SET active = 1 - active WHERE id = ? AND company_id = ?", [$qid, $cid]);
-    flash('Status do quiz atualizado.', 'success');
-    redirect('quizzes.php');
-}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    requireCsrf();
+    $action = $_POST['action'];
+    $qid    = (int)($_POST['id'] ?? 0);
 
-// Delete
-if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
-    $qid = (int)$_GET['delete'];
-    dbExec("DELETE FROM quizzes WHERE id = ? AND company_id = ?", [$qid, $cid]);
-    flash('Quiz excluído.', 'success');
-    redirect('quizzes.php');
-}
+    // Toggle active
+    if ($action === 'toggle' && $qid) {
+        dbExec("UPDATE quizzes SET active = 1 - active WHERE id = ? AND company_id = ?", [$qid, $cid]);
+        flash('Status do quiz atualizado.', 'success');
+        redirect('quizzes.php');
+    }
 
-// Force Delete
-if (isset($_GET['force_delete']) && is_numeric($_GET['force_delete'])) {
-    $qid = (int)$_GET['force_delete'];
-    if (!dbRow("SELECT id FROM quizzes WHERE id = ? AND company_id = ?", [$qid, $cid])) redirect('quizzes.php');
-    dbExec("DELETE FROM answers WHERE participant_id IN (SELECT id FROM participants WHERE quiz_id = ?)", [$qid]);
-    dbExec("DELETE FROM participants WHERE quiz_id = ?", [$qid]);
-    dbExec("DELETE FROM quizzes WHERE id = ? AND company_id = ?", [$qid, $cid]);
-    flash('Quiz e todos os seus resultados foram excluídos permanentemente.', 'success');
-    redirect('quizzes.php');
-}
+    // Delete
+    if ($action === 'delete' && $qid) {
+        dbExec("DELETE FROM quizzes WHERE id = ? AND company_id = ?", [$qid, $cid]);
+        flash('Quiz excluído.', 'success');
+        redirect('quizzes.php');
+    }
 
-// Clone
-if (isset($_GET['clone']) && is_numeric($_GET['clone'])) {
-    $qid = (int)$_GET['clone'];
+    // Force Delete
+    if ($action === 'force_delete' && $qid) {
+        if (!dbRow("SELECT id FROM quizzes WHERE id = ? AND company_id = ?", [$qid, $cid])) redirect('quizzes.php');
+        dbExec("DELETE FROM answers WHERE participant_id IN (SELECT id FROM participants WHERE quiz_id = ?)", [$qid]);
+        dbExec("DELETE FROM participants WHERE quiz_id = ?", [$qid]);
+        dbExec("DELETE FROM quizzes WHERE id = ? AND company_id = ?", [$qid, $cid]);
+        flash('Quiz e todos os seus resultados foram excluídos permanentemente.', 'success');
+        redirect('quizzes.php');
+    }
+
+    // Clone
+    if ($action === 'clone' && $qid) {
     $old = dbRow("SELECT * FROM quizzes WHERE id = ? AND company_id = ?", [$qid, $cid]);
     if ($old) {
         unset($old['id']);
@@ -57,6 +58,7 @@ if (isset($_GET['clone']) && is_numeric($_GET['clone'])) {
         flash('Quiz clonado com sucesso! A cópia está inativa.', 'success');
     }
     redirect('quizzes.php');
+    }
 }
 
 $quizzes = dbRows("
@@ -158,23 +160,36 @@ adminHead('Quizzes', 'quizzes.php');
                         <a href="quiz-questions.php?id=<?= $q['id'] ?>" class="row-action" title="Questões (<?= $q['q_count'] ?>)"><i class="fa-solid fa-list-ol"></i></a>
                         <a href="quiz-edit.php?id=<?= $q['id'] ?>" class="row-action" title="Configurações"><i class="fa-solid fa-sliders"></i></a>
                         <a href="/quiz.php?id=<?= $q['id'] ?><?= $companySlug ? '&c='.urlencode($companySlug) : '' ?>" class="row-action" title="Abrir Quiz" target="_blank"><i class="fa-solid fa-play-circle"></i></a>
-                        <a href="?clone=<?= $q['id'] ?>" class="row-action" title="Duplicar" onclick="return confirmAction('Duplicar este quiz?')"><i class="fa-solid fa-copy"></i></a>
+                        <form method="post" style="display:inline" onsubmit="return confirmAction('Duplicar este quiz?')">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action" value="clone"/>
+                            <input type="hidden" name="id" value="<?= $q['id'] ?>"/>
+                            <button type="submit" class="row-action" title="Duplicar"><i class="fa-solid fa-copy"></i></button>
+                        </form>
                         <a href="results.php?quiz=<?= $q['id'] ?>" class="row-action" title="Resultados"><i class="fa-solid fa-chart-bar"></i></a>
-                        <a href="?toggle=<?= $q['id'] ?>" class="row-action <?= $q['active'] ? 'row-action--danger' : 'row-action--success' ?>"
-                           title="<?= $q['active'] ? 'Desativar' : 'Ativar' ?>"
-                           onclick="return confirmAction('<?= $q['active'] ? 'Desativar' : 'Ativar' ?> este quiz?')">
-                            <i class="fa-solid <?= $q['active'] ? 'fa-pause' : 'fa-play' ?>"></i>
-                        </a>
+                        <form method="post" style="display:inline" onsubmit="return confirmAction('<?= $q['active'] ? 'Desativar' : 'Ativar' ?> este quiz?')">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action" value="toggle"/>
+                            <input type="hidden" name="id" value="<?= $q['id'] ?>"/>
+                            <button type="submit" class="row-action <?= $q['active'] ? 'row-action--danger' : 'row-action--success' ?>"
+                               title="<?= $q['active'] ? 'Desativar' : 'Ativar' ?>">
+                                <i class="fa-solid <?= $q['active'] ? 'fa-pause' : 'fa-play' ?>"></i>
+                            </button>
+                        </form>
                         <?php if ($q['part_count'] == 0): ?>
-                        <a href="?delete=<?= $q['id'] ?>" class="row-action row-action--delete" title="Excluir"
-                           onclick="return confirmAction('Excluir este quiz permanentemente?')">
-                            <i class="fa-solid fa-trash"></i>
-                        </a>
+                        <form method="post" style="display:inline" onsubmit="return confirmAction('Excluir este quiz permanentemente?')">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action" value="delete"/>
+                            <input type="hidden" name="id" value="<?= $q['id'] ?>"/>
+                            <button type="submit" class="row-action row-action--delete" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                        </form>
                         <?php else: ?>
-                        <a href="?force_delete=<?= $q['id'] ?>" class="row-action row-action--delete" title="Forçar Exclusão"
-                           onclick="return confirmAction('ATENÇÃO: Este quiz possui <?= $q['part_count'] ?> participações. Todos os resultados serão apagados permanentemente. Continuar?')">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                        </a>
+                        <form method="post" style="display:inline" onsubmit="return confirmAction('ATENÇÃO: Este quiz possui <?= $q['part_count'] ?> participações. Todos os resultados serão apagados permanentemente. Continuar?')">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action" value="force_delete"/>
+                            <input type="hidden" name="id" value="<?= $q['id'] ?>"/>
+                            <button type="submit" class="row-action row-action--delete" title="Forçar Exclusão"><i class="fa-solid fa-triangle-exclamation"></i></button>
+                        </form>
                         <?php endif; ?>
                     </div>
                 </td>

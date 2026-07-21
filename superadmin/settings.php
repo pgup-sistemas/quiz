@@ -6,12 +6,14 @@ if (session_name() !== 'SUPER_ADMIN_SESS') {
 require_once __DIR__ . '/../includes/superadmin-auth.php';
 requireSuperAdmin();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/layout.php';
 
 $msg   = '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrf();
     $section = $_POST['section'] ?? 'general';
 
     if ($section === 'general') {
@@ -31,6 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $msg = 'Configurações gerais salvas.';
         }
     } elseif ($section === 'email') {
+        // NOTE: resend_api_key is stored in plaintext in system_settings (SQLite) — known follow-up, not addressed here.
         $emailUpdates = [
             'resend_api_key' => trim($_POST['resend_api_key'] ?? ''),
             'mail_from'      => trim($_POST['mail_from']      ?? 'noreply@quiz.pageup.net.br'),
@@ -47,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $priceCents = (int)round((float)$priceRaw * 100);
         if ($priceCents < 100) $error = 'Preço mínimo: R$ 1,00.';
         if (!$error) {
+            // NOTE: efi_client_secret / efi_cert_password are stored in plaintext in system_settings (SQLite) — known follow-up, not addressed here.
             $efiUpdates = [
                 'pro_price_monthly'  => (string)$priceCents,
                 'efi_client_id'      => trim($_POST['efi_client_id']      ?? ''),
@@ -94,6 +98,7 @@ superadminHead('Configurações', 'settings.php');
     <!-- Configurações gerais -->
     <div class="card" style="border-radius:var(--radius);padding:28px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px">
         <form method="POST">
+            <?= csrfField() ?>
             <input type="hidden" name="section" value="general"/>
             <div style="margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--gray-100)">
                 <h3 style="font-size:15px;color:var(--prussian);margin:0 0 16px">
@@ -136,6 +141,7 @@ superadminHead('Configurações', 'settings.php');
     <!-- Configurações de E-mail -->
     <div class="card" style="border-radius:var(--radius);padding:28px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px">
         <form method="POST">
+            <?= csrfField() ?>
             <input type="hidden" name="section" value="email"/>
             <h3 style="font-size:15px;color:var(--prussian);margin:0 0 20px">
                 <i class="fa-solid fa-envelope" style="color:var(--pacific)"></i> E-mail Transacional
@@ -180,6 +186,7 @@ superadminHead('Configurações', 'settings.php');
     <!-- Configurações EFI Bank -->
     <div class="card" style="border-radius:var(--radius);padding:28px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
         <form method="POST">
+            <?= csrfField() ?>
             <input type="hidden" name="section" value="efi"/>
             <h3 style="font-size:15px;color:var(--prussian);margin:0 0 20px">
                 <i class="fa-solid fa-credit-card" style="color:#219ebc"></i> EFI Bank — Pagamentos

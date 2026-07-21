@@ -8,6 +8,7 @@ $cid = adminCompanyId();
 
 /* ── Add Sector ─────────────────────────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_sector'])) {
+    requireCsrf();
     $name = trim($_POST['name'] ?? '');
     if (!$name) {
         flash('O nome do setor é obrigatório.', 'error');
@@ -25,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_sector'])) {
 
 /* ── Rename Sector ───────────────────────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rename_sector'])) {
+    requireCsrf();
     $id      = (int)$_POST['sector_id'];
     $newName = trim($_POST['new_name'] ?? '');
     if (!$newName) {
@@ -41,8 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rename_sector'])) {
 }
 
 /* ── Delete Sector ───────────────────────────────────────── */
-if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && is_numeric($_POST['delete'])) {
+    requireCsrf();
+    $id = (int)$_POST['delete'];
     $sector = dbRow("SELECT * FROM sectors WHERE id = ? AND company_id = ?", [$id, $cid]);
     if ($sector) {
         $quizCount = dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE sector = ? AND company_id = ?", [$sector['name'], $cid])['c'];
@@ -57,8 +60,9 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
 }
 
 /* ── Force Delete ────────────────────────────────────────── */
-if (isset($_GET['force_delete']) && is_numeric($_GET['force_delete'])) {
-    $id = (int)$_GET['force_delete'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['force_delete']) && is_numeric($_POST['force_delete'])) {
+    requireCsrf();
+    $id = (int)$_POST['force_delete'];
     $sector = dbRow("SELECT * FROM sectors WHERE id = ? AND company_id = ?", [$id, $cid]);
     if ($sector && $sector['name'] !== 'Geral') {
         dbExec("UPDATE quizzes SET sector = 'Geral' WHERE sector = ? AND company_id = ?", [$sector['name'], $cid]);
@@ -201,6 +205,7 @@ adminHead('Setores', 'sectors.php');
             <h2><i class="fa-solid fa-plus" style="color:var(--green)"></i> Novo Setor</h2>
         </div>
         <form method="post">
+            <?= csrfField() ?>
             <input type="hidden" name="add_sector" value="1"/>
             <div class="form-group">
                 <label class="form-label">Nome do Setor</label>
@@ -243,6 +248,7 @@ adminHead('Setores', 'sectors.php');
             </button>
         </div>
         <form method="post" style="display:flex;gap:10px;align-items:flex-end">
+            <?= csrfField() ?>
             <input type="hidden" name="rename_sector" value="1"/>
             <input type="hidden" name="sector_id" id="rename-id"/>
             <div class="form-group" style="margin-bottom:0;flex:1">
@@ -303,15 +309,17 @@ adminHead('Setores', 'sectors.php');
 
                 <?php if (!$isDefault): ?>
                     <?php if ($s['quiz_count'] == 0): ?>
-                    <a href="?delete=<?= $s['id'] ?>" class="btn btn-danger btn-sm"
-                       onclick="return confirmAction('Excluir o setor «<?= e($s['name']) ?>»? Esta ação não pode ser desfeita.')">
-                        <i class="fa-solid fa-trash"></i>
-                    </a>
+                    <form method="post" style="display:inline" onsubmit="return confirmAction('Excluir o setor «<?= e($s['name']) ?>»? Esta ação não pode ser desfeita.')">
+                        <?= csrfField() ?>
+                        <input type="hidden" name="delete" value="<?= $s['id'] ?>"/>
+                        <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i></button>
+                    </form>
                     <?php else: ?>
-                    <a href="?force_delete=<?= $s['id'] ?>" class="btn btn-danger btn-sm"
-                       onclick="return confirmAction('Excluir «<?= e($s['name']) ?>» e mover os <?= $s['quiz_count'] ?> quiz(es) para «Geral»?')">
-                        <i class="fa-solid fa-triangle-exclamation"></i> Forçar
-                    </a>
+                    <form method="post" style="display:inline" onsubmit="return confirmAction('Excluir «<?= e($s['name']) ?>» e mover os <?= $s['quiz_count'] ?> quiz(es) para «Geral»?')">
+                        <?= csrfField() ?>
+                        <input type="hidden" name="force_delete" value="<?= $s['id'] ?>"/>
+                        <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-triangle-exclamation"></i> Forçar</button>
+                    </form>
                     <?php endif; ?>
                 <?php else: ?>
                     <span style="font-size:11px;color:var(--gray-300);padding:0 4px">

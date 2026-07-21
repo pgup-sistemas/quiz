@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "<p>Olá!</p>"
                 . "<p>Recebemos uma solicitação para redefinir a senha da sua conta na plataforma.</p>"
                 . "<p>Clique no botão abaixo para criar uma nova senha (link válido por <strong>1 hora</strong>).</p>"
-                . mailBtnHtml(htmlspecialchars($resetUrl), 'Redefinir minha senha →')
+                . mailBtnHtml($resetUrl, 'Redefinir minha senha →')
                 . "<p style='font-size:12px;color:#94a3b8'>Se você não solicitou isso, ignore este e-mail. Sua senha permanece a mesma.</p>"
             );
             sendMail($email, 'Redefinição de senha · PageQuiz', $html);
@@ -46,23 +46,16 @@ userPageHead('Esqueci minha senha');
     <div class="u-title"><i class="fa-solid fa-key" aria-hidden="true"></i> Recuperar senha</div>
 
     <?php if ($sent): ?>
-      <?php if ($token): ?>
-      <div class="u-alert ok">
-        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
-        <div>
-          <strong>Link gerado!</strong> Em produção ele é enviado por e-mail.<br/>
-          <span style="font-size:12px;color:var(--gray-500)">Ambiente local — clique no link abaixo para redefinir:</span>
-          <div style="margin-top:10px;word-break:break-all">
-            <a href="reset-password.php?token=<?= htmlspecialchars($token) ?>" style="color:var(--pacific);font-size:13px">
-              Redefinir senha agora →
-            </a>
-          </div>
-        </div>
-      </div>
-      <?php else: ?>
       <div class="u-alert ok">
         <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
         <span>Se esse e-mail estiver cadastrado, as instruções foram enviadas.</span>
+      </div>
+      <?php if (APP_DEBUG && $token): ?>
+      <div style="background:#fffbea;border:1px solid #f6e05e;border-radius:8px;padding:10px 14px;margin-top:12px;font-size:12px;color:#744210">
+        <strong>[DEBUG]</strong> Link local (visível apenas com APP_DEBUG=true):<br/>
+        <a href="reset-password.php?token=<?= htmlspecialchars($token) ?>" style="color:var(--pacific);word-break:break-all">
+          reset-password.php?token=<?= htmlspecialchars($token) ?>
+        </a>
       </div>
       <?php endif; ?>
       <div class="u-links"><a href="login.php">← Voltar ao login</a></div>

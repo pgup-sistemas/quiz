@@ -14,6 +14,29 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input) { $input = $_POST; }
 
+// Rate limit por IP (arquivo, independe de cookies/sessão): no máximo 20 novas sessões por minuto
+$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+$rlDir = sys_get_temp_dir() . '/pagequiz_rl';
+if (!is_dir($rlDir)) @mkdir($rlDir, 0700, true);
+$rlFile = $rlDir . '/start_' . preg_replace('/[^a-zA-Z0-9.:]/', '_', $ip) . '.json';
+$now  = time();
+$hits = [];
+$fh = @fopen($rlFile, 'c+');
+if ($fh && flock($fh, LOCK_EX)) {
+    $raw = stream_get_contents($fh);
+    $hits = $raw ? array_filter((json_decode($raw, true) ?: []), fn($t) => $t > $now - 60) : [];
+    if (count($hits) >= 20) {
+        flock($fh, LOCK_UN); fclose($fh);
+        http_response_code(429);
+        echo json_encode(['success' => false, 'message' => 'Muitas tentativas. Aguarde um instante e tente novamente.']);
+        exit;
+    }
+    $hits[] = $now;
+    ftruncate($fh, 0); rewind($fh);
+    fwrite($fh, json_encode(array_values($hits)));
+    flock($fh, LOCK_UN); fclose($fh);
+}
+
 $quizId = (int)($input['quiz_id'] ?? 0);
 $name   = trim($input['name']     ?? '');
 $email  = trim($input['email']    ?? '');

@@ -127,6 +127,8 @@ HTML;
 }
 
 function mailBtnHtml(string $url, string $label): string {
+    $url   = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $label = htmlspecialchars($label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     return <<<HTML
 <div style="text-align:center;margin:28px 0">
   <a href="$url" style="display:inline-block;padding:14px 32px;background:#219EBC;color:#fff;font-size:15px;font-weight:700;border-radius:10px;text-decoration:none;letter-spacing:.3px">$label</a>
