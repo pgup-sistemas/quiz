@@ -51,7 +51,7 @@ $monthlyCompanies = dbRows("
     ORDER BY mes ASC
 ");
 
-$coMonthMax = max(1, ...array_column($monthlyCompanies ?: [[0]], 'total'));
+$coMonthMax = max(array_merge([1], array_column($monthlyCompanies, 'total')));
 
 // ── Crescimento mensal de participações (atividade) ───────────────────────────
 $monthlyActivity = dbRows("
@@ -63,7 +63,7 @@ $monthlyActivity = dbRows("
     ORDER BY mes ASC
 ");
 
-$actMax = max(1, ...array_column($monthlyActivity ?: [[0]], 'completions'));
+$actMax = max(array_merge([1], array_column($monthlyActivity, 'completions')));
 
 // ── Top empresas por uso (participantes + quizzes) ────────────────────────────
 $topCompanies = dbRows("

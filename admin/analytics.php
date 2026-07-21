@@ -77,7 +77,7 @@ $dist = dbRows("
     ORDER BY MIN(percentage)
 ", [$cid]);
 
-$distMax = max(1, ...array_column($dist, 'total'));
+$distMax = max(array_merge([1], array_column($dist, 'total')));
 
 // ── Top performers (por usuários únicos identificados por email) ───────────────
 $topPerf = dbRows("
@@ -108,7 +108,7 @@ $monthly = dbRows("
     ORDER BY mes ASC
 ", [$cid]);
 
-$monthMax = max(1, ...array_column($monthly ?: [[0]], 'completions'));
+$monthMax = max(array_merge([1], array_column($monthly, 'completions')));
 
 // ── Distribuição por setor ────────────────────────────────────────────────────
 $bySector = dbRows("
@@ -336,7 +336,7 @@ adminHead('Analytics', 'analytics.php');
         <?php if (empty($bySector)): ?>
         <div style="text-align:center;padding:32px;color:var(--gray-300);font-size:12px">Sem dados por setor</div>
         <?php else:
-            $sectorMax = max(1, ...array_column($bySector, 'total'));
+            $sectorMax = max(array_merge([1], array_column($bySector, 'total')));
         ?>
         <?php foreach ($bySector as $s):
             $sp = $s['total'] > 0 ? round($s['passed']/$s['total']*100) : 0;
