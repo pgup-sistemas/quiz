@@ -124,6 +124,7 @@ if ($participant && $quiz) {
         }
         .search-input {
             flex-grow: 1;
+            min-width: 0;
             padding: 12px 16px;
             border: 2px solid var(--gray-200);
             border-radius: var(--radius-sm);
@@ -196,6 +197,15 @@ if ($participant && $quiz) {
             text-align: center;
         }
         .verify-footer p { font-size: var(--text-xs); color: rgba(142,202,230,.5); margin: 0; }
+
+        @media (max-width: 480px) {
+            .verify-card { padding: 24px 20px; }
+            .verify-main { padding: 32px 14px; }
+            .search-form { flex-direction: column; }
+            .btn-verify { width: 100%; justify-content: center; padding: 13px 20px; }
+            .info-row-split { flex-direction: column; gap: 12px; }
+            .info-row-split .info-row:last-child { text-align: left; }
+        }
     </style>
 </head>
 <body>

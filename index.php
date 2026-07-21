@@ -313,6 +313,10 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
   .lp-nav{padding:0 14px;gap:10px}
   .lp-nav-auth{gap:6px}
   .btn-ghost,.btn-cta{padding:8px 12px;font-size:13px;gap:5px}
+  .lp-features,.lp-howitworks,.lp-managers,.lp-quizzes,.lp-cta{padding:56px 20px}
+  .lp-footer{padding:48px 20px 24px}
+  .section-sub{margin-bottom:36px}
+  .footer-brand p{max-width:none}
 }
 @media(max-width:420px){
   .lp-nav{padding:0 10px}

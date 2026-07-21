@@ -86,9 +86,9 @@ alphaclin-quiz/
 │   └── auth.php           ← Autenticação de sessão
 │
 ├── assets/
-│   ├── style.css          ← CSS global (fontes Alphaclin)
-│   ├── logo.jpg           ← Logo Alphaclin colorida
-│   ├── logo-white.png     ← Logo Alphaclin branca
+│   ├── style.css          ← CSS global
+│   ├── logo.svg           ← Logo PageQuiz colorida
+│   ├── logo-white.svg     ← Logo PageQuiz branca
 │   └── fonts/
 │       ├── SancoaleBold.otf
 │       ├── SancoaleMedium.otf
@@ -179,5 +179,5 @@ define('DEFAULT_PASS_PCT', 70);   // % mínima para aprovação
 
 ## Suporte
 
-Desenvolvido para Alphaclin · Excelência em Diagnóstico  
+Desenvolvido por PageUp Sistemas  
 Sistema versão 1.0.0
