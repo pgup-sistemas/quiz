@@ -49,13 +49,10 @@ $sectorStats = dbRows("
 
 $base = ((!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off')?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pagequiz');
 $slug = $company['slug'] ?? '';
-$isSubdomain = substr_count($_SERVER['HTTP_HOST'] ?? '', '.') >= 2;
-$accessUrl   = $isSubdomain
-    ? preg_replace('/^([a-z]+\.)/', $slug.'.', $base) . '/'
-    : $base . '/?c=' . urlencode($slug);
-$registerUrl = $isSubdomain
-    ? preg_replace('/^([a-z]+\.)/', $slug.'.', $base) . '/user/register.php'
-    : $base . '/user/register.php?c=' . urlencode($slug);
+// Tenant é resolvido via ?c=slug (ver includes/tenant.php) — não há DNS/vhost
+// com wildcard de subdomínio por empresa configurado em produção.
+$accessUrl   = $base . '/?c=' . urlencode($slug);
+$registerUrl = $base . '/user/register.php?c=' . urlencode($slug);
 
 adminHead('Dashboard', 'index.php');
 ?>
