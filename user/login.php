@@ -8,7 +8,11 @@ resolveTenant(); // garante que o tenant fica na sessão (via subdomínio ou ?c=
 if (isUserLoggedIn()) { header('Location: dashboard.php'); exit; }
 
 $error = '';
-$redirect = $_GET['redirect'] ?? 'dashboard.php';
+$_rawRedir = $_GET['redirect'] ?? 'dashboard.php';
+// Rejeita redirects para domínios externos (open redirect)
+$redirect = (preg_match('/^[a-zA-Z0-9_\-\/\.%?=&]+$/', $_rawRedir) && !str_starts_with($_rawRedir, '//'))
+    ? $_rawRedir
+    : 'dashboard.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');

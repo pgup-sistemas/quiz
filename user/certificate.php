@@ -28,9 +28,9 @@ if (!$p) { header('Location: dashboard.php'); exit; }
 // Tenant isolation: user's company must match quiz's company
 if ($cid && (int)$p['company_id'] !== $cid) { header('Location: dashboard.php'); exit; }
 
-// Owner check: certificate must belong to this user (by email or name)
-$ownerOk = ($user['email'] && $p['email'] === $user['email'])
-         || ($p['name'] === $user['name']);
+// Owner check: priority is user_id, fallback to email (name match removed — too easy to bypass)
+$ownerOk = ((int)($p['user_id'] ?? 0) && (int)$p['user_id'] === (int)$user['id'])
+         || ($user['email'] && $p['email'] && $p['email'] === $user['email']);
 if (!$ownerOk) { header('Location: dashboard.php'); exit; }
 
 $base   = ((!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off')?'https':'http').'://'.($_SERVER['HTTP_HOST']??'quiz.pageup.net.br');

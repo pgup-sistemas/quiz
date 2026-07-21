@@ -23,7 +23,12 @@ if (!$quizId || !$name || !$sector) {
     echo json_encode(['success' => false, 'message' => 'Dados incompletos']); exit;
 }
 
-$companyId = $tenant ? (int)$tenant['id'] : (int)(dbRow("SELECT company_id FROM quizzes WHERE id=?", [$quizId])['company_id'] ?? 1);
+$companyId = $tenant
+    ? (int)$tenant['id']
+    : (int)(dbRow("SELECT company_id FROM quizzes WHERE id=?", [$quizId])['company_id'] ?? 0);
+if (!$companyId) {
+    echo json_encode(['success' => false, 'message' => 'Empresa não identificada']); exit;
+}
 
 // Vincula ao user do portal se estiver autenticado
 $loggedUser = currentUser();

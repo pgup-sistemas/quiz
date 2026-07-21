@@ -109,7 +109,12 @@ $_seoUrl     = $_seoBase.'/quiz.php?id='.(int)$quiz['id'];
         </div>
         <div class="field">
             <label for="inp-sector">Setor *</label>
-            <?php $sectors = dbRows("SELECT name FROM sectors ORDER BY name ASC"); ?>
+            <?php
+            $tenantCid = $tenant ? (int)$tenant['id'] : 0;
+            $sectors = $tenantCid
+                ? dbRows("SELECT name FROM sectors WHERE company_id=? ORDER BY name ASC", [$tenantCid])
+                : [];
+            ?>
             <select id="inp-sector" aria-required="true">
                 <option value="">— Selecione seu setor —</option>
                 <?php if (empty($sectors)): ?>
