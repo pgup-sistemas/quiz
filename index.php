@@ -93,8 +93,8 @@ $_seoJsonLd = seoJsonLdOrganization(
 <meta name="keywords" content="quiz, treinamento corporativo, avaliação, certificado, e-learning, capacitação<?= $tenant ? ', '.htmlspecialchars($tenant['name']) : ', PageQuiz, PageUp Sistemas' ?>"/>
 <title><?= htmlspecialchars($_seoTitle) ?></title>
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon.svg"/>
-<link rel="apple-touch-icon" href="assets/logo-icon.svg"/>
+<link rel="icon" type="image/x-icon" href="/favicon.ico"/>
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png"/>
 <link rel="manifest" href="/manifest.json"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -310,6 +310,14 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
   .lp-hero{padding:72px 20px 96px}
   .hero-floats{display:none}
   .quiz-cards-grid{grid-template-columns:1fr}
+  .lp-nav{padding:0 14px;gap:10px}
+  .lp-nav-auth{gap:6px}
+  .btn-ghost,.btn-cta{padding:8px 12px;font-size:13px;gap:5px}
+}
+@media(max-width:420px){
+  .lp-nav{padding:0 10px}
+  .btn-ghost,.btn-cta{padding:9px;font-size:0}
+  .btn-ghost i,.btn-cta i{font-size:16px}
 }
 @media(prefers-reduced-motion:reduce){
   .hero-float,.reveal{animation:none;transition:none;opacity:1;transform:none}
