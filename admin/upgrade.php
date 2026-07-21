@@ -8,8 +8,8 @@ requireLogin();
 $companyId = adminCompanyId();
 $company   = dbRow("SELECT * FROM companies WHERE id=?", [$companyId]);
 
-$supportEmail = dbRow("SELECT value FROM system_settings WHERE key='support_email'")['value'] ?? 'contato@pageup.net.br';
-$freeLimit    = (int)(dbRow("SELECT value FROM system_settings WHERE key='free_quiz_limit'")['value'] ?? 12);
+$supportEmail = dbRow("SELECT value FROM system_settings WHERE `key`='support_email'")['value'] ?? 'contato@pageup.net.br';
+$freeLimit    = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
 
 $msg   = '';
 $error = '';
@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($company['status'] === 'pending_payment') {
         $msg = 'Sua solicitação Pro já está sendo processada. Aguarde o contato da equipe PageUp.';
     } else {
-        dbExec("UPDATE companies SET status='pending_payment', updated_at=datetime('now','localtime') WHERE id=?", [$companyId]);
+        dbExec("UPDATE companies SET status='pending_payment', updated_at=NOW() WHERE id=?", [$companyId]);
         $msg = 'Solicitação enviada! Entraremos em contato em breve para ativar o plano Pro.';
     }
 }

@@ -113,8 +113,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$freeLimit    = (int)(dbRow("SELECT value FROM system_settings WHERE key='free_quiz_limit'")['value'] ?? 12);
-$supportEmail = dbRow("SELECT value FROM system_settings WHERE key='support_email'")['value'] ?? 'contato@pageup.net.br';
+$freeLimit    = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
+$supportEmail = dbRow("SELECT value FROM system_settings WHERE `key`='support_email'")['value'] ?? 'contato@pageup.net.br';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">

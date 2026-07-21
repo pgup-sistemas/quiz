@@ -103,7 +103,7 @@ function tenantCompany(): array {
  * 'quizzes' = -1 significa ilimitado.
  */
 function planLimits(string $plan): array {
-    $row = dbRow("SELECT value FROM system_settings WHERE key = 'free_quiz_limit'");
+    $row = dbRow("SELECT value FROM system_settings WHERE `key` = 'free_quiz_limit'");
     $freeLimit = (int)($row['value'] ?? 12);
 
     return match ($plan) {

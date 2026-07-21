@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $companies  = dbRows("SELECT id, name, email, plan FROM companies ORDER BY name");
-$defaultPrice = (int)(dbRow("SELECT value FROM system_settings WHERE key='pro_price_monthly'")['value'] ?? 4990);
+$defaultPrice = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='pro_price_monthly'")['value'] ?? 4990);
 
 superadminHead('Gerar Link de Pagamento', 'payments.php');
 ?>

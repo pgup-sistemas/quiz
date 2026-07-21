@@ -22,7 +22,7 @@ try {
     if ($sub['efi_subscription_id']) {
         efiCancelSubscription($sub['efi_subscription_id']);
     }
-    dbExec("UPDATE subscriptions SET status='cancelled', updated_at=datetime('now','localtime') WHERE id=?", [$subId]);
+    dbExec("UPDATE subscriptions SET status='cancelled', updated_at=NOW() WHERE id=?", [$subId]);
     dbExec("INSERT INTO audit_log (actor_type, actor_id, action, target_company_id, detail) VALUES (?,?,?,?,?)",
            ['admin', adminId(), 'subscription_cancelled', $companyId, json_encode(['sub_id'=>$subId])]);
 

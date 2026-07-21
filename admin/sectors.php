@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['force_delete']) && is
     if ($sector && $sector['name'] !== 'Geral') {
         dbExec("UPDATE quizzes SET sector = 'Geral' WHERE sector = ? AND company_id = ?", [$sector['name'], $cid]);
         dbExec("DELETE FROM sectors WHERE id = ? AND company_id = ?", [$id, $cid]);
-        dbExec("INSERT OR IGNORE INTO sectors (name, company_id) VALUES ('Geral', ?)", [$cid]);
+        dbExec("INSERT IGNORE INTO sectors (name, company_id) VALUES ('Geral', ?)", [$cid]);
         flash("Setor «{$sector['name']}» excluído. Quizzes movidos para «Geral».", 'success');
     }
     redirect('sectors.php');

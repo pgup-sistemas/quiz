@@ -14,7 +14,7 @@ $quizzes = dbRows("
     SELECT id, updated_at, created_at
     FROM quizzes
     WHERE active = 1
-      AND (expires_at IS NULL OR expires_at = '' OR expires_at >= date('now','localtime'))
+      AND (expires_at IS NULL OR expires_at >= NOW())
     ORDER BY updated_at DESC
 ");
 

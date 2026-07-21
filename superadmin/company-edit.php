@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($errors)) {
             if ($isEdit) {
-                dbExec("UPDATE companies SET name=?, email=?, cnpj=?, plan=?, status=?, updated_at=datetime('now','localtime') WHERE id=?",
+                dbExec("UPDATE companies SET name=?, email=?, cnpj=?, plan=?, status=?, updated_at=NOW() WHERE id=?",
                        [$name, $email, $cnpj ?: null, $plan, $status, $id]);
                 logAudit('edit_company', $id, json_encode(['plan'=>$plan,'status'=>$status]));
                 header('Location: companies.php?_msg=' . urlencode('Empresa atualizada.')); exit;
@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // E-mail de boas-vindas
                 $loginUrl = rtrim(BASE_URL, '/') . '/admin/login.php';
-                $appName  = htmlspecialchars(dbRow("SELECT value FROM system_settings WHERE key='app_name'")['value'] ?? 'PageQuiz');
+                $appName  = htmlspecialchars(dbRow("SELECT value FROM system_settings WHERE `key`='app_name'")['value'] ?? 'PageQuiz');
                 $html = mailTemplate(
                     "Bem-vindo ao $appName!",
                     "<p>Olá, <strong>" . htmlspecialchars($name) . "</strong>!</p>"

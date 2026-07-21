@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'step1') {
         $displayName = trim($_POST['display_name'] ?? '');
         if ($displayName) {
-            dbExec("UPDATE companies SET name=?, updated_at=datetime('now','localtime') WHERE id=?",
+            dbExec("UPDATE companies SET name=?, updated_at=NOW() WHERE id=?",
                    [$displayName, $companyId]);
         }
         header('Location: onboarding.php?step=2'); exit;
@@ -36,14 +36,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!is_dir($dir)) mkdir($dir, 0755, true);
                     $dest = "$dir/logo.$ext";
                     move_uploaded_file($_FILES['logo']['tmp_name'], $dest);
-                    dbExec("UPDATE companies SET logo_path=?, updated_at=datetime('now','localtime') WHERE id=?",
+                    dbExec("UPDATE companies SET logo_path=?, updated_at=NOW() WHERE id=?",
                            ["uploads/companies/$companyId/logo.$ext", $companyId]);
                 }
             }
             // Cor primária
             $color = trim($_POST['primary_color'] ?? '');
             if (preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
-                dbExec("UPDATE companies SET primary_color=?, updated_at=datetime('now','localtime') WHERE id=?",
+                dbExec("UPDATE companies SET primary_color=?, updated_at=NOW() WHERE id=?",
                        [$color, $companyId]);
             }
         }
@@ -181,7 +181,7 @@ h2 { font-family:var(--font-heading,'Syne',sans-serif); font-size:20px; color:va
         <ul style="margin:0;padding-left:20px;font-size:13px;color:var(--gray-600,#4b5563);line-height:1.8">
             <li>Plano: <strong><?= $isPro ? 'Pro' : 'Free' ?></strong></li>
             <?php if (!$isPro): ?>
-            <li>Quizzes disponíveis: até <strong><?= dbRow("SELECT value FROM system_settings WHERE key='free_quiz_limit'")['value'] ?? 12 ?></strong></li>
+            <li>Quizzes disponíveis: até <strong><?= dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12 ?></strong></li>
             <?php else: ?>
             <li>Quizzes: <strong>ilimitados</strong></li>
             <?php endif; ?>

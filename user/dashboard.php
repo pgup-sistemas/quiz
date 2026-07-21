@@ -37,7 +37,7 @@ if ($cid) {
                (SELECT COUNT(*) FROM questions qs WHERE qs.quiz_id = q.id) AS question_count
         FROM quizzes q
         WHERE q.active = 1 AND q.company_id = ?
-          AND (q.expires_at IS NULL OR q.expires_at = '' OR q.expires_at >= date('now','localtime'))
+          AND (q.expires_at IS NULL OR q.expires_at >= NOW())
           AND (
               q.visibility = 'all'
               OR (q.visibility = 'sector' AND EXISTS (

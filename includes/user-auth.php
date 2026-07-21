@@ -66,7 +66,7 @@ function userLogin(string $email, string $pass): bool {
         'sector'     => $user['sector'],
         'company_id' => $user['company_id'] ?? 0,
     ];
-    dbExec("UPDATE users SET last_login = datetime('now','localtime') WHERE id = ?", [$user['id']]);
+    dbExec("UPDATE users SET last_login = NOW() WHERE id = ?", [$user['id']]);
     return true;
 }
 
@@ -93,7 +93,7 @@ function generateResetToken(string $email): string|false {
 
 function validateResetToken(string $token): ?array {
     return dbRow(
-        "SELECT * FROM users WHERE reset_token = ? AND reset_expires > datetime('now','localtime')",
+        "SELECT * FROM users WHERE reset_token = ? AND reset_expires > NOW()",
         [$token]
     ) ?: null;
 }

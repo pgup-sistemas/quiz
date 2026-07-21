@@ -5,6 +5,7 @@ data/*.db-wal
 
 # Variáveis de ambiente sensíveis
 .env
+.env.production
 .env.local
 .env.*.local
 

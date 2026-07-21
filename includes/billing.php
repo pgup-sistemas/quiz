@@ -16,7 +16,7 @@ function checkAndApplyDowngrades(): void {
     }
     $_SESSION[$key] = time();
 
-    $freeLimit = (int)(dbRow("SELECT value FROM system_settings WHERE key='free_quiz_limit'")['value'] ?? 12);
+    $freeLimit = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
     $now       = date('Y-m-d H:i:s');
 
     // Empresas Pro com next_billing_at no passado e sem grace period ativo
@@ -60,7 +60,7 @@ function _applyDowngrade(int $companyId, int $freeLimit): int {
     }
 
     dbExec(
-        "UPDATE companies SET plan = 'free', status = 'active', updated_at = datetime('now','localtime') WHERE id = ?",
+        "UPDATE companies SET plan = 'free', status = 'active', updated_at = NOW() WHERE id = ?",
         [$companyId]
     );
     dbExec(

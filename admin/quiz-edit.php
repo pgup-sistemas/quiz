@@ -190,14 +190,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_quiz'])) {
                 title=?,description=?,sector=?,created_by=?,time_per_question=?,
                 pass_percentage=?,max_questions=?,expires_at=?,visible_from=?,show_feedback=?,
                 has_certificate=?,randomize=?,allow_retake=?,active=?,visibility=?,
-                updated_at=datetime('now','localtime')
+                updated_at=NOW()
             WHERE id=? AND company_id=?",
         [$title,$desc,$sector,$createdBy,$timer,$passPct,$maxQ,$expiry,$visibleFrom,
          $feedback,$hasCert,$randomize,$retake,$active,$visibility,$quizId,$cid]);
 
     dbExec("DELETE FROM quiz_assignments WHERE quiz_id IN (SELECT id FROM quizzes WHERE id=? AND company_id=?)", [$quizId,$cid]);
     if ($visibility === 'sector' && $targetSectors) {
-        $stmt = getDB()->prepare("INSERT OR IGNORE INTO quiz_assignments (quiz_id,sector_id) VALUES (?,?)");
+        $stmt = getDB()->prepare("INSERT IGNORE INTO quiz_assignments (quiz_id,sector_id) VALUES (?,?)");
         foreach ($targetSectors as $sid) {
             if (dbRow("SELECT id FROM sectors WHERE id=? AND company_id=?", [$sid,$cid]))
                 $stmt->execute([$quizId,$sid]);

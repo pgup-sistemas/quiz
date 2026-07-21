@@ -14,7 +14,7 @@ require_once __DIR__ . '/db.php';
  */
 function sendMail(string $to, string $subject, string $html, ?string $toName = null): bool {
     $settings = [];
-    foreach (dbRows("SELECT key, value FROM system_settings WHERE key IN ('resend_api_key','mail_from','mail_from_name','app_name')") as $r) {
+    foreach (dbRows("SELECT `key`, value FROM system_settings WHERE `key` IN ('resend_api_key','mail_from','mail_from_name','app_name')") as $r) {
         $settings[$r['key']] = $r['value'];
     }
 
@@ -89,7 +89,7 @@ function _sendViaNativeMail(string $fromEmail, string $fromName, string $to, ?st
 
 function mailTemplate(string $title, string $body, string $footer = ''): string {
     $settings = [];
-    foreach (dbRows("SELECT key, value FROM system_settings WHERE key IN ('app_name','mail_from')") as $r) {
+    foreach (dbRows("SELECT `key`, value FROM system_settings WHERE `key` IN ('app_name','mail_from')") as $r) {
         $settings[$r['key']] = $r['value'];
     }
     $appName = htmlspecialchars($settings['app_name'] ?? 'PageQuiz');

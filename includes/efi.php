@@ -16,7 +16,7 @@ function efiConfig(): array {
     if ($cfg !== null) return $cfg;
 
     $s = function(string $key): string {
-        $row = dbRow("SELECT value FROM system_settings WHERE key=?", [$key]);
+        $row = dbRow("SELECT value FROM system_settings WHERE `key`=?", [$key]);
         return $row['value'] ?? '';
     };
 
@@ -54,15 +54,15 @@ function efiClient(): EfiPay {
 }
 
 function efiIsSandbox(): bool {
-    return (bool)(int)(dbRow("SELECT value FROM system_settings WHERE key='efi_sandbox'")['value'] ?? 1);
+    return (bool)(int)(dbRow("SELECT value FROM system_settings WHERE `key`='efi_sandbox'")['value'] ?? 1);
 }
 
 function efiPixKey(): string {
-    return dbRow("SELECT value FROM system_settings WHERE key='efi_pix_key'")['value'] ?? '';
+    return dbRow("SELECT value FROM system_settings WHERE `key`='efi_pix_key'")['value'] ?? '';
 }
 
 function efiProPrice(): int {
-    return (int)(dbRow("SELECT value FROM system_settings WHERE key='pro_price_monthly'")['value'] ?? 4990);
+    return (int)(dbRow("SELECT value FROM system_settings WHERE `key`='pro_price_monthly'")['value'] ?? 4990);
 }
 
 function efiProPriceFormatted(): string {
@@ -214,7 +214,7 @@ function efiCancelSubscription(string $subscriptionId): bool {
  * Obtém ou cria o plano Pro mensal na EFI (cache em system_settings).
  */
 function efiGetOrCreateProPlan(int $cents): int {
-    $cached = dbRow("SELECT value FROM system_settings WHERE key='efi_plan_id'");
+    $cached = dbRow("SELECT value FROM system_settings WHERE `key`='efi_plan_id'");
     if ($cached && (int)$cached['value'] > 0) return (int)$cached['value'];
 
     $response = efiClient()->createPlan([], [
@@ -225,7 +225,8 @@ function efiGetOrCreateProPlan(int $cents): int {
     $planId = (int)$response['data']['plan_id'];
 
     // Salva para reusar
-    dbExec("INSERT OR REPLACE INTO system_settings (key, value, description) VALUES (?,?,?)",
+    dbExec("INSERT INTO system_settings (`key`, value, description) VALUES (?,?,?)
+            ON DUPLICATE KEY UPDATE value = VALUES(value), description = VALUES(description)",
            ['efi_plan_id', (string)$planId, 'ID do plano recorrente Pro na EFI Bank']);
 
     return $planId;

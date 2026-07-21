@@ -17,8 +17,8 @@ if ($tenant) {
     $totalQuizzes = (int)(dbRow("
         SELECT COUNT(*) AS c FROM quizzes
         WHERE active = 1 AND company_id = ?
-          AND (expires_at  IS NULL OR expires_at  = '' OR expires_at  >= date('now','localtime'))
-          AND (visible_from IS NULL OR visible_from = '' OR visible_from <= date('now','localtime'))
+          AND (expires_at  IS NULL OR expires_at  >= NOW())
+          AND (visible_from IS NULL OR visible_from <= NOW())
     ", [$cid])['c'] ?? 0);
 
     $totalPages = max(1, (int)ceil($totalQuizzes / $perPage));
@@ -32,8 +32,8 @@ if ($tenant) {
         LEFT JOIN questions   qs  ON qs.quiz_id = q.id
         WHERE q.active = 1
           AND q.company_id = ?
-          AND (q.expires_at   IS NULL OR q.expires_at   = '' OR q.expires_at   >= date('now','localtime'))
-          AND (q.visible_from IS NULL OR q.visible_from = '' OR q.visible_from <= date('now','localtime'))
+          AND (q.expires_at   IS NULL OR q.expires_at   >= NOW())
+          AND (q.visible_from IS NULL OR q.visible_from <= NOW())
         GROUP BY q.id
         ORDER BY q.created_at DESC
         LIMIT ? OFFSET ?

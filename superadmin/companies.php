@@ -70,22 +70,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cid = (int)($_POST['company_id'] ?? 0);
 
     if ($act === 'suspend') {
-        dbExec("UPDATE companies SET status='suspended', updated_at=datetime('now','localtime') WHERE id=?", [$cid]);
+        dbExec("UPDATE companies SET status='suspended', updated_at=NOW() WHERE id=?", [$cid]);
         logAudit('suspend', $cid);
         $msg = 'Empresa suspensa.';
     } elseif ($act === 'activate') {
-        dbExec("UPDATE companies SET status='active', updated_at=datetime('now','localtime') WHERE id=?", [$cid]);
+        dbExec("UPDATE companies SET status='active', updated_at=NOW() WHERE id=?", [$cid]);
         logAudit('activate', $cid);
         $msg = 'Empresa reativada.';
     } elseif ($act === 'approve_pro') {
         $co = dbRow("SELECT * FROM companies WHERE id=?", [$cid]);
         if ($co) {
-            dbExec("UPDATE companies SET plan='pro', status='active', updated_at=datetime('now','localtime') WHERE id=?", [$cid]);
+            dbExec("UPDATE companies SET plan='pro', status='active', updated_at=NOW() WHERE id=?", [$cid]);
             logAudit('approve_pro', $cid, json_encode(['prev_status' => $co['status']]));
             $msg = 'Plano Pro ativado com sucesso!';
         }
     } elseif ($act === 'downgrade_free') {
-        $freeLimit = (int)(dbRow("SELECT value FROM system_settings WHERE key='free_quiz_limit'")['value'] ?? 12);
+        $freeLimit = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
         $quizzesAtivos = dbRows("SELECT id FROM quizzes WHERE company_id=? AND active=1 ORDER BY created_at ASC", [$cid]);
         $excess = array_slice($quizzesAtivos, $freeLimit);
         $inactivatedIds = [];
@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             dbExec("UPDATE quizzes SET active=0 WHERE id=?", [$q['id']]);
             $inactivatedIds[] = $q['id'];
         }
-        dbExec("UPDATE companies SET plan='free', status='active', updated_at=datetime('now','localtime') WHERE id=?", [$cid]);
+        dbExec("UPDATE companies SET plan='free', status='active', updated_at=NOW() WHERE id=?", [$cid]);
         logAudit('downgrade', $cid, json_encode(['inactivated_ids' => $inactivatedIds, 'limit' => $freeLimit]));
         $msg = 'Plano rebaixado para Free. ' . count($inactivatedIds) . ' quizze(s) inativado(s).';
     }
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if (isset($_GET['_msg'])) $msg = $_GET['_msg'];
 
-$freeLimit = (int)(dbRow("SELECT value FROM system_settings WHERE key='free_quiz_limit'")['value'] ?? 12);
+$freeLimit = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
 
 superadminHead('Empresas', 'companies.php');
 ?>

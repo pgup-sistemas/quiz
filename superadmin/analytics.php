@@ -42,11 +42,11 @@ $conversionRate = $totalCo > 0 ? round($proActive / $totalCo * 100) : 0;
 
 // ── Crescimento mensal de empresas (últimos 12 meses) ─────────────────────────
 $monthlyCompanies = dbRows("
-    SELECT strftime('%Y-%m', created_at) AS mes,
+    SELECT DATE_FORMAT(created_at, '%Y-%m') AS mes,
         COUNT(*) AS total,
         SUM(CASE WHEN plan='pro' THEN 1 ELSE 0 END) AS pro_count
     FROM companies
-    WHERE created_at >= date('now','localtime','-12 months')
+    WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
     GROUP BY mes
     ORDER BY mes ASC
 ");
@@ -55,10 +55,10 @@ $coMonthMax = max(array_merge([1], array_column($monthlyCompanies, 'total')));
 
 // ── Crescimento mensal de participações (atividade) ───────────────────────────
 $monthlyActivity = dbRows("
-    SELECT strftime('%Y-%m', p.completed_at) AS mes,
+    SELECT DATE_FORMAT(p.completed_at, '%Y-%m') AS mes,
         COUNT(*) AS completions
     FROM participants p
-    WHERE p.completed_at >= date('now','localtime','-12 months')
+    WHERE p.completed_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
     GROUP BY mes
     ORDER BY mes ASC
 ");

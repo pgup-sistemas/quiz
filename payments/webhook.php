@@ -41,7 +41,7 @@ try {
     $notifId = md5($rawPayload);
     try {
         dbExec(
-            "INSERT OR IGNORE INTO payment_events (efi_notification_id, event_type, raw_payload, processed) VALUES (?,?,?,2)",
+            "INSERT IGNORE INTO payment_events (efi_notification_id, event_type, raw_payload, processed) VALUES (?,?,?,2)",
             [$notifId . '_err_' . time(), 'webhook_error', $rawPayload]
         );
     } catch (Throwable $ignored) {}

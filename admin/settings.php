@@ -103,10 +103,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_branding'])) {
     }
 
     if ($color) {
-        dbExec("UPDATE companies SET primary_color = ?, updated_at = datetime('now','localtime') WHERE id = ?", [$color, $cid]);
+        dbExec("UPDATE companies SET primary_color = ?, updated_at = NOW() WHERE id = ?", [$color, $cid]);
     }
     if ($logoPath !== null) {
-        dbExec("UPDATE companies SET logo_path = ?, updated_at = datetime('now','localtime') WHERE id = ?", [$logoPath, $cid]);
+        dbExec("UPDATE companies SET logo_path = ?, updated_at = NOW() WHERE id = ?", [$logoPath, $cid]);
     }
 
     flash('Identidade visual atualizada!', 'success');

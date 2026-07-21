@@ -66,7 +66,7 @@ if (!$error && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = userRegister($name, $email, $pass, $sector);
         if ($result === true) {
             // Marca convite como usado
-            dbExec("UPDATE invites SET used_at = datetime('now','localtime') WHERE token = ?", [$token]);
+            dbExec("UPDATE invites SET used_at = NOW() WHERE token = ?", [$token]);
             // Auto-login
             userLogin($email, $pass);
             header('Location: dashboard.php');

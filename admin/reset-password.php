@@ -12,7 +12,7 @@ $error = '';
 
 if ($token) {
     $admin = dbRow(
-        "SELECT * FROM admins WHERE reset_token = ? AND reset_expires > datetime('now','localtime')",
+        "SELECT * FROM admins WHERE reset_token = ? AND reset_expires > NOW()",
         [$token]
     );
 }

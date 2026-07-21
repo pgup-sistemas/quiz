@@ -11,10 +11,10 @@ $period = $_GET['period'] ?? '30';
 if (!in_array($period, ['7','30','90','365','all'], true)) $period = '30';
 
 $dateFilter = match($period) {
-    '7'   => "AND p.completed_at >= date('now','localtime','-7 days')",
-    '30'  => "AND p.completed_at >= date('now','localtime','-30 days')",
-    '90'  => "AND p.completed_at >= date('now','localtime','-90 days')",
-    '365' => "AND p.completed_at >= date('now','localtime','-1 year')",
+    '7'   => "AND p.completed_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)",
+    '30'  => "AND p.completed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)",
+    '90'  => "AND p.completed_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)",
+    '365' => "AND p.completed_at >= DATE_SUB(NOW(), INTERVAL 1 YEAR)",
     default => '',
 };
 
@@ -96,14 +96,14 @@ $topPerf = dbRows("
 
 // ── Evolução mensal (últimos 12 meses) ────────────────────────────────────────
 $monthly = dbRows("
-    SELECT strftime('%Y-%m', p.completed_at) AS mes,
+    SELECT DATE_FORMAT(p.completed_at, '%Y-%m') AS mes,
         COUNT(*) AS completions,
         ROUND(AVG(p.percentage)) AS avg_pct,
         SUM(p.passed) AS passed
     FROM participants p
     JOIN quizzes q ON q.id = p.quiz_id
     WHERE q.company_id = ? AND p.completed_at IS NOT NULL
-        AND p.completed_at >= date('now','localtime','-12 months')
+        AND p.completed_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
     GROUP BY mes
     ORDER BY mes ASC
 ", [$cid]);

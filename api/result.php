@@ -71,7 +71,7 @@ $vCode = strtoupper(bin2hex(random_bytes(4)));
 dbExec("
     UPDATE participants
     SET score = ?, total_questions = ?, percentage = ?, passed = ?,
-        avg_time = ?, completed_at = datetime('now','localtime'), verify_code = ?
+        avg_time = ?, completed_at = NOW(), verify_code = ?
     WHERE id = ? AND company_id = ?
 ", [$correct, $total, $pct, $passed, $avgTime, $vCode, $pid, $companyId]);
 

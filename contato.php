@@ -4,18 +4,7 @@ require_once __DIR__ . '/includes/user-auth.php';
 userSessionStart();
 $currentUser = currentUser();
 
-// Cria tabela de contatos se não existir
-getDB()->exec("
-    CREATE TABLE IF NOT EXISTS contact_messages (
-        id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        name       TEXT NOT NULL,
-        email      TEXT NOT NULL,
-        subject    TEXT NOT NULL,
-        message    TEXT NOT NULL,
-        ip         TEXT DEFAULT '',
-        created_at TEXT DEFAULT (datetime('now','localtime'))
-    )
-");
+// Tabela contact_messages já é criada centralmente em includes/db.php -> initDB()
 
 $success = false;
 $errors  = [];

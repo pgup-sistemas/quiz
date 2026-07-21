@@ -32,7 +32,7 @@ $users = dbRows(
     "SELECT u.id, u.name, u.email, u.sector, u.created_at, u.company_id,
             c.name AS company_name, c.plan AS company_plan,
             (SELECT COUNT(*) FROM participants p WHERE p.user_id=u.id) AS quiz_count,
-            (SELECT MAX(p2.finished_at) FROM participants p2 WHERE p2.user_id=u.id AND p2.finished_at IS NOT NULL) AS last_activity
+            (SELECT MAX(p2.completed_at) FROM participants p2 WHERE p2.user_id=u.id AND p2.completed_at IS NOT NULL) AS last_activity
      FROM users u
      LEFT JOIN companies c ON c.id=u.company_id
      WHERE $whereSql
@@ -45,7 +45,7 @@ $totalPages = (int)ceil($total / $perPage);
 $totalUsers    = (int)dbRow("SELECT COUNT(*) AS c FROM users")['c'];
 $activeUsers30 = (int)dbRow(
     "SELECT COUNT(DISTINCT user_id) AS c FROM participants
-     WHERE finished_at >= datetime('now','localtime','-30 days')"
+     WHERE completed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)"
 )['c'];
 $companies = dbRows("SELECT id, name FROM companies ORDER BY name");
 

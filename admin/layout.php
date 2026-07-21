@@ -10,7 +10,7 @@ function adminHead(string $title, string $activeNav = ''): void {
     $plan      = $company['plan'] ?? 'free';
 
     // Uso de quizzes para banner
-    $freeLimit = (int)(dbRow("SELECT value FROM system_settings WHERE key='free_quiz_limit'")['value'] ?? 12);
+    $freeLimit = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
     $quizUsed  = (int)(dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE company_id=? AND active=1", [$companyId])['c'] ?? 0);
     $quizPct   = ($plan === 'free' && $freeLimit > 0) ? (int)round($quizUsed / $freeLimit * 100) : 0;
 

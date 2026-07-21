@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'support_email'   => trim($_POST['support_email'] ?? ''),
             ];
             foreach ($updates as $key => $val) {
-                dbExec("UPDATE system_settings SET value=?, updated_at=datetime('now','localtime') WHERE key=?", [$val, $key]);
+                dbExec("UPDATE system_settings SET value=?, updated_at=NOW() WHERE `key`=?", [$val, $key]);
             }
             logAudit('update_settings', 0, json_encode($updates));
             $msg = 'Configurações gerais salvas.';
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'mail_from_name' => trim($_POST['mail_from_name'] ?? 'PageQuiz'),
         ];
         foreach ($emailUpdates as $key => $val) {
-            dbExec("UPDATE system_settings SET value=?, updated_at=datetime('now','localtime') WHERE key=?", [$val, $key]);
+            dbExec("UPDATE system_settings SET value=?, updated_at=NOW() WHERE `key`=?", [$val, $key]);
         }
         logAudit('update_email_settings', 0, json_encode(['mail_from' => $emailUpdates['mail_from'], 'has_key' => (bool)$emailUpdates['resend_api_key']]));
         $msg = 'Configurações de e-mail salvas.';
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'efi_cert_password'  => trim($_POST['efi_cert_password']  ?? ''),
             ];
             foreach ($efiUpdates as $key => $val) {
-                dbExec("UPDATE system_settings SET value=?, updated_at=datetime('now','localtime') WHERE key=?", [$val, $key]);
+                dbExec("UPDATE system_settings SET value=?, updated_at=NOW() WHERE `key`=?", [$val, $key]);
             }
             logAudit('update_efi_settings', 0, json_encode(['sandbox' => $efiUpdates['efi_sandbox'], 'price' => $priceCents]));
             $msg = 'Configurações EFI Bank salvas.';
@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $settings = [];
-foreach (dbRows("SELECT * FROM system_settings ORDER BY key") as $row) {
+foreach (dbRows("SELECT * FROM system_settings ORDER BY `key`") as $row) {
     $settings[$row['key']] = $row;
 }
 

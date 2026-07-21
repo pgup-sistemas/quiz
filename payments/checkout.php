@@ -125,7 +125,7 @@ $efiJsSdk = $isSandbox
     ? 'https://sandbox.efipay.com.br/v1/cdn/efi.min.js'
     : 'https://efipay.com.br/v1/cdn/efi.min.js';
 
-$efiClientId = dbRow("SELECT value FROM system_settings WHERE key='efi_client_id'")['value'] ?? '';
+$efiClientId = dbRow("SELECT value FROM system_settings WHERE `key`='efi_client_id'")['value'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">

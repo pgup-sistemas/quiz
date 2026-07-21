@@ -1,6 +1,13 @@
 <?php
+require_once __DIR__ . '/env.php';
+loadEnvFile(__DIR__ . '/../.env');
+loadEnvFile(__DIR__ . '/../.env.production');
+
 define('APP_DEBUG',  false);
-define('DB_PATH',    __DIR__ . '/../data/quiz.db');
+define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
+define('DB_NAME', getenv('DB_NAME') ?: 'pagequiz');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') ?: '');
 define('BASE_URL',   'https://quiz.pageup.net.br');
 define('SITE_NAME',  'PageQuiz');
 define('SITE_BRAND', 'PageUp Sistemas');

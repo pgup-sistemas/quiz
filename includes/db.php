@@ -4,96 +4,104 @@ require_once __DIR__ . '/config.php';
 function getDB(): PDO {
     static $pdo = null;
     if ($pdo === null) {
-        $dir = dirname(DB_PATH);
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
-        $pdo = new PDO('sqlite:' . DB_PATH);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $pdo->exec('PRAGMA journal_mode=WAL');   // leituras paralelas durante escritas
-        $pdo->exec('PRAGMA synchronous=NORMAL'); // durabilidade OK, sem fsync em cada write
-        $pdo->exec('PRAGMA foreign_keys=ON');
-        $pdo->exec('PRAGMA busy_timeout=5000');  // espera até 5s antes de "database is locked"
+        $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4';
+        $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES   => false,
+        ]);
         initDB($pdo);
     }
     return $pdo;
 }
 
+/**
+ * Verifica se uma coluna existe numa tabela (usado para migrações incrementais futuras).
+ */
+function columnExists(PDO $db, string $table, string $column): bool {
+    $st = $db->prepare("SELECT COUNT(*) FROM information_schema.columns
+                         WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?");
+    $st->execute([$table, $column]);
+    return (int)$st->fetchColumn() > 0;
+}
+
 function initDB(PDO $db): void {
-    // ── Novas tabelas SaaS ──────────────────────────────────────────────────
+    // ── Tabelas SaaS ─────────────────────────────────────────────────────────
     $db->exec("
     CREATE TABLE IF NOT EXISTS companies (
-        id            INTEGER PRIMARY KEY AUTOINCREMENT,
-        name          TEXT    NOT NULL,
-        slug          TEXT    UNIQUE NOT NULL,
-        cnpj          TEXT    DEFAULT NULL,
-        email         TEXT    NOT NULL,
-        plan          TEXT    NOT NULL DEFAULT 'free',
-        status        TEXT    NOT NULL DEFAULT 'active',
-        primary_color TEXT    NOT NULL DEFAULT '#219EBC',
-        logo_path     TEXT    DEFAULT NULL,
-        created_at    TEXT    DEFAULT (datetime('now','localtime')),
-        updated_at    TEXT    DEFAULT (datetime('now','localtime'))
-    );
+        id                  INT PRIMARY KEY AUTO_INCREMENT,
+        name                VARCHAR(255) NOT NULL,
+        slug                VARCHAR(150) NOT NULL UNIQUE,
+        cnpj                VARCHAR(20)  DEFAULT NULL,
+        email               VARCHAR(255) NOT NULL,
+        plan                VARCHAR(20)  NOT NULL DEFAULT 'free',
+        status              VARCHAR(20)  NOT NULL DEFAULT 'active',
+        primary_color       VARCHAR(20)  NOT NULL DEFAULT '#219EBC',
+        logo_path           VARCHAR(255) DEFAULT NULL,
+        allow_self_register TINYINT(1)   NOT NULL DEFAULT 1,
+        created_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
     CREATE TABLE IF NOT EXISTS system_settings (
-        key         TEXT PRIMARY KEY,
+        `key`       VARCHAR(100) PRIMARY KEY,
         value       TEXT NOT NULL,
-        description TEXT DEFAULT '',
-        updated_at  TEXT DEFAULT (datetime('now','localtime'))
-    );
+        description VARCHAR(255) DEFAULT '',
+        updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
     CREATE TABLE IF NOT EXISTS super_admins (
-        id            INTEGER PRIMARY KEY AUTOINCREMENT,
-        username      TEXT    UNIQUE NOT NULL,
-        password_hash TEXT    NOT NULL,
-        name          TEXT    DEFAULT '',
-        active        INTEGER DEFAULT 1,
-        created_at    TEXT    DEFAULT (datetime('now','localtime'))
-    );
+        id            INT PRIMARY KEY AUTO_INCREMENT,
+        username      VARCHAR(255) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        name          VARCHAR(255) DEFAULT '',
+        active        TINYINT(1) DEFAULT 1,
+        created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
     CREATE TABLE IF NOT EXISTS audit_log (
-        id                INTEGER PRIMARY KEY AUTOINCREMENT,
-        actor_type        TEXT    NOT NULL,
-        actor_id          INTEGER NOT NULL DEFAULT 0,
-        action            TEXT    NOT NULL,
-        target_company_id INTEGER DEFAULT NULL,
-        ip                TEXT    DEFAULT '',
-        detail            TEXT    DEFAULT '',
-        created_at        TEXT    DEFAULT (datetime('now','localtime'))
-    );
+        id                 INT PRIMARY KEY AUTO_INCREMENT,
+        actor_type         VARCHAR(50) NOT NULL,
+        actor_id           INT NOT NULL DEFAULT 0,
+        action             VARCHAR(100) NOT NULL,
+        target_company_id  INT DEFAULT NULL,
+        ip                 VARCHAR(64) DEFAULT '',
+        detail             TEXT DEFAULT NULL,
+        created_at         DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
     CREATE TABLE IF NOT EXISTS subscriptions (
-        id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-        company_id          INTEGER NOT NULL,
-        efi_subscription_id TEXT    DEFAULT NULL,
-        efi_charge_id       TEXT    DEFAULT NULL,
-        type                TEXT    NOT NULL DEFAULT 'pix',
-        status              TEXT    NOT NULL DEFAULT 'pending',
-        amount              INTEGER NOT NULL DEFAULT 0,
-        next_billing_at     TEXT    DEFAULT NULL,
-        grace_until         TEXT    DEFAULT NULL,
-        pix_txid            TEXT    DEFAULT NULL,
-        pix_qrcode          TEXT    DEFAULT NULL,
-        pix_copiaecola      TEXT    DEFAULT NULL,
-        payment_link_url    TEXT    DEFAULT NULL,
-        created_at          TEXT    DEFAULT (datetime('now','localtime')),
-        updated_at          TEXT    DEFAULT (datetime('now','localtime'))
-    );
+        id                   INT PRIMARY KEY AUTO_INCREMENT,
+        company_id           INT NOT NULL,
+        efi_subscription_id  VARCHAR(100) DEFAULT NULL,
+        efi_charge_id        VARCHAR(100) DEFAULT NULL,
+        type                 VARCHAR(20) NOT NULL DEFAULT 'pix',
+        status               VARCHAR(20) NOT NULL DEFAULT 'pending',
+        amount               INT NOT NULL DEFAULT 0,
+        next_billing_at      DATETIME DEFAULT NULL,
+        grace_until          DATETIME DEFAULT NULL,
+        pix_txid             VARCHAR(100) DEFAULT NULL,
+        pix_qrcode           TEXT DEFAULT NULL,
+        pix_copiaecola       TEXT DEFAULT NULL,
+        payment_link_url     VARCHAR(500) DEFAULT NULL,
+        created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
     CREATE TABLE IF NOT EXISTS payment_events (
-        id                   INTEGER PRIMARY KEY AUTOINCREMENT,
-        company_id           INTEGER DEFAULT NULL,
-        subscription_id      INTEGER DEFAULT NULL,
-        efi_notification_id  TEXT    UNIQUE,
-        event_type           TEXT    NOT NULL,
-        raw_payload          TEXT    DEFAULT '',
-        processed            INTEGER NOT NULL DEFAULT 0,
-        created_at           TEXT    DEFAULT (datetime('now','localtime'))
-    );
+        id                    INT PRIMARY KEY AUTO_INCREMENT,
+        company_id            INT DEFAULT NULL,
+        subscription_id       INT DEFAULT NULL,
+        efi_notification_id   VARCHAR(150) UNIQUE,
+        event_type            VARCHAR(100) NOT NULL,
+        raw_payload           TEXT DEFAULT NULL,
+        processed             TINYINT(1) NOT NULL DEFAULT 0,
+        created_at            DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
 
     // Seeds: empresa base (Alphaclin = id 1)
-    $db->exec("INSERT OR IGNORE INTO companies (id, name, slug, email, plan, status)
+    $db->exec("INSERT IGNORE INTO companies (id, name, slug, email, plan, status)
                VALUES (1, 'Alphaclin', 'alphaclin', 'comunicacao@alphaclin.net.br', 'pro', 'active')");
 
     // Seeds: configurações globais
@@ -111,10 +119,10 @@ function initDB(PDO $db): void {
         ['efi_client_secret', '',                         'Client Secret EFI Bank'],
         ['efi_sandbox',       '1',                        '1=sandbox (homologacao), 0=producao'],
         ['efi_pix_key',       '',                         'Chave PIX da conta EFI (e-mail, CPF, CNPJ ou aleatoria)'],
-        ['efi_cert_path',     'certs/efi-sandbox.p12',   'Caminho do certificado .p12 relativo a raiz do projeto'],
+        ['efi_cert_path',     'certs/efi-sandbox.p12',    'Caminho do certificado .p12 relativo a raiz do projeto'],
         ['efi_cert_password', '',                         'Senha do certificado .p12 (deixe vazio se nao tiver)'],
     ];
-    $stmt = $db->prepare("INSERT OR IGNORE INTO system_settings (key, value, description) VALUES (?,?,?)");
+    $stmt = $db->prepare("INSERT IGNORE INTO system_settings (`key`, value, description) VALUES (?,?,?)");
     foreach ($settingsSeeds as $s) $stmt->execute($s);
 
     // Seed super-admin
@@ -125,293 +133,168 @@ function initDB(PDO $db): void {
            ->execute(['pageupsistemas@gmail.com', $saHash, 'PageUp Sistemas']);
     }
 
-    // ── Tabelas existentes ──────────────────────────────────────────────────
+    // ── Tabelas de domínio ──────────────────────────────────────────────────
     $db->exec("
     CREATE TABLE IF NOT EXISTS admins (
-        id              INTEGER PRIMARY KEY AUTOINCREMENT,
-        username        TEXT    UNIQUE NOT NULL,
-        password_hash   TEXT    NOT NULL,
-        name            TEXT    DEFAULT 'Administrador',
-        created_at      TEXT    DEFAULT (datetime('now','localtime'))
-    );
+        id              INT PRIMARY KEY AUTO_INCREMENT,
+        username        VARCHAR(255) NOT NULL UNIQUE,
+        password_hash   VARCHAR(255) NOT NULL,
+        name            VARCHAR(255) DEFAULT 'Administrador',
+        first_login     TINYINT(1) NOT NULL DEFAULT 0,
+        active          TINYINT(1) NOT NULL DEFAULT 1,
+        reset_token     VARCHAR(255) DEFAULT NULL,
+        reset_expires   DATETIME DEFAULT NULL,
+        company_id      INT NOT NULL DEFAULT 1,
+        created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_admins_company (company_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
     CREATE TABLE IF NOT EXISTS sectors (
-        id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        name       TEXT    UNIQUE NOT NULL,
-        created_at TEXT    DEFAULT (datetime('now','localtime'))
-    );
+        id         INT PRIMARY KEY AUTO_INCREMENT,
+        company_id INT NOT NULL DEFAULT 1,
+        name       VARCHAR(150) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_sector_company_name (company_id, name),
+        INDEX idx_sectors_company (company_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
     CREATE TABLE IF NOT EXISTS quizzes (
-        id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-        title               TEXT    NOT NULL,
-        description         TEXT    DEFAULT '',
-        sector              TEXT    DEFAULT 'Geral',
-        created_by          TEXT    DEFAULT '',
-        time_per_question   INTEGER DEFAULT 30,
-        pass_percentage     INTEGER DEFAULT 70,
-        max_questions       INTEGER DEFAULT 0,
-        allow_retake        INTEGER DEFAULT 1,
-        show_feedback       INTEGER DEFAULT 1,
-        has_certificate     INTEGER DEFAULT 1,
-        randomize           INTEGER DEFAULT 0,
-        active              INTEGER DEFAULT 1,
-        expires_at          TEXT    DEFAULT NULL,
-        created_at          TEXT    DEFAULT (datetime('now','localtime')),
-        updated_at          TEXT    DEFAULT (datetime('now','localtime'))
-    );
+        id                  INT PRIMARY KEY AUTO_INCREMENT,
+        title               VARCHAR(255) NOT NULL,
+        description         TEXT DEFAULT NULL,
+        sector              VARCHAR(150) DEFAULT 'Geral',
+        created_by          VARCHAR(255) DEFAULT '',
+        time_per_question   INT DEFAULT 30,
+        pass_percentage     INT DEFAULT 70,
+        max_questions       INT DEFAULT 0,
+        allow_retake        TINYINT(1) DEFAULT 1,
+        show_feedback       TINYINT(1) DEFAULT 1,
+        has_certificate     TINYINT(1) DEFAULT 1,
+        randomize           TINYINT(1) DEFAULT 0,
+        active              TINYINT(1) DEFAULT 1,
+        expires_at          DATETIME DEFAULT NULL,
+        visible_from        DATETIME DEFAULT NULL,
+        visibility          VARCHAR(20) NOT NULL DEFAULT 'all',
+        company_id          INT NOT NULL DEFAULT 1,
+        created_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_quizzes_company (company_id, active)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
     CREATE TABLE IF NOT EXISTS questions (
-        id              INTEGER PRIMARY KEY AUTOINCREMENT,
-        quiz_id         INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
-        question_text   TEXT    NOT NULL,
-        category        TEXT    DEFAULT '',
-        option_a        TEXT    NOT NULL,
-        option_b        TEXT    NOT NULL,
-        option_c        TEXT    DEFAULT '',
-        option_d        TEXT    DEFAULT '',
-        correct_answer  INTEGER NOT NULL DEFAULT 0,
-        explanation     TEXT    DEFAULT '',
-        sort_order      INTEGER DEFAULT 0,
-        created_at      TEXT    DEFAULT (datetime('now','localtime'))
-    );
-
-    CREATE TABLE IF NOT EXISTS participants (
-        id              INTEGER PRIMARY KEY AUTOINCREMENT,
-        quiz_id         INTEGER REFERENCES quizzes(id) ON DELETE SET NULL,
-        name            TEXT    NOT NULL,
-        email           TEXT    DEFAULT '',
-        sector          TEXT    DEFAULT '',
-        score           INTEGER DEFAULT 0,
-        total_questions INTEGER DEFAULT 0,
-        percentage      REAL    DEFAULT 0,
-        passed          INTEGER DEFAULT 0,
-        avg_time        REAL    DEFAULT 0,
-        started_at      TEXT    DEFAULT (datetime('now','localtime')),
-        last_activity   TEXT    DEFAULT (datetime('now','localtime')),
-        completed_at    TEXT,
-        verify_code     TEXT    DEFAULT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS answers (
-        id              INTEGER PRIMARY KEY AUTOINCREMENT,
-        participant_id  INTEGER NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
-        company_id      INTEGER NOT NULL DEFAULT 1,
-        question_id     INTEGER NOT NULL,
-        selected_answer INTEGER DEFAULT -1,
-        is_correct      INTEGER DEFAULT 0,
-        time_taken      INTEGER DEFAULT 0
-    );
+        id              INT PRIMARY KEY AUTO_INCREMENT,
+        quiz_id         INT NOT NULL,
+        question_text   TEXT NOT NULL,
+        category        VARCHAR(150) DEFAULT '',
+        option_a        TEXT NOT NULL,
+        option_b        TEXT NOT NULL,
+        option_c        TEXT DEFAULT NULL,
+        option_d        TEXT DEFAULT NULL,
+        correct_answer  INT NOT NULL DEFAULT 0,
+        explanation     TEXT DEFAULT NULL,
+        sort_order      INT DEFAULT 0,
+        company_id      INT NOT NULL DEFAULT 1,
+        created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_questions_quiz FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,
+        INDEX idx_questions_company (company_id, quiz_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
     CREATE TABLE IF NOT EXISTS users (
-        id              INTEGER PRIMARY KEY AUTOINCREMENT,
-        name            TEXT    NOT NULL,
-        email           TEXT    NOT NULL UNIQUE,
-        password_hash   TEXT    NOT NULL,
-        sector          TEXT    DEFAULT '',
-        active          INTEGER DEFAULT 1,
-        reset_token     TEXT    DEFAULT NULL,
-        reset_expires   TEXT    DEFAULT NULL,
-        last_login      TEXT    DEFAULT NULL,
-        created_at      TEXT    DEFAULT (datetime('now','localtime'))
-    );
+        id              INT PRIMARY KEY AUTO_INCREMENT,
+        company_id      INT NOT NULL DEFAULT 1,
+        name            VARCHAR(255) NOT NULL,
+        email           VARCHAR(255) NOT NULL,
+        password_hash   VARCHAR(255) NOT NULL,
+        sector          VARCHAR(150) DEFAULT '',
+        active          TINYINT(1) DEFAULT 1,
+        reset_token     VARCHAR(255) DEFAULT NULL,
+        reset_expires   DATETIME DEFAULT NULL,
+        last_login      DATETIME DEFAULT NULL,
+        created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_user_company_email (company_id, email),
+        INDEX idx_users_company (company_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+    CREATE TABLE IF NOT EXISTS participants (
+        id              INT PRIMARY KEY AUTO_INCREMENT,
+        quiz_id         INT DEFAULT NULL,
+        name            VARCHAR(255) NOT NULL,
+        email           VARCHAR(255) DEFAULT '',
+        sector          VARCHAR(150) DEFAULT '',
+        score           INT DEFAULT 0,
+        total_questions INT DEFAULT 0,
+        percentage      DECIMAL(6,2) DEFAULT 0,
+        passed          TINYINT(1) DEFAULT 0,
+        avg_time        DECIMAL(8,2) DEFAULT 0,
+        started_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_activity   DATETIME DEFAULT CURRENT_TIMESTAMP,
+        completed_at    DATETIME DEFAULT NULL,
+        verify_code     VARCHAR(20) DEFAULT NULL,
+        user_id         INT DEFAULT NULL,
+        company_id      INT NOT NULL DEFAULT 1,
+        CONSTRAINT fk_participants_quiz FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE SET NULL,
+        CONSTRAINT fk_participants_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+        INDEX idx_participants_user (user_id),
+        INDEX idx_participants_company (company_id, quiz_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+    CREATE TABLE IF NOT EXISTS answers (
+        id              INT PRIMARY KEY AUTO_INCREMENT,
+        participant_id  INT NOT NULL,
+        company_id      INT NOT NULL DEFAULT 1,
+        question_id     INT NOT NULL,
+        selected_answer INT DEFAULT -1,
+        is_correct      TINYINT(1) DEFAULT 0,
+        time_taken      INT DEFAULT 0,
+        CONSTRAINT fk_answers_participant FOREIGN KEY (participant_id) REFERENCES participants(id) ON DELETE CASCADE,
+        INDEX idx_answers_company (company_id, participant_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+    CREATE TABLE IF NOT EXISTS quiz_assignments (
+        id         INT PRIMARY KEY AUTO_INCREMENT,
+        quiz_id    INT NOT NULL,
+        sector_id  INT NOT NULL,
+        CONSTRAINT fk_qa_quiz   FOREIGN KEY (quiz_id)   REFERENCES quizzes(id) ON DELETE CASCADE,
+        CONSTRAINT fk_qa_sector FOREIGN KEY (sector_id) REFERENCES sectors(id) ON DELETE CASCADE,
+        UNIQUE KEY uniq_quiz_sector (quiz_id, sector_id),
+        INDEX idx_qa_quiz (quiz_id),
+        INDEX idx_qa_sector (sector_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+    CREATE TABLE IF NOT EXISTS invites (
+        id         INT PRIMARY KEY AUTO_INCREMENT,
+        company_id INT NOT NULL,
+        email      VARCHAR(255) DEFAULT NULL,
+        sector     VARCHAR(150) DEFAULT '',
+        token      VARCHAR(255) NOT NULL UNIQUE,
+        expires_at DATETIME NOT NULL,
+        used_at    DATETIME DEFAULT NULL,
+        created_by INT NOT NULL DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_invites_company (company_id),
+        INDEX idx_invites_token (token)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+    CREATE TABLE IF NOT EXISTS contact_messages (
+        id         INT PRIMARY KEY AUTO_INCREMENT,
+        company_id INT NOT NULL DEFAULT 1,
+        name       VARCHAR(255) NOT NULL,
+        email      VARCHAR(255) NOT NULL,
+        subject    VARCHAR(255) NOT NULL,
+        message    TEXT NOT NULL,
+        ip         VARCHAR(64) DEFAULT '',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
 
-    // Migrations — add columns to existing DBs that were created before these fields existed
-    $cols = array_column($db->query("PRAGMA table_info(quizzes)")->fetchAll(PDO::FETCH_ASSOC), 'name');
-    if (!in_array('expires_at',     $cols)) $db->exec("ALTER TABLE quizzes ADD COLUMN expires_at TEXT DEFAULT NULL");
-    if (!in_array('max_questions',  $cols)) $db->exec("ALTER TABLE quizzes ADD COLUMN max_questions INTEGER DEFAULT 0");
-    if (!in_array('has_certificate',$cols)) $db->exec("ALTER TABLE quizzes ADD COLUMN has_certificate INTEGER DEFAULT 1");
-    if (!in_array('visible_from',   $cols)) $db->exec("ALTER TABLE quizzes ADD COLUMN visible_from TEXT DEFAULT NULL");
-
-    $pCols = array_column($db->query("PRAGMA table_info(participants)")->fetchAll(PDO::FETCH_ASSOC), 'name');
-    if (!in_array('last_activity', $pCols)) {
-        $db->exec("ALTER TABLE participants ADD COLUMN last_activity TEXT");
-        $db->exec("UPDATE participants SET last_activity = datetime('now','localtime') WHERE last_activity IS NULL");
-    }
-    if (!in_array('verify_code',   $pCols)) {
-        $db->exec("ALTER TABLE participants ADD COLUMN verify_code TEXT DEFAULT NULL");
-    }
-    if (!in_array('user_id', $pCols)) {
-        $db->exec("ALTER TABLE participants ADD COLUMN user_id INTEGER DEFAULT NULL REFERENCES users(id) ON DELETE SET NULL");
-        $db->exec("CREATE INDEX IF NOT EXISTS idx_participants_user ON participants(user_id)");
-    }
-
-    // ── Migrations SaaS: company_id em todas as tabelas de domínio ──────────
-    // Todos os dados existentes pertencem à empresa 1 (Alphaclin)
-    $existingTables = array_column($db->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(), 'name');
-    $domainTables = array_intersect(['quizzes', 'questions', 'participants', 'answers', 'sectors', 'admins', 'contact_messages'], $existingTables);
-    foreach ($domainTables as $tbl) {
-        $tc = array_column($db->query("PRAGMA table_info($tbl)")->fetchAll(PDO::FETCH_ASSOC), 'name');
-        if (!in_array('company_id', $tc)) {
-            $db->exec("ALTER TABLE $tbl ADD COLUMN company_id INTEGER NOT NULL DEFAULT 1");
-        }
-    }
-
-    // Colunas extras em super_admins
-    $saCols = array_column($db->query("PRAGMA table_info(super_admins)")->fetchAll(PDO::FETCH_ASSOC), 'name');
-    if (!in_array('active', $saCols)) $db->exec("ALTER TABLE super_admins ADD COLUMN active INTEGER NOT NULL DEFAULT 1");
-
-    // Colunas extras em admins
-    $aCols = array_column($db->query("PRAGMA table_info(admins)")->fetchAll(PDO::FETCH_ASSOC), 'name');
-    if (!in_array('first_login',    $aCols)) $db->exec("ALTER TABLE admins ADD COLUMN first_login    INTEGER NOT NULL DEFAULT 0");
-    if (!in_array('active',         $aCols)) $db->exec("ALTER TABLE admins ADD COLUMN active         INTEGER NOT NULL DEFAULT 1");
-    if (!in_array('reset_token',    $aCols)) $db->exec("ALTER TABLE admins ADD COLUMN reset_token    TEXT");
-    if (!in_array('reset_expires',  $aCols)) $db->exec("ALTER TABLE admins ADD COLUMN reset_expires  TEXT");
-
-    // Índices de performance por tenant
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_quizzes_company     ON quizzes(company_id, active)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_questions_company   ON questions(company_id, quiz_id)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_participants_company ON participants(company_id, quiz_id)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_answers_company     ON answers(company_id, participant_id)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_admins_company      ON admins(company_id)");
-
-    // ── Migration: recriar users com UNIQUE (company_id, email) ─────────────
-    $uIdxList = $db->query("PRAGMA index_list(users)")->fetchAll(PDO::FETCH_ASSOC);
-    $hasCompanyEmailUniq = false;
-    foreach ($uIdxList as $idx) {
-        if ($idx['unique'] && str_contains((string)($idx['name'] ?? ''), 'company')) {
-            $hasCompanyEmailUniq = true;
-            break;
-        }
-    }
-    if (!$hasCompanyEmailUniq) {
-        $uCols = array_column($db->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_ASSOC), 'name');
-        if (!in_array('company_id', $uCols)) {
-            // Passo 1: adicionar company_id como coluna temporária
-            $db->exec("ALTER TABLE users ADD COLUMN company_id INTEGER NOT NULL DEFAULT 1");
-        }
-        // Passo 2: recriar tabela com UNIQUE (company_id, email)
-        $db->exec("CREATE TABLE IF NOT EXISTS users_v2 (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            company_id    INTEGER NOT NULL DEFAULT 1,
-            name          TEXT    NOT NULL,
-            email         TEXT    NOT NULL,
-            password_hash TEXT    NOT NULL,
-            sector        TEXT    DEFAULT '',
-            active        INTEGER DEFAULT 1,
-            reset_token   TEXT    DEFAULT NULL,
-            reset_expires TEXT    DEFAULT NULL,
-            last_login    TEXT    DEFAULT NULL,
-            created_at    TEXT    DEFAULT (datetime('now','localtime')),
-            UNIQUE(company_id, email)
-        )");
-        $db->exec("INSERT OR IGNORE INTO users_v2
-                   SELECT id, company_id, name, email, password_hash, sector, active,
-                          reset_token, reset_expires, last_login, created_at FROM users");
-        $db->exec("DROP TABLE users");
-        $db->exec("ALTER TABLE users_v2 RENAME TO users");
-        $db->exec("CREATE INDEX IF NOT EXISTS idx_users_company ON users(company_id)");
-    }
-
-    // ── Migration: sectors → UNIQUE(name, company_id) ───────────────────────
-    $sIdxList = $db->query("PRAGMA index_list(sectors)")->fetchAll(PDO::FETCH_ASSOC);
-    $hasSectorCompanyUniq = false;
-    foreach ($sIdxList as $idx) {
-        if ($idx['unique'] && str_contains((string)($idx['name'] ?? ''), 'company')) {
-            $hasSectorCompanyUniq = true; break;
-        }
-    }
-    if (!$hasSectorCompanyUniq) {
-        $sCols = array_column($db->query("PRAGMA table_info(sectors)")->fetchAll(PDO::FETCH_ASSOC), 'name');
-        $db->exec("CREATE TABLE IF NOT EXISTS sectors_v2 (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            company_id INTEGER NOT NULL DEFAULT 1,
-            name       TEXT    NOT NULL,
-            created_at TEXT    DEFAULT (datetime('now','localtime')),
-            UNIQUE(company_id, name)
-        )");
-        if (in_array('company_id', $sCols)) {
-            $db->exec("INSERT OR IGNORE INTO sectors_v2 (id, company_id, name, created_at)
-                       SELECT id, company_id, name, created_at FROM sectors");
-        } else {
-            $db->exec("INSERT OR IGNORE INTO sectors_v2 (id, name, created_at)
-                       SELECT id, name, created_at FROM sectors");
-        }
-        $db->exec("DROP TABLE sectors");
-        $db->exec("ALTER TABLE sectors_v2 RENAME TO sectors");
-        $db->exec("CREATE INDEX IF NOT EXISTS idx_sectors_company ON sectors(company_id)");
-    }
-
-    // ── Migration: participants.quiz_id → remove NOT NULL (conflita com ON DELETE SET NULL) ──
-    $pColsInfo = $db->query("PRAGMA table_info(participants)")->fetchAll(PDO::FETCH_ASSOC);
-    $quizIdNotNull = false;
-    foreach ($pColsInfo as $c) {
-        if ($c['name'] === 'quiz_id' && (int)$c['notnull'] === 1) { $quizIdNotNull = true; break; }
-    }
-    if ($quizIdNotNull) {
-        $db->exec("PRAGMA foreign_keys=OFF");
-        $pAllCols = array_column($pColsInfo, 'name');
-        $pColsSql = implode(', ', $pAllCols);
-        $db->exec("DROP TABLE IF EXISTS participants_v2");
-        $db->exec("CREATE TABLE participants_v2 (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            quiz_id         INTEGER REFERENCES quizzes(id) ON DELETE SET NULL,
-            name            TEXT    NOT NULL,
-            email           TEXT    DEFAULT '',
-            sector          TEXT    DEFAULT '',
-            score           INTEGER DEFAULT 0,
-            total_questions INTEGER DEFAULT 0,
-            percentage      REAL    DEFAULT 0,
-            passed          INTEGER DEFAULT 0,
-            avg_time        REAL    DEFAULT 0,
-            started_at      TEXT    DEFAULT (datetime('now','localtime')),
-            last_activity   TEXT    DEFAULT (datetime('now','localtime')),
-            completed_at    TEXT,
-            verify_code     TEXT    DEFAULT NULL,
-            user_id         INTEGER DEFAULT NULL REFERENCES users(id) ON DELETE SET NULL,
-            company_id      INTEGER NOT NULL DEFAULT 1
-        )");
-        $db->exec("INSERT INTO participants_v2 ($pColsSql) SELECT $pColsSql FROM participants");
-        $db->exec("DROP TABLE participants");
-        $db->exec("ALTER TABLE participants_v2 RENAME TO participants");
-        $db->exec("CREATE INDEX IF NOT EXISTS idx_participants_user ON participants(user_id)");
-        $db->exec("CREATE INDEX IF NOT EXISTS idx_participants_company ON participants(company_id, quiz_id)");
-        $db->exec("PRAGMA foreign_keys=ON");
-    }
-
-    // ── Migration: quizzes → visibility + quiz_assignments ───────────────────
-    $qCols2 = array_column($db->query("PRAGMA table_info(quizzes)")->fetchAll(PDO::FETCH_ASSOC), 'name');
-    if (!in_array('visibility', $qCols2)) {
-        $db->exec("ALTER TABLE quizzes ADD COLUMN visibility TEXT NOT NULL DEFAULT 'all'");
-    }
-    $db->exec("CREATE TABLE IF NOT EXISTS quiz_assignments (
-        id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        quiz_id    INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
-        sector_id  INTEGER NOT NULL REFERENCES sectors(id) ON DELETE CASCADE,
-        UNIQUE(quiz_id, sector_id)
-    )");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_qa_quiz ON quiz_assignments(quiz_id)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_qa_sector ON quiz_assignments(sector_id)");
-
-    // ── Seed initial sectors ─────────────────────────────────────────────────
+    // ── Seed setores iniciais ────────────────────────────────────────────────
     $sc = $db->query("SELECT COUNT(*) FROM sectors")->fetchColumn();
     if ($sc == 0) {
         $existing = $db->query("SELECT DISTINCT sector FROM quizzes WHERE sector != '' AND sector IS NOT NULL")->fetchAll(PDO::FETCH_COLUMN);
-        $stmt = $db->prepare("INSERT OR IGNORE INTO sectors (company_id, name) VALUES (1,?)");
+        $stmt = $db->prepare("INSERT IGNORE INTO sectors (company_id, name) VALUES (1,?)");
         foreach (array_filter($existing) as $s) $stmt->execute([$s]);
-        $db->exec("INSERT OR IGNORE INTO sectors (company_id, name) VALUES (1,'Geral')");
+        $db->exec("INSERT IGNORE INTO sectors (company_id, name) VALUES (1,'Geral')");
     }
-
-    // ── Migration: companies → allow_self_register ──────────────────────────
-    $coCols = array_column($db->query("PRAGMA table_info(companies)")->fetchAll(PDO::FETCH_ASSOC), 'name');
-    if (!in_array('allow_self_register', $coCols)) {
-        $db->exec("ALTER TABLE companies ADD COLUMN allow_self_register INTEGER NOT NULL DEFAULT 1");
-    }
-
-    // ── Tabela de convites por token ─────────────────────────────────────────
-    $db->exec("CREATE TABLE IF NOT EXISTS invites (
-        id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        company_id INTEGER NOT NULL,
-        email      TEXT    DEFAULT NULL,
-        sector     TEXT    DEFAULT '',
-        token      TEXT    UNIQUE NOT NULL,
-        expires_at TEXT    NOT NULL,
-        used_at    TEXT    DEFAULT NULL,
-        created_by INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT    DEFAULT (datetime('now','localtime'))
-    )");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_invites_company ON invites(company_id)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_invites_token   ON invites(token)");
 
     // Seed default admin if none exists
     $count = $db->query("SELECT COUNT(*) FROM admins")->fetchColumn();

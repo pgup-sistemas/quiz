@@ -64,7 +64,7 @@ if ($userId && !$email && !empty($loggedUser['email'])) {
 
 dbExec("
     INSERT INTO participants (quiz_id, company_id, user_id, name, email, sector, score, total_questions, percentage, passed, avg_time, started_at, last_activity)
-    VALUES (?,?,?,?,?,?,0,0,0,0,0, datetime('now','localtime'), datetime('now','localtime'))
+    VALUES (?,?,?,?,?,?,0,0,0,0,0, NOW(), NOW())
 ", [$quizId, $companyId, $userId, $name, $email, $sector]);
 
 $pid = dbLastId();

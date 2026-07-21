@@ -35,8 +35,8 @@ $participants = dbRows("
     FROM participants p
     WHERE p.quiz_id = ?
     AND (
-        p.last_activity >= datetime('now', 'localtime', '-2 minutes')
-        OR p.completed_at >= datetime('now', 'localtime', '-10 minutes')
+        p.last_activity >= DATE_SUB(NOW(), INTERVAL 2 MINUTE)
+        OR p.completed_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)
     )
     ORDER BY p.score DESC, total_time_spent ASC, p.last_activity DESC
 ", [$quizId]);

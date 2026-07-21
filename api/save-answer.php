@@ -69,7 +69,7 @@ dbExec("
         total_questions = ?,
         avg_time        = ?,
         percentage      = ROUND((? * 1.0 / ?) * 100, 1),
-        last_activity   = datetime('now','localtime')
+        last_activity   = NOW()
     WHERE id = ?
 ", [
     (int)$stats['total_c'],
