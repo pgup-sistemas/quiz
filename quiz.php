@@ -468,68 +468,80 @@ function updateTimer() {
     ring.setAttribute('aria-label', `${timeLeft} segundos restantes`);
 }
 
-function autoTimeout() {
+async function autoTimeout() {
+    const q = QUESTIONS[currentQ];
     const elapsed = QUIZ.timer;
-    answers.push({ q_id: QUESTIONS[currentQ].id, selected: -1, correct: 0, time: elapsed });
     timesUsed.push(elapsed);
+    document.querySelectorAll('.opt').forEach(o => o.classList.add('disabled'));
 
+    let correctIdx = -1;
     if (participantId) {
-        fetch('api/save-answer.php', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ participant_id: participantId, question_id: QUESTIONS[currentQ].id, selected_answer: -1, is_correct: 0, time_taken: elapsed })
-        });
+        try {
+            const r = await fetch('api/save-answer.php', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ participant_id: participantId, question_id: q.id, selected_answer: -1, time_taken: elapsed })
+            });
+            const d = await r.json();
+            if (typeof d.correct_answer === 'number') correctIdx = d.correct_answer;
+        } catch(e) { console.error('save-answer error', e); }
     }
 
-    document.querySelectorAll('.opt').forEach(o => o.classList.add('disabled'));
-    document.getElementById(`opt-${QUESTIONS[currentQ].correct}`)?.classList.add('reveal');
-    showFeedback('timeout', QUESTIONS[currentQ]);
+    answers.push({ q_id: q.id, selected: -1, correct: 0, correct_answer: correctIdx, time: elapsed });
+    if (correctIdx >= 0) document.getElementById(`opt-${correctIdx}`)?.classList.add('reveal');
+    showFeedback('timeout', q, correctIdx);
 }
 
-function selectOpt(idx) {
+async function selectOpt(idx) {
     clearInterval(timerInterval);
     const elapsed = Math.round((Date.now() - startTime) / 1000);
     const q = QUESTIONS[currentQ];
-    const correct = idx === q.correct;
-
-    answers.push({ q_id: q.id, selected: idx, correct: correct ? 1 : 0, time: elapsed });
     timesUsed.push(elapsed);
+    document.querySelectorAll('.opt').forEach(o => o.classList.add('disabled'));
 
+    let isCorrect = false, correctIdx = -1;
     if (participantId) {
-        fetch('api/save-answer.php', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ participant_id: participantId, question_id: q.id, selected_answer: idx, is_correct: correct ? 1 : 0, time_taken: elapsed })
-        });
+        try {
+            const r = await fetch('api/save-answer.php', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ participant_id: participantId, question_id: q.id, selected_answer: idx, time_taken: elapsed })
+            });
+            const d = await r.json();
+            isCorrect  = !!d.is_correct;
+            if (typeof d.correct_answer === 'number') correctIdx = d.correct_answer;
+        } catch(e) { console.error('save-answer error', e); }
     }
 
-    document.querySelectorAll('.opt').forEach(o => o.classList.add('disabled'));
-    if (correct) {
-        const el = document.getElementById(`opt-${idx}`);
-        el.classList.add('correct', 'correct-animate');
+    answers.push({ q_id: q.id, selected: idx, correct: isCorrect ? 1 : 0, correct_answer: correctIdx, time: elapsed });
+
+    if (isCorrect) {
+        document.getElementById(`opt-${idx}`)?.classList.add('correct', 'correct-animate');
         try { confetti({ particleCount:60, spread:70, origin:{ y:.75 }, colors:['#219EBC','#00b894','#FFB703'], zIndex:1000 }); } catch(e){}
     } else {
         document.getElementById(`opt-${idx}`)?.classList.add('wrong');
-        document.getElementById(`opt-${q.correct}`)?.classList.add('reveal');
+        if (correctIdx >= 0) document.getElementById(`opt-${correctIdx}`)?.classList.add('reveal');
     }
-    showFeedback(correct ? 'correct' : 'wrong', q);
+    showFeedback(isCorrect ? 'correct' : 'wrong', q, correctIdx);
 }
 
-function showFeedback(type, q) {
+function showFeedback(type, q, correctIdx = -1) {
     if (!QUIZ.feedback) {
         document.getElementById('btn-next').style.display = 'block';
         return;
     }
     const fb = document.getElementById('q-feedback');
+    const correctText = correctIdx >= 0 ? escHtml(q.opts[correctIdx]) : '—';
+    const expHtml = q.exp ? '<br/><br/>' + escHtml(q.exp) : '';
     if (type === 'timeout') {
         fb.className = 'feedback timeout';
-        fb.innerHTML = `<i class="fa-solid fa-hourglass-end" aria-hidden="true"></i><span><strong>Tempo esgotado!</strong> Resposta correta: <strong>${escHtml(q.opts[q.correct])}</strong>${q.exp ? '<br/><br/>' + escHtml(q.exp) : ''}</span>`;
+        fb.innerHTML = `<i class="fa-solid fa-hourglass-end" aria-hidden="true"></i><span><strong>Tempo esgotado!</strong>${correctIdx >= 0 ? ' Resposta correta: <strong>' + correctText + '</strong>' : ''}${expHtml}</span>`;
     } else if (type === 'correct') {
         fb.className = 'feedback correct';
         fb.innerHTML = `<i class="fa-solid fa-circle-check" aria-hidden="true"></i><span><strong>Correto!</strong>${q.exp ? ' ' + escHtml(q.exp) : ''}</span>`;
     } else {
         fb.className = 'feedback wrong';
-        fb.innerHTML = `<i class="fa-solid fa-circle-xmark" aria-hidden="true"></i><span><strong>Incorreto.</strong> Resposta correta: <strong>${escHtml(q.opts[q.correct])}</strong>${q.exp ? '<br/><br/>' + escHtml(q.exp) : ''}</span>`;
+        fb.innerHTML = `<i class="fa-solid fa-circle-xmark" aria-hidden="true"></i><span><strong>Incorreto.</strong>${correctIdx >= 0 ? ' Resposta correta: <strong>' + correctText + '</strong>' : ''}${expHtml}</span>`;
     }
     fb.style.display = 'flex';
     document.getElementById('btn-next').style.display = 'block';
@@ -611,14 +623,15 @@ async function showResult() {
         const selText = a.selected === -1
             ? '<i class="fa-solid fa-hourglass-end" aria-hidden="true"></i> Tempo esgotado'
             : `${letters[a.selected]}) ${escHtml(q.opts[a.selected])}`;
+        const cIdx = a.correct_answer ?? -1;
+        const correctHint = (!a.correct && cIdx >= 0)
+            ? `<span class="ra-correct"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Correta: ${letters[cIdx]}) ${escHtml(q.opts[cIdx])}</span>`
+            : (a.correct ? `<span class="ra-correct"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Resposta correta!</span>` : '');
         div.innerHTML = `
             <div class="rq">Q${i+1}: ${escHtml(q.q)}</div>
             <div class="ra">
                 <span>Sua resposta: ${selText}</span>
-                ${!a.correct
-                    ? `<span class="ra-correct"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Correta: ${letters[q.correct]}) ${escHtml(q.opts[q.correct])}</span>`
-                    : `<span class="ra-correct"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Resposta correta!</span>`
-                }
+                ${correctHint}
             </div>`;
         rl.appendChild(div);
     });

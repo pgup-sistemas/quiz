@@ -151,3 +151,36 @@ function processEfiWebhookEvent(array $payload): void {
 
     dbExec("UPDATE payment_events SET processed = 1 WHERE id = ?", [$peId]);
 }
+
+/**
+ * Reprocessa um evento de webhook já registrado (processed=2).
+ * Não usa processEfiWebhookEvent() porque esse tenta INSERT e falha
+ * na UNIQUE constraint do efi_notification_id no retry.
+ */
+function reprocessPaymentEvent(int $eventId): bool {
+    $event = dbRow("SELECT * FROM payment_events WHERE id=?", [$eventId]);
+    if (!$event) return false;
+
+    $eventType = $event['event_type'];
+    $companyId = $event['company_id'] ? (int)$event['company_id'] : null;
+    $subId     = $event['subscription_id'] ? (int)$event['subscription_id'] : null;
+    $sub       = $subId ? dbRow("SELECT * FROM subscriptions WHERE id=?", [$subId]) : null;
+    $now       = date('Y-m-d H:i:s');
+
+    if ($companyId && $sub) {
+        if (in_array($eventType, ['charge.paid','subscription.renewed','pix.paid','payment.created'])) {
+            $nextBilling = date('Y-m-d H:i:s', strtotime('+1 month'));
+            dbExec("UPDATE subscriptions SET status='active', next_billing_at=?, updated_at=? WHERE id=?",
+                   [$nextBilling, $now, $sub['id']]);
+            dbExec("UPDATE companies SET plan='pro', status='active', updated_at=? WHERE id=?",
+                   [$now, $companyId]);
+        } elseif (in_array($eventType, ['subscription.cancelled','charge.cancelled','charge.expired','subscription.overdue'])) {
+            $graceUntil = date('Y-m-d H:i:s', strtotime('+7 days'));
+            dbExec("UPDATE subscriptions SET status='overdue', grace_until=?, updated_at=? WHERE id=?",
+                   [$graceUntil, $now, $sub['id']]);
+        }
+    }
+
+    dbExec("UPDATE payment_events SET processed=1 WHERE id=?", [$eventId]);
+    return true;
+}

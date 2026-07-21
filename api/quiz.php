@@ -46,9 +46,7 @@ if ($quiz['randomize']) {
     shuffle($questions);
 }
 
-// Build clean response (do NOT expose correct_answer here - we validate server-side)
-// Actually for a simple offline-capable quiz we send everything; for production
-// you'd separate validation to server-side. This is the simplified version.
+// Correct answers are NOT sent to the client. Validation happens server-side in save-answer.php.
 $qs = [];
 foreach ($questions as $q) {
     $opts = array_filter([
@@ -58,12 +56,11 @@ foreach ($questions as $q) {
         $q['option_d'],
     ], fn($o) => trim($o) !== '');
     $qs[] = [
-        'id'      => $q['id'],
-        'q'       => $q['question_text'],
-        'cat'     => $q['category'],
-        'opts'    => array_values($opts),
-        'correct' => (int)$q['correct_answer'],
-        'exp'     => $q['explanation'],
+        'id'   => $q['id'],
+        'q'    => $q['question_text'],
+        'cat'  => $q['category'],
+        'opts' => array_values($opts),
+        'exp'  => $q['explanation'],
     ];
 }
 

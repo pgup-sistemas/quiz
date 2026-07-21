@@ -6,7 +6,21 @@ if (session_name() !== 'SUPER_ADMIN_SESS') {
 require_once __DIR__ . '/../includes/superadmin-auth.php';
 requireSuperAdmin();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/billing.php';
 require_once __DIR__ . '/layout.php';
+
+// Retry de evento de webhook com falha
+if (isset($_GET['retry'])) {
+    $retryId = (int)$_GET['retry'];
+    $ev = dbRow("SELECT id FROM payment_events WHERE id=? AND processed=2", [$retryId]);
+    $ok = $ev && reprocessPaymentEvent($retryId);
+    logAudit('webhook_retry', 0, json_encode(['event_id' => $retryId, 'success' => $ok]));
+    header('Location: payments.php?_msg=' . urlencode($ok ? 'Evento reprocessado com sucesso.' : 'Falha ao reprocessar o evento.') . '&_ok=' . ($ok ? '1' : '0'));
+    exit;
+}
+
+$flashMsg = $_GET['_msg'] ?? '';
+$flashOk  = ($_GET['_ok'] ?? '1') === '1';
 
 $statusFlt = trim($_GET['status']  ?? '');
 $typeFlt   = trim($_GET['type']    ?? '');
@@ -39,6 +53,15 @@ $failedEvents = (int)dbRow("SELECT COUNT(*) AS c FROM payment_events WHERE proce
 
 $companies = dbRows("SELECT id, name FROM companies ORDER BY name");
 
+$failedEventRows = dbRows(
+    "SELECT pe.*, c.name AS company_name
+     FROM payment_events pe
+     LEFT JOIN companies c ON c.id = pe.company_id
+     WHERE pe.processed = 2
+     ORDER BY pe.created_at DESC
+     LIMIT 50"
+);
+
 $statusLabels = [
     'pending'   => ['Aguardando', '#92400e', '#fef3c7'],
     'active'    => ['Ativo',      '#166534', '#dcfce7'],
@@ -58,6 +81,14 @@ $typeLabels = [
 superadminHead('Pagamentos', 'payments.php');
 ?>
 <div class="sa-wrap">
+
+    <?php if ($flashMsg): ?>
+    <div class="alert <?= $flashOk ? 'alert-success' : '' ?>" style="<?= $flashOk ? '' : 'background:#fee2e2;color:#991b1b;' ?>border-radius:8px;padding:12px 16px;margin-bottom:16px">
+        <i class="fa-solid fa-<?= $flashOk ? 'circle-check' : 'circle-exclamation' ?>"></i>
+        <?= htmlspecialchars($flashMsg) ?>
+    </div>
+    <?php endif; ?>
+
     <div class="page-header">
         <div>
             <h1><i class="fa-solid fa-money-bill-wave" style="color:var(--yellow)"></i> Pagamentos</h1>
@@ -165,5 +196,62 @@ superadminHead('Pagamentos', 'payments.php');
         </div>
         <?php endif; ?>
     </div>
-</div>
+
+<?php if (!empty($failedEventRows)): ?>
+    <div style="margin-top:32px">
+        <div class="page-header" style="margin-bottom:16px">
+            <div>
+                <h2 style="font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px">
+                    <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444"></i>
+                    Eventos de Webhook com Falha
+                    <span style="background:#fee2e2;color:#991b1b;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px"><?= count($failedEventRows) ?></span>
+                </h2>
+                <div class="sub" style="color:#ef4444">Estes eventos não foram processados. Clique em Reprocessar para tentar novamente.</div>
+            </div>
+        </div>
+        <div class="card" style="border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <div style="overflow-x:auto">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo de Evento</th>
+                        <th>Empresa</th>
+                        <th>Payload (resumo)</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($failedEventRows as $ev): ?>
+                <tr>
+                    <td style="font-size:12px;color:var(--gray-500);white-space:nowrap"><?= substr($ev['created_at'],0,16) ?></td>
+                    <td>
+                        <span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:#fee2e2;color:#991b1b">
+                            <?= htmlspecialchars($ev['event_type']) ?>
+                        </span>
+                    </td>
+                    <td style="font-size:13px"><?= htmlspecialchars($ev['company_name'] ?? '—') ?></td>
+                    <td style="font-size:11px;color:var(--gray-400);max-width:240px">
+                        <code style="font-size:10px;background:rgba(0,0,0,.05);padding:2px 6px;border-radius:4px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                              title="<?= htmlspecialchars($ev['raw_payload']) ?>">
+                            <?= htmlspecialchars(mb_substr($ev['raw_payload'] ?? '', 0, 80)) ?>…
+                        </code>
+                    </td>
+                    <td>
+                        <a href="payments.php?retry=<?= $ev['id'] ?>"
+                           onclick="return confirm('Reprocessar este evento de webhook?')"
+                           class="btn" style="background:var(--pacific);color:#fff;font-size:12px;padding:5px 12px">
+                            <i class="fa-solid fa-rotate-right"></i> Reprocessar
+                        </a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+</div><!-- /.sa-wrap -->
 <?php superadminFoot(); ?>

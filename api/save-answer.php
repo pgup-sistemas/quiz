@@ -14,8 +14,8 @@ if (!$input) { $input = $_POST; }
 $pid      = (int)($input['participant_id']  ?? 0);
 $q_id     = (int)($input['question_id']     ?? 0);
 $selected = (int)($input['selected_answer'] ?? -1);
-$correct  = (int)($input['is_correct']      ?? 0);
 $time     = (int)($input['time_taken']      ?? 0);
+// is_correct is calculated server-side — never trust client input
 
 if (!$pid || !$q_id) {
     echo json_encode(['success' => false, 'message' => 'Dados incompletos']); exit;
@@ -34,11 +34,15 @@ if (!$participant) {
 }
 $companyId = (int)$participant['company_id'];
 
-// Confirma que a questão pertence ao quiz deste participante
-$question = dbRow("SELECT id FROM questions WHERE id = ? AND quiz_id = ?", [$q_id, $participant['quiz_id']]);
+// Confirma que a questão pertence ao quiz deste participante e lê a resposta correta
+$question = dbRow("SELECT id, correct_answer FROM questions WHERE id = ? AND quiz_id = ?", [$q_id, $participant['quiz_id']]);
 if (!$question) {
     echo json_encode(['success' => false, 'message' => 'Questão não pertence a este quiz']); exit;
 }
+
+// Validação server-side da resposta
+$correctAnswer = (int)$question['correct_answer'];
+$correct       = ($selected >= 0 && $selected === $correctAnswer) ? 1 : 0;
 
 // Impede duplo envio para a mesma questão
 $existing = dbRow("SELECT id FROM answers WHERE participant_id = ? AND question_id = ?", [$pid, $q_id]);
@@ -77,8 +81,10 @@ dbExec("
 ]);
 
 echo json_encode([
-    'success' => true,
-    'score'   => (int)$stats['total_c'],
-    'total'   => (int)$stats['total_q'],
-    'avg_t'   => (float)$stats['avg_t'],
+    'success'        => true,
+    'is_correct'     => (bool)$correct,
+    'correct_answer' => $correctAnswer,
+    'score'          => (int)$stats['total_c'],
+    'total'          => (int)$stats['total_q'],
+    'avg_t'          => (float)$stats['avg_t'],
 ]);

@@ -29,9 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['full_csv']) && $isNe
         redirect('quiz-edit.php');
     }
 
-    // Auto-detect delimiter
-    $firstLine = fgets($handle);
-    $delim     = substr_count($firstLine, ';') >= substr_count($firstLine, ',') ? ';' : ',';
+    // Auto-detect delimiter: scan the full file (a section header like [QUIZ] has neither ; nor ,)
+    $rawContent = stream_get_contents($handle);
+    $delim      = substr_count($rawContent, ';') >= substr_count($rawContent, ',') ? ';' : ',';
     rewind($handle);
 
     // Lê todas as linhas
