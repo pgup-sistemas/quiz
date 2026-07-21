@@ -22,18 +22,22 @@ if (isset($_GET['retry'])) {
 $flashMsg = $_GET['_msg'] ?? '';
 $flashOk  = ($_GET['_ok'] ?? '1') === '1';
 
-$statusFlt = trim($_GET['status']  ?? '');
-$typeFlt   = trim($_GET['type']    ?? '');
-$coFlt     = (int)($_GET['company'] ?? 0);
-$page      = max(1, (int)($_GET['p'] ?? 1));
-$perPage   = 30;
-$offset    = ($page - 1) * $perPage;
+$statusFlt   = trim($_GET['status']     ?? '');
+$typeFlt     = trim($_GET['type']       ?? '');
+$coFlt       = (int)($_GET['company']   ?? 0);
+$dateFrom    = trim($_GET['date_from']  ?? '');
+$dateTo      = trim($_GET['date_to']    ?? '');
+$page        = max(1, (int)($_GET['p']  ?? 1));
+$perPage     = 30;
+$offset      = ($page - 1) * $perPage;
 
 $where  = ['1=1'];
 $params = [];
 if ($statusFlt) { $where[] = "s.status=?"; $params[] = $statusFlt; }
 if ($typeFlt)   { $where[] = "s.type=?";   $params[] = $typeFlt; }
 if ($coFlt)     { $where[] = "s.company_id=?"; $params[] = $coFlt; }
+if ($dateFrom)  { $where[] = "DATE(s.created_at) >= ?"; $params[] = $dateFrom; }
+if ($dateTo)    { $where[] = "DATE(s.created_at) <= ?"; $params[] = $dateTo; }
 $whereSql = implode(' AND ', $where);
 
 $total = (int)dbRow("SELECT COUNT(*) AS c FROM subscriptions s WHERE $whereSql", $params)['c'];
@@ -139,10 +143,16 @@ superadminHead('Pagamentos', 'payments.php');
             <option value="<?= $co['id'] ?>" <?= $coFlt==$co['id']?'selected':'' ?>><?= htmlspecialchars($co['name']) ?></option>
             <?php endforeach; ?>
         </select>
+        <input type="date" name="date_from" value="<?= htmlspecialchars($dateFrom) ?>"
+               title="De"
+               style="padding:8px 10px;border:1px solid #2d4a6a;border-radius:6px;background:#0f1f35;color:#e2e8f0;font-size:13px"/>
+        <input type="date" name="date_to" value="<?= htmlspecialchars($dateTo) ?>"
+               title="Até"
+               style="padding:8px 10px;border:1px solid #2d4a6a;border-radius:6px;background:#0f1f35;color:#e2e8f0;font-size:13px"/>
         <button type="submit" class="btn" style="background:var(--pacific);color:#fff;font-size:13px">
             <i class="fa-solid fa-magnifying-glass"></i> Filtrar
         </button>
-        <?php if ($statusFlt||$typeFlt||$coFlt): ?>
+        <?php if ($statusFlt||$typeFlt||$coFlt||$dateFrom||$dateTo): ?>
         <a href="payments.php" class="btn" style="background:var(--gray-200);color:var(--gray-700);font-size:13px"><i class="fa-solid fa-xmark"></i> Limpar</a>
         <?php endif; ?>
     </form>
@@ -188,7 +198,7 @@ superadminHead('Pagamentos', 'payments.php');
         <?php if ($totalPages > 1): ?>
         <div style="padding:14px 16px;border-top:1px solid var(--gray-100);display:flex;gap:8px">
             <?php for ($i=1;$i<=$totalPages;$i++): ?>
-            <a href="?<?= http_build_query(['status'=>$statusFlt,'type'=>$typeFlt,'company'=>$coFlt,'p'=>$i]) ?>"
+            <a href="?<?= http_build_query(['status'=>$statusFlt,'type'=>$typeFlt,'company'=>$coFlt,'date_from'=>$dateFrom,'date_to'=>$dateTo,'p'=>$i]) ?>"
                style="padding:4px 10px;border-radius:6px;font-size:13px;text-decoration:none;
                       background:<?= $i===$page?'var(--pacific)':'var(--gray-100)' ?>;
                       color:<?= $i===$page?'#fff':'var(--gray-600)' ?>"><?= $i ?></a>

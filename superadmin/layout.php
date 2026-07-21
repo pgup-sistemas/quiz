@@ -5,6 +5,7 @@ function superadminHead(string $title, string $active = ''): void {
         'companies.php' => ['fa-building',          'Empresas',   'companies.php'],
         'payments.php'  => ['fa-money-bill-wave',   'Pagamentos', 'payments.php'],
         'settings.php'  => ['fa-sliders',           'Config',     'settings.php'],
+        'users.php'     => ['fa-users',              'Colaboradores','users.php'],
         'audit.php'     => ['fa-shield-halved',     'Auditoria',  'audit.php'],
     ];
     require_once __DIR__ . '/../includes/superadmin-auth.php';
