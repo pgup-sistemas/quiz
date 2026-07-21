@@ -142,18 +142,12 @@ body { background: #0b1e35; min-height: 100vh; }
 .btn-back:hover { background: var(--gray-300); }
 
 @media print {
-    @page { size: A4 landscape; margin: 0; }
-    html, body { width: 297mm; height: 210mm; margin: 0; padding: 0; background: #fff; }
+    @page { size: A4 landscape; margin: 12mm 2mm 12mm 22mm; }
+    html, body { width: auto; height: auto; margin: 0; padding: 0; background: #fff; }
     .cert-page-nav, .cert-actions, .cert-outer > *:not(.cert-wrap) { display: none !important; }
-    .cert-outer {
-        margin: 0; padding: 0; max-width: none; width: 297mm; height: 210mm;
-        position: relative;
-    }
-    .cert-wrap {
-        max-width: none; width: 277mm; margin: 0;
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    }
-    .cert { width: 100%; height: 187mm; min-height: unset; padding: 14mm 20mm; box-shadow: none; border: none; border-radius: 0; margin: 0; }
+    .cert-outer { margin: 0; padding: 0; max-width: none; width: auto; height: auto; }
+    .cert-wrap { max-width: none; width: 100%; margin: 0; }
+    .cert { width: 100%; height: 186mm; min-height: unset; padding: 14mm 20mm; box-shadow: none; border: none; border-radius: 0; margin: 0; box-sizing: border-box; }
 }
 </style>
 </head>

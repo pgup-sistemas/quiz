@@ -137,7 +137,9 @@ adminHead('Manual do Sistema', 'manual.php');
         <a href="#usuarios"><i class="fa-solid fa-users"></i> Usuários</a>
         <a href="#portal"><i class="fa-solid fa-door-open"></i> Portal do Usuário</a>
         <a href="#resultados"><i class="fa-solid fa-graduation-cap"></i> Resultados</a>
+        <a href="#analytics"><i class="fa-solid fa-chart-line"></i> Analytics</a>
         <a href="#ao-vivo"><i class="fa-solid fa-tower-broadcast"></i> Ao Vivo</a>
+        <a href="#cobranca"><i class="fa-solid fa-receipt"></i> Cobrança e Planos</a>
         <a href="#seguranca"><i class="fa-solid fa-shield-halved"></i> Segurança</a>
     </nav>
 
@@ -283,6 +285,24 @@ adminHead('Manual do Sistema', 'manual.php');
         </ul>
     </div>
 
+    <!-- ─── 8b. Analytics ─────────────────────────────────── -->
+    <div class="manual-section" id="analytics">
+        <h2><i class="fa-solid fa-chart-line"></i> Analytics</h2>
+        <p>O menu <strong>Analytics</strong> traz uma visão mais aprofundada do desempenho dos treinamentos, com filtro por período (7, 30, 90 dias, 1 ano ou tudo):</p>
+        <ul class="manual-list">
+            <li><i class="fa-solid fa-play"></i> <strong>Participações:</strong> total de tentativas iniciadas e número de participantes únicos.</li>
+            <li><i class="fa-solid fa-flag-checkered"></i> <strong>Taxa de Conclusão:</strong> percentual de quizzes iniciados que foram efetivamente finalizados.</li>
+            <li><i class="fa-solid fa-bullseye"></i> <strong>Nota Média:</strong> média de aproveitamento entre todos os concluídos.</li>
+            <li><i class="fa-solid fa-circle-check"></i> <strong>Taxa de Aprovação:</strong> percentual de participantes que atingiram a nota mínima.</li>
+            <li><i class="fa-solid fa-calendar-days"></i> <strong>Evolução Mensal:</strong> gráfico de conclusões por mês nos últimos 12 meses.</li>
+        </ul>
+        <div class="manual-card">
+            <strong><i class="fa-solid fa-circle-info"></i> Diferença para "Resultados"</strong>
+            Enquanto <em>Resultados</em> lista participantes individuais para consulta e exportação, o Analytics
+            mostra tendências agregadas — use-o para identificar setores ou períodos que precisam de reforço no treinamento.
+        </div>
+    </div>
+
     <!-- ─── 9. Ao Vivo ────────────────────────────────────── -->
     <div class="manual-section" id="ao-vivo">
         <h2><i class="fa-solid fa-tower-broadcast"></i> Ao Vivo</h2>
@@ -298,6 +318,23 @@ adminHead('Manual do Sistema', 'manual.php');
             <strong><i class="fa-solid fa-circle-info"></i> Quando usar</strong>
             Use o painel Ao Vivo durante treinamentos em grupo ou quando precisar confirmar que
             todos os colaboradores completaram a avaliação antes de encerrar uma sessão.
+        </div>
+    </div>
+
+    <!-- ─── 9b. Cobrança e Planos ─────────────────────────── -->
+    <div class="manual-section" id="cobranca">
+        <h2><i class="fa-solid fa-receipt"></i> Cobrança e Planos</h2>
+        <p>A plataforma tem dois planos: <strong>Free</strong> (com limite de quizzes ativos) e <strong>Pro</strong> (quizzes ilimitados e recursos avançados). Gerencie tudo no menu <strong>Cobrança</strong>:</p>
+        <ul class="manual-list">
+            <li><i class="fa-solid fa-star"></i> <strong>Upgrade para Pro:</strong> empresas no plano Free veem um botão <em>"Upgrade"</em> em destaque na navbar — o pagamento pode ser feito via PIX ou cartão.</li>
+            <li><i class="fa-solid fa-clock-rotate-left"></i> <strong>Histórico de Pagamentos:</strong> acompanhe todas as cobranças, com status (Aguardando, Ativo, Pago, Inadimplente, Cancelado, Expirado).</li>
+            <li><i class="fa-solid fa-credit-card"></i> <strong>Formas de Pagamento:</strong> PIX, cartão (cobrança única ou assinatura recorrente), link de pagamento, ou ativação manual pelo suporte PageUp.</li>
+            <li><i class="fa-solid fa-ban"></i> <strong>Cancelamento:</strong> assinaturas recorrentes podem ser canceladas a qualquer momento pela tela de Cobrança.</li>
+        </ul>
+        <div class="manual-warn">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <strong>Limite do plano Free:</strong> ao atingir o número máximo de quizzes ativos, é necessário desativar algum quiz existente
+            ou fazer upgrade para o plano Pro para criar novos.
         </div>
     </div>
 

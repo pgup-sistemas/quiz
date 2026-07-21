@@ -717,18 +717,15 @@ tr:last-child td { border-bottom: none; }
 
 /* ── Print ──────────────────────────────── */
 @media print {
-    @page { size:A4 landscape; margin:0; }
-    html, body { width:297mm; height:210mm; margin:0; padding:0; }
+    @page { size:A4 landscape; margin:12mm 2mm 12mm 22mm; }
+    html, body { width:auto; height:auto; margin:0; padding:0; }
     .quiz-body  { background:#fff !important; padding:0; display:block; }
     .screen     { display:block !important; }
     #screen-login, #screen-quiz, #screen-result, #loading-overlay { display:none !important; }
-    #screen-cert { display:block !important; position:relative; width:297mm; height:210mm; max-width:100% !important; }
+    #screen-cert { display:block !important; width:auto; height:auto; max-width:100% !important; }
     .btn-print, .btn-cert, .btn-retry, .cert-actions { display:none !important; }
-    .cert-wrap  {
-        max-width:none; width:277mm; margin:0;
-        position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-    }
-    .cert       { width:100%; height:187mm; min-height:unset; box-shadow:none; border:none; border-radius:0; padding:14mm 20mm; margin:0; }
+    .cert-wrap  { max-width:none; width:100%; margin:0; }
+    .cert       { width:100%; height:186mm; min-height:unset; box-shadow:none; border:none; border-radius:0; padding:14mm 20mm; margin:0; box-sizing:border-box; }
 }
 
 /* ── Quiz responsive ────────────────────── */
