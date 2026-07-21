@@ -735,3 +735,54 @@ tr:last-child td { border-bottom: none; }
     .q-text     { font-size:var(--text-base); }
     .score-grid { grid-template-columns:1fr 1fr; }
 }
+
+/* ── Mobile 375px — portal do colaborador ── */
+@media (max-width: 390px) {
+    /* Quiz header: stack verticalmente para o timer não comprimir o texto */
+    .quiz-header { flex-wrap:wrap; gap:10px; padding:12px 14px; }
+    .qh-left { flex:1 1 100%; }
+    .progress-track { width:100%; }
+    .svg-timer { width:56px; height:56px; align-self:flex-end; }
+    .svg-timer svg { width:56px; height:56px; }
+    .svg-timer .timer-num { font-size:16px; }
+
+    /* Q-card: menos padding, texto menor */
+    .q-card { padding:16px; }
+    .q-text { font-size:15px; margin-bottom:16px; }
+    .q-meta { flex-wrap:wrap; gap:4px; }
+    .q-num-label { font-size:10px; }
+
+    /* Opções: área de toque ≥44px */
+    .opt { padding:13px 14px; font-size:13px; min-height:44px; }
+    .opt .letter { min-width:20px; height:20px; font-size:11px; }
+
+    /* Botão próxima: largura total */
+    .clearfix { overflow:visible; }
+    .btn-next { float:none; display:block; width:100%; text-align:center; margin-top:14px; justify-content:center; }
+
+    /* Resultado */
+    .result-card { padding:20px 16px; }
+    .score-circle { width:110px; height:110px; font-size:32px; }
+    .result-title { font-size:18px; }
+    .score-grid { grid-template-columns:1fr 1fr; gap:8px; }
+    .score-item .val { font-size:22px; }
+    .btn-cert, .btn-retry { padding:11px 18px; font-size:14px; }
+
+    /* Login screen */
+    .quiz-card-white { padding:20px 16px; }
+    .brand h1 { font-size:18px; }
+}
+
+/* ── Dashboard mobile — portal do colaborador ── */
+@media (max-width: 640px) {
+    .dash-nav { padding:0 14px; height:52px; }
+    .dash-nav-brand { font-size:14px; }
+    .wrap { padding:16px 12px; }
+}
+@media (max-width: 390px) {
+    .wrap { padding:12px 10px; }
+    .dash-nav-right a span,
+    .dash-nav-right .btn-out span { display:none; }
+    .dash-nav-right a,
+    .dash-nav-right .btn-out { padding:6px 10px; font-size:14px; }
+}

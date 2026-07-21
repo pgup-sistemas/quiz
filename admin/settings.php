@@ -56,6 +56,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_admin'])) {
     redirect('settings.php');
 }
 
+/* ── Branding (logo + cor) ───────────────────────── */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_branding'])) {
+    $color = trim($_POST['primary_color'] ?? '');
+    if ($color && !preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
+        flash('Cor inválida. Use formato hexadecimal (#RRGGBB).', 'error');
+        redirect('settings.php');
+    }
+
+    $logoPath = null;
+    if (!empty($_FILES['logo']['tmp_name']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+        $allowed = ['image/png','image/jpeg','image/gif','image/svg+xml','image/webp'];
+        $mime    = mime_content_type($_FILES['logo']['tmp_name']);
+        $ext     = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
+        if (!in_array($mime, $allowed, true)) {
+            flash('Tipo de arquivo inválido. Use PNG, JPG, SVG ou WebP.', 'error');
+            redirect('settings.php');
+        }
+        if ($_FILES['logo']['size'] > 2 * 1024 * 1024) {
+            flash('Logo muito grande. Limite: 2 MB.', 'error');
+            redirect('settings.php');
+        }
+        $dir = __DIR__ . '/../uploads/logos/';
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $filename = 'co_' . $cid . '_' . bin2hex(random_bytes(4)) . '.' . strtolower($ext);
+        if (move_uploaded_file($_FILES['logo']['tmp_name'], $dir . $filename)) {
+            // Remove logo anterior
+            $old = dbRow("SELECT logo_path FROM companies WHERE id = ?", [$cid]);
+            if (!empty($old['logo_path'])) {
+                $oldFile = __DIR__ . '/../' . $old['logo_path'];
+                if (file_exists($oldFile)) @unlink($oldFile);
+            }
+            $logoPath = 'uploads/logos/' . $filename;
+        }
+    }
+
+    if ($color) {
+        dbExec("UPDATE companies SET primary_color = ?, updated_at = datetime('now','localtime') WHERE id = ?", [$color, $cid]);
+    }
+    if ($logoPath !== null) {
+        dbExec("UPDATE companies SET logo_path = ?, updated_at = datetime('now','localtime') WHERE id = ?", [$logoPath, $cid]);
+    }
+
+    flash('Identidade visual atualizada!', 'success');
+    redirect('settings.php');
+}
+
+/* ── Remove logo ─────────────────────────────────── */
+if (isset($_GET['remove_logo'])) {
+    $co = dbRow("SELECT logo_path FROM companies WHERE id = ?", [$cid]);
+    if (!empty($co['logo_path'])) {
+        $f = __DIR__ . '/../' . $co['logo_path'];
+        if (file_exists($f)) @unlink($f);
+    }
+    dbExec("UPDATE companies SET logo_path = NULL WHERE id = ?", [$cid]);
+    flash('Logo removida.', 'success');
+    redirect('settings.php');
+}
+
 /* ── Toggle allow_self_register ────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_self_register'])) {
     $val = (int)($_POST['allow_self_register'] ?? 0);
@@ -210,7 +268,84 @@ adminHead('Configurações', 'settings.php');
 
 </div>
 
-<!-- ══ SEÇÃO 2: EMPRESA ══════════════════════════════════ -->
+<!-- ══ SEÇÃO 2: IDENTIDADE VISUAL ════════════════════════ -->
+<div class="cfg-section-title">
+    <i class="fa-solid fa-palette"></i> Identidade Visual
+    <?php if ($myCompany['plan'] !== 'pro'): ?>
+    <span class="badge badge-yellow" style="font-size:10px;text-transform:none;letter-spacing:0">Pro</span>
+    <?php endif; ?>
+</div>
+
+<?php if ($myCompany['plan'] === 'pro'): ?>
+<div class="card" style="margin-bottom:20px">
+    <div class="card-header">
+        <h2><i class="fa-solid fa-image" style="color:var(--pacific)"></i> Logo &amp; Cor da Empresa</h2>
+        <p style="font-size:12px;color:var(--gray-400);margin:4px 0 0">Aplicados no portal do colaborador e quizzes.</p>
+    </div>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="update_branding" value="1"/>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" class="cfg-two-col">
+            <!-- Logo -->
+            <div>
+                <div class="form-group">
+                    <label class="form-label">Logo da empresa</label>
+                    <?php if (!empty($myCompany['logo_path']) && file_exists(__DIR__.'/../'.$myCompany['logo_path'])): ?>
+                    <div style="margin-bottom:10px;padding:12px;background:var(--gray-50);border-radius:8px;display:inline-flex;align-items:center;gap:12px">
+                        <img src="../<?= htmlspecialchars($myCompany['logo_path']) ?>" alt="Logo atual" style="height:40px;max-width:120px;object-fit:contain"/>
+                        <a href="?remove_logo=1" class="btn btn-sm btn-danger"
+                           onclick="return confirm('Remover a logo atual?')">
+                            <i class="fa-solid fa-trash"></i>
+                        </a>
+                    </div>
+                    <?php endif; ?>
+                    <input class="form-control" type="file" name="logo" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp"/>
+                    <div class="form-hint">PNG, JPG, SVG ou WebP · máx. 2 MB</div>
+                </div>
+            </div>
+            <!-- Cor primária -->
+            <div>
+                <div class="form-group">
+                    <label class="form-label">Cor primária</label>
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <input type="color" name="primary_color"
+                               value="<?= htmlspecialchars($myCompany['primary_color'] ?? '#219EBC') ?>"
+                               style="width:48px;height:38px;padding:2px 4px;border:1px solid var(--gray-200);border-radius:8px;cursor:pointer"/>
+                        <input class="form-control" type="text" id="color-hex" placeholder="#219EBC"
+                               value="<?= htmlspecialchars($myCompany['primary_color'] ?? '') ?>"
+                               pattern="^#[0-9a-fA-F]{6}$" style="font-family:monospace;width:110px"/>
+                    </div>
+                    <div class="form-hint">Aplicada nos botões e destaques do portal</div>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-circle-check"></i> Salvar Identidade Visual
+        </button>
+    </form>
+</div>
+<script>
+(function(){
+    var picker = document.querySelector('input[type="color"][name="primary_color"]');
+    var hexIn  = document.getElementById('color-hex');
+    if (!picker || !hexIn) return;
+    picker.addEventListener('input', function(){ hexIn.value = picker.value; });
+    hexIn.addEventListener('input', function(){
+        if (/^#[0-9a-fA-F]{6}$/.test(hexIn.value)) picker.value = hexIn.value;
+    });
+})();
+</script>
+<?php else: ?>
+<div style="background:var(--gray-50);border:1px dashed var(--gray-200);border-radius:12px;padding:24px;text-align:center;margin-bottom:20px">
+    <i class="fa-solid fa-palette" style="font-size:28px;color:var(--gray-300);display:block;margin-bottom:8px"></i>
+    <div style="font-weight:600;color:var(--gray-600);margin-bottom:4px">Disponível no Plano Pro</div>
+    <div style="font-size:12px;color:var(--gray-400)">Personalize o logo e as cores do portal com o plano Pro.</div>
+    <a href="upgrade.php" class="btn btn-sm" style="margin-top:12px;background:var(--yellow);color:var(--prussian);font-weight:700">
+        <i class="fa-solid fa-star"></i> Fazer Upgrade
+    </a>
+</div>
+<?php endif; ?>
+
+<!-- ══ SEÇÃO 4: EMPRESA ══════════════════════════════════ -->
 <div class="cfg-section-title">
     <i class="fa-solid fa-building"></i> Empresa
 </div>
@@ -240,7 +375,7 @@ adminHead('Configurações', 'settings.php');
     </form>
 </div>
 
-<!-- ══ SEÇÃO 3: ADMINISTRADORES ══════════════════════════ -->
+<!-- ══ SEÇÃO 5: ADMINISTRADORES ══════════════════════════ -->
 <div class="cfg-section-title">
     <i class="fa-solid fa-user-shield"></i> Administradores
     <span class="badge badge-blue" style="font-size:11px;text-transform:none;letter-spacing:0"><?= count($admins) ?></span>

@@ -54,6 +54,9 @@ $_seoUrl     = $_seoBase.'/quiz.php?id='.(int)$quiz['id'];
         'jsonld'     => seoJsonLdQuiz($quiz, $_seoOrgName, $_seoUrl),
     ]) ?>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<?php if ($tenant && !empty($tenant['primary_color']) && preg_match('/^#[0-9a-fA-F]{6}$/', $tenant['primary_color'])): ?>
+    <style>:root{--pacific:<?= $tenant['primary_color'] ?>;--blue:<?= $tenant['primary_color'] ?>;}</style>
+<?php endif; ?>
 </head>
 <body class="quiz-body">
 
@@ -73,7 +76,11 @@ $_seoUrl     = $_seoBase.'/quiz.php?id='.(int)$quiz['id'];
 <!-- SCREEN: LOGIN -->
 <div class="screen active" id="screen-login">
     <div class="brand">
+        <?php if ($tenant && !empty($tenant['logo_path']) && file_exists(__DIR__ . '/' . $tenant['logo_path'])): ?>
+        <img src="<?= htmlspecialchars($tenant['logo_path']) ?>" alt="<?= htmlspecialchars($tenant['name']) ?>" style="max-height:60px;max-width:180px;object-fit:contain"/>
+        <?php else: ?>
         <img src="assets/logo-white.svg" alt="PageUp"/>
+        <?php endif; ?>
         <h1><?= e($quiz['title']) ?></h1>
         <p><?= e($quiz['sector']) ?></p>
     </div>

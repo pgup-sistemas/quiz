@@ -6,8 +6,9 @@ function superadminHead(string $title, string $active = ''): void {
         'payments.php'  => ['fa-money-bill-wave',   'Pagamentos', 'payments.php'],
         'settings.php'  => ['fa-sliders',           'Config',     'settings.php'],
         'users.php'     => ['fa-users',              'Colaboradores','users.php'],
-        'admins.php'    => ['fa-shield-halved',      'S-Admins',   'admins.php'],
-        'audit.php'     => ['fa-scroll',             'Auditoria',  'audit.php'],
+        'admins.php'    => ['fa-shield-halved',      'S-Admins',    'admins.php'],
+        'analytics.php' => ['fa-chart-line',         'Analytics',   'analytics.php'],
+        'audit.php'     => ['fa-scroll',             'Auditoria',   'audit.php'],
     ];
     require_once __DIR__ . '/../includes/superadmin-auth.php';
 ?>

@@ -163,6 +163,13 @@ if ($tenant) {
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/style.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<?php
+$_coRow = $cid ? dbRow("SELECT primary_color, logo_path FROM companies WHERE id = ?", [$cid]) : null;
+if ($_coRow && !empty($_coRow['primary_color']) && preg_match('/^#[0-9a-fA-F]{6}$/', $_coRow['primary_color'])):
+    $_brandColor = $_coRow['primary_color'];
+?>
+<style>:root{--pacific:<?= $_brandColor ?>;--blue:<?= $_brandColor ?>;}</style>
+<?php endif; ?>
 <style>
 body { background: #0b1e35; font-family: 'DM Sans', sans-serif; margin: 0; }
 
@@ -468,8 +475,10 @@ body { background: #0b1e35; font-family: 'DM Sans', sans-serif; margin: 0; }
 <!-- Navbar -->
 <nav class="dash-nav">
     <a class="dash-nav-logo" href="../index.php">
-        <?php if ($tenant && !empty($tenant['logo_path']) && file_exists(__DIR__.'/../'.$tenant['logo_path'])): ?>
-        <img src="../<?= htmlspecialchars($tenant['logo_path']) ?>" alt="<?= $orgName ?>" height="28"/>
+        <?php
+        $_logoPath = ($tenant['logo_path'] ?? '') ?: ($_coRow['logo_path'] ?? '');
+        if ($_logoPath && file_exists(__DIR__.'/../'.$_logoPath)): ?>
+        <img src="../<?= htmlspecialchars($_logoPath) ?>" alt="<?= $orgName ?>" height="28" style="max-height:28px;max-width:120px;object-fit:contain"/>
         <?php else: ?>
         <img src="../assets/logo-white.svg" alt="PageQuiz" height="28"/>
         <?php endif; ?>
