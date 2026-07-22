@@ -197,12 +197,12 @@ superadminHead('Pagamentos', 'payments.php');
             <thead>
                 <tr>
                     <th>Data</th><th>Empresa</th><th>Método</th>
-                    <th>Valor</th><th>Status</th><th>Referência EFI</th>
+                    <th>Valor</th><th>Status</th><th>Referência EFI</th><th>Ação</th>
                 </tr>
             </thead>
             <tbody>
             <?php if (empty($subs)): ?>
-            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--gray-400)">
+            <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-400)">
                 Nenhum pagamento encontrado.
             </td></tr>
             <?php endif; ?>
@@ -223,6 +223,19 @@ superadminHead('Pagamentos', 'payments.php');
                 </td>
                 <td style="font-size:11px;color:var(--gray-400)">
                     <?= htmlspecialchars($s['efi_charge_id'] ?? $s['pix_txid'] ?? $s['efi_subscription_id'] ?? '—') ?>
+                </td>
+                <td>
+                    <div class="actions">
+                        <a href="payment-detail.php?id=<?= $s['id'] ?>" class="btn-xs ghost" title="Ver detalhes">
+                            <i class="fa-solid fa-eye"></i>
+                        </a>
+                        <?php if ($s['type'] === 'payment_link' && !empty($s['payment_link_url'])): ?>
+                        <button type="button" class="btn-xs primary" title="Copiar link"
+                                onclick="navigator.clipboard.writeText('<?= htmlspecialchars($s['payment_link_url'], ENT_QUOTES) ?>').then(()=>this.innerHTML='<i class=\'fa-solid fa-check\'></i>')">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                        <?php endif; ?>
+                    </div>
                 </td>
             </tr>
             <?php endforeach; ?>
