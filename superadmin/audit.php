@@ -34,14 +34,14 @@ $totalPages = (int)ceil($total / $perPage);
 
 $actionBadge = [
     'login'            => ['#dbeafe', '#1e40af', 'Login'],
-    'impersonate'      => ['#e9d5ff', '#6b21a8', 'Impersonation'],
-    'suspend'          => ['#fee2e2', '#991b1b',  'Suspensão'],
-    'activate'         => ['#dcfce7', '#166534',  'Reativação'],
-    'approve_pro'      => ['#fef3c7', '#92400e',  'Ativar Pro'],
+    'impersonate'      => ['rgba(168,85,247,.18)', '#d8b4fe', 'Impersonation'],
+    'suspend'          => ['rgba(239,68,68,.15)', '#fca5a5',  'Suspensão'],
+    'activate'         => ['rgba(34,197,94,.15)', '#86efac',  'Reativação'],
+    'approve_pro'      => ['rgba(251,191,36,.15)', '#fcd34d',  'Ativar Pro'],
     'downgrade'        => ['#ffedd5', '#9a3412',  'Rebaixamento'],
-    'edit_company'     => ['#e0f2fe', '#0369a1',  'Edição'],
-    'create_company'   => ['#dcfce7', '#166534',  'Nova empresa'],
-    'update_settings'  => ['#f3e8ff', '#6b21a8',  'Config'],
+    'edit_company'     => ['rgba(33,158,188,.18)', '#7dd3fc',  'Edição'],
+    'create_company'   => ['rgba(34,197,94,.15)', '#86efac',  'Nova empresa'],
+    'update_settings'  => ['#f3e8ff', '#d8b4fe',  'Config'],
 ];
 
 $companies = dbRows("SELECT id, name FROM companies ORDER BY name");

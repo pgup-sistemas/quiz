@@ -58,7 +58,7 @@ superadminHead('Dashboard', 'index.php');
         </div>
         <div class="stat-card">
             <div class="sc-label">Plano Pro</div>
-            <div class="sc-val" style="color:#92400e"><?= $totalPro ?></div>
+            <div class="sc-val" style="color:#fcd34d"><?= $totalPro ?></div>
             <div class="sc-sub">ativas</div>
         </div>
         <div class="stat-card">

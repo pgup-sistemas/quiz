@@ -178,8 +178,8 @@ superadminHead('Empresas', 'companies.php');
         <?php endif; ?>
     </form>
 
-    <div id="bulk-bar" style="display:none;align-items:center;gap:12px;background:#fff5f5;border:1.5px solid #fecaca;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px">
-        <span id="bulk-count" style="font-size:13px;font-weight:700;color:#991b1b"></span>
+    <div id="bulk-bar" style="display:none;align-items:center;gap:12px;background:rgba(239,68,68,.10);border:1.5px solid rgba(239,68,68,.4);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px">
+        <span id="bulk-count" style="font-size:13px;font-weight:700;color:#fca5a5"></span>
         <button type="button" class="btn btn-xs" style="background:#ef4444;color:#fff;font-weight:700" onclick="bulkDeleteGo()">
             <i class="fa-solid fa-trash-can"></i> Excluir selecionadas
         </button>

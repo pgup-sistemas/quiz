@@ -75,20 +75,20 @@ superadminHead('Excluir Empresa', 'companies.php');
     </div>
 
     <?php if ($error): ?>
-    <div class="alert" style="background:#fee2e2;color:#991b1b;border-radius:8px;padding:12px 16px;margin-bottom:16px">
+    <div class="alert" style="background:rgba(239,68,68,.15);color:#fca5a5;border-radius:8px;padding:12px 16px;margin-bottom:16px">
         <i class="fa-solid fa-circle-exclamation"></i> <?= htmlspecialchars($error) ?>
     </div>
     <?php endif; ?>
 
-    <div class="card" style="border-radius:var(--radius);padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:2px solid #fecaca;background:#fff5f5;margin-bottom:20px">
-        <div style="font-weight:800;color:#991b1b;font-size:16px;margin-bottom:6px">
+    <div class="card" style="border-radius:var(--radius);padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:2px solid rgba(239,68,68,.4);background:rgba(239,68,68,.10);margin-bottom:20px">
+        <div style="font-weight:800;color:#fca5a5;font-size:16px;margin-bottom:6px">
             <i class="fa-solid fa-triangle-exclamation"></i> Esta ação é IRREVERSÍVEL
         </div>
-        <p style="font-size:13px;color:#7f1d1d;margin:0 0 16px">
+        <p style="font-size:13px;color:#fca5a5;margin:0 0 16px">
             Ao excluir <strong><?= htmlspecialchars($company['name']) ?></strong>, todos os dados abaixo serão
             permanentemente apagados do banco de dados — não há como recuperar depois.
         </p>
-        <ul style="margin:0;padding-left:20px;font-size:14px;color:#7f1d1d;line-height:1.9">
+        <ul style="margin:0;padding-left:20px;font-size:14px;color:#fca5a5;line-height:1.9">
             <li><strong><?= $counts['quizzes'] ?></strong> quiz(zes) e todas as suas questões</li>
             <li><strong><?= $counts['participants'] ?></strong> participação(ões)/resultado(s) e certificados emitidos</li>
             <li><strong><?= $counts['users'] ?></strong> colaborador(es) cadastrado(s)</li>
@@ -97,9 +97,9 @@ superadminHead('Excluir Empresa', 'companies.php');
             <li><strong><?= $counts['invites'] ?></strong> convite(s) gerado(s)</li>
             <li><strong><?= $counts['subscriptions'] ?></strong> registro(s) de pagamento/assinatura</li>
         </ul>
-        <div style="margin-top:14px;font-size:12px;color:#7f1d1d">
+        <div style="margin-top:14px;font-size:12px;color:#fca5a5">
             <i class="fa-solid fa-circle-info"></i> Se o objetivo é apenas bloquear o acesso, considere
-            <a href="companies.php" style="color:#991b1b;font-weight:700">Suspender</a> a empresa em vez de excluir —
+            <a href="companies.php" style="color:#fca5a5;font-weight:700">Suspender</a> a empresa em vez de excluir —
             é reversível e preserva o histórico.
         </div>
     </div>

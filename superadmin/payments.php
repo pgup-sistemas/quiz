@@ -96,10 +96,10 @@ $failedEventRows = dbRows(
 );
 
 $statusLabels = [
-    'pending'   => ['Aguardando', '#92400e', '#fef3c7'],
-    'active'    => ['Ativo',      '#166534', '#dcfce7'],
-    'paid'      => ['Pago',       '#166534', '#dcfce7'],
-    'overdue'   => ['Inadim.',    '#991b1b', '#fee2e2'],
+    'pending'   => ['Aguardando', '#fcd34d', 'rgba(251,191,36,.15)'],
+    'active'    => ['Ativo',      '#86efac', 'rgba(34,197,94,.15)'],
+    'paid'      => ['Pago',       '#86efac', 'rgba(34,197,94,.15)'],
+    'overdue'   => ['Inadim.',    '#fca5a5', 'rgba(239,68,68,.15)'],
     'cancelled' => ['Cancelado',  '#6b7280', '#f3f4f6'],
     'expired'   => ['Expirado',   '#6b7280', '#f3f4f6'],
 ];
@@ -116,7 +116,7 @@ superadminHead('Pagamentos', 'payments.php');
 <div class="sa-wrap">
 
     <?php if ($flashMsg): ?>
-    <div class="alert <?= $flashOk ? 'alert-success' : '' ?>" style="<?= $flashOk ? '' : 'background:#fee2e2;color:#991b1b;' ?>border-radius:8px;padding:12px 16px;margin-bottom:16px">
+    <div class="alert <?= $flashOk ? 'alert-success' : '' ?>" style="<?= $flashOk ? '' : 'background:rgba(239,68,68,.15);color:#fca5a5;' ?>border-radius:8px;padding:12px 16px;margin-bottom:16px">
         <i class="fa-solid fa-<?= $flashOk ? 'circle-check' : 'circle-exclamation' ?>"></i>
         <?= htmlspecialchars($flashMsg) ?>
     </div>
@@ -140,7 +140,7 @@ superadminHead('Pagamentos', 'payments.php');
     <div class="stat-cards">
         <div class="stat-card">
             <div class="sc-label">Total Pago/Ativo</div>
-            <div class="sc-val" style="color:#166534"><?= $totalPaid ?></div>
+            <div class="sc-val" style="color:#86efac"><?= $totalPaid ?></div>
         </div>
         <div class="stat-card">
             <div class="sc-label">Receita Total</div>
@@ -148,11 +148,11 @@ superadminHead('Pagamentos', 'payments.php');
         </div>
         <div class="stat-card">
             <div class="sc-label">Aguardando</div>
-            <div class="sc-val" style="color:#92400e"><?= $totalPending ?></div>
+            <div class="sc-val" style="color:#fcd34d"><?= $totalPending ?></div>
         </div>
         <div class="stat-card">
             <div class="sc-label">Erros Webhook</div>
-            <div class="sc-val" style="color:<?= $failedEvents > 0 ? '#991b1b' : 'var(--gray-400)' ?>"><?= $failedEvents ?></div>
+            <div class="sc-val" style="color:<?= $failedEvents > 0 ? '#fca5a5' : 'var(--gray-400)' ?>"><?= $failedEvents ?></div>
             <div class="sc-sub"><?= $failedEvents > 0 ? 'reprocessar manualmente' : 'ok' ?></div>
         </div>
     </div>
@@ -248,7 +248,7 @@ superadminHead('Pagamentos', 'payments.php');
                 <h2 style="font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px">
                     <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444"></i>
                     Eventos de Webhook com Falha
-                    <span style="background:#fee2e2;color:#991b1b;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px"><?= count($failedEventRows) ?></span>
+                    <span style="background:rgba(239,68,68,.15);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px"><?= count($failedEventRows) ?></span>
                 </h2>
                 <div class="sub" style="color:#ef4444">Estes eventos não foram processados. Clique em Reprocessar para tentar novamente.</div>
             </div>
@@ -270,7 +270,7 @@ superadminHead('Pagamentos', 'payments.php');
                 <tr>
                     <td style="font-size:12px;color:var(--gray-500);white-space:nowrap"><?= substr($ev['created_at'],0,16) ?></td>
                     <td>
-                        <span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:#fee2e2;color:#991b1b">
+                        <span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(239,68,68,.15);color:#fca5a5">
                             <?= htmlspecialchars($ev['event_type']) ?>
                         </span>
                     </td>

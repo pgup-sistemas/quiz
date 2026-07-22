@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $admins = dbRows("SELECT * FROM super_admins ORDER BY active DESC, created_at ASC");
 
-superadminHead('Super-Admins', 'settings.php');
+superadminHead('Super-Admins', 'admins.php');
 ?>
 <div class="sa-wrap" style="max-width:860px">
 
@@ -77,7 +77,7 @@ superadminHead('Super-Admins', 'settings.php');
     </div>
     <?php endif; ?>
     <?php if ($errors): ?>
-    <div class="alert" style="background:#fee2e2;color:#991b1b;border-radius:8px;padding:12px 16px;margin-bottom:16px">
+    <div class="alert" style="background:rgba(239,68,68,.15);color:#fca5a5;border-radius:8px;padding:12px 16px;margin-bottom:16px">
         <?php foreach ($errors as $e): ?><div><i class="fa-solid fa-circle-exclamation"></i> <?= htmlspecialchars($e) ?></div><?php endforeach; ?>
     </div>
     <?php endif; ?>
@@ -103,15 +103,15 @@ superadminHead('Super-Admins', 'settings.php');
                 <td style="font-weight:600;color:var(--prussian)">
                     <?= htmlspecialchars($sa['name']) ?>
                     <?php if ((int)$sa['id'] === $meId): ?>
-                    <span style="font-size:11px;background:#e9d5ff;color:#6b21a8;padding:1px 6px;border-radius:20px;margin-left:6px;font-weight:700">você</span>
+                    <span style="font-size:11px;background:rgba(168,85,247,.18);color:#d8b4fe;padding:1px 6px;border-radius:20px;margin-left:6px;font-weight:700">você</span>
                     <?php endif; ?>
                 </td>
                 <td style="font-size:13px;color:var(--gray-500)"><?= htmlspecialchars($sa['username']) ?></td>
                 <td>
                     <?php if ($sa['active']): ?>
-                    <span style="padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:#dcfce7;color:#166534">Ativo</span>
+                    <span style="padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(34,197,94,.15);color:#86efac">Ativo</span>
                     <?php else: ?>
-                    <span style="padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:#fee2e2;color:#991b1b">Inativo</span>
+                    <span style="padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(239,68,68,.15);color:#fca5a5">Inativo</span>
                     <?php endif; ?>
                 </td>
                 <td style="font-size:12px;color:var(--gray-400)"><?= date('d/m/Y', strtotime($sa['created_at'])) ?></td>
@@ -129,7 +129,7 @@ superadminHead('Super-Admins', 'settings.php');
                         <form method="POST" style="display:inline">
                             <input type="hidden" name="action" value="reactivate"/>
                             <input type="hidden" name="target_id" value="<?= $sa['id'] ?>"/>
-                            <button type="submit" class="btn btn-xs success" style="font-size:12px;background:#dcfce7;color:#166534">
+                            <button type="submit" class="btn btn-xs success" style="font-size:12px;background:rgba(34,197,94,.15);color:#86efac">
                                 <i class="fa-solid fa-circle-check"></i> Reativar
                             </button>
                         </form>

@@ -49,7 +49,7 @@ $activeUsers30 = (int)dbRow(
 )['c'];
 $companies = dbRows("SELECT id, name FROM companies ORDER BY name");
 
-superadminHead('Colaboradores', '');
+superadminHead('Colaboradores', 'users.php');
 ?>
 <div class="sa-wrap">
 
@@ -67,7 +67,7 @@ superadminHead('Colaboradores', '');
         </div>
         <div class="stat-card">
             <div class="sc-label">Ativos (últimos 30d)</div>
-            <div class="sc-val" style="color:#166534"><?= $activeUsers30 ?></div>
+            <div class="sc-val" style="color:#86efac"><?= $activeUsers30 ?></div>
         </div>
         <div class="stat-card">
             <div class="sc-label">Resultado da busca</div>

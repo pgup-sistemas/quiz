@@ -69,23 +69,23 @@ $typeLabels = [
     'manual'       => 'Manual',
 ];
 $subStatusLabels = [
-    'pending'  => ['Aguardando','#92400e','#fef3c7'],
-    'active'   => ['Ativo',     '#166534','#dcfce7'],
-    'paid'     => ['Pago',      '#166534','#dcfce7'],
-    'overdue'  => ['Inadim.',   '#991b1b','#fee2e2'],
+    'pending'  => ['Aguardando','#fcd34d','rgba(251,191,36,.15)'],
+    'active'   => ['Ativo',     '#86efac','rgba(34,197,94,.15)'],
+    'paid'     => ['Pago',      '#86efac','rgba(34,197,94,.15)'],
+    'overdue'  => ['Inadim.',   '#fca5a5','rgba(239,68,68,.15)'],
     'cancelled'=> ['Cancelado', '#6b7280','#f3f4f6'],
 ];
 
 $actionBadge = [
     'login'               => ['#dbeafe','#1e40af','Login'],
-    'impersonate'         => ['#e9d5ff','#6b21a8','Impersonation'],
-    'suspend'             => ['#fee2e2','#991b1b','Suspensão'],
-    'activate'            => ['#dcfce7','#166534','Reativação'],
-    'approve_pro'         => ['#fef3c7','#92400e','Ativar Pro'],
+    'impersonate'         => ['rgba(168,85,247,.18)','#d8b4fe','Impersonation'],
+    'suspend'             => ['rgba(239,68,68,.15)','#fca5a5','Suspensão'],
+    'activate'            => ['rgba(34,197,94,.15)','#86efac','Reativação'],
+    'approve_pro'         => ['rgba(251,191,36,.15)','#fcd34d','Ativar Pro'],
     'downgrade'           => ['#ffedd5','#9a3412','Rebaixamento'],
-    'edit_company'        => ['#e0f2fe','#0369a1','Edição'],
-    'create_company'      => ['#dcfce7','#166534','Nova empresa'],
-    'reset_admin_password'=> ['#fef9c3','#854d0e','Reset senha'],
+    'edit_company'        => ['rgba(33,158,188,.18)','#7dd3fc','Edição'],
+    'create_company'      => ['rgba(34,197,94,.15)','#86efac','Nova empresa'],
+    'reset_admin_password'=> ['rgba(251,191,36,.12)','#fcd34d','Reset senha'],
     'auto_downgrade'      => ['#ffedd5','#9a3412','Auto-downgrade'],
 ];
 
@@ -94,7 +94,7 @@ superadminHead('Empresa: ' . $company['name'], 'companies.php');
 <style>
 .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
 @media(max-width:700px){ .detail-grid { grid-template-columns:1fr; } }
-.section-card { background:#fff; border-radius:var(--radius); box-shadow:0 1px 4px rgba(0,0,0,.08); margin-bottom:20px; overflow:hidden; }
+.section-card { background:#16304d; border:1px solid #23415f; border-radius:var(--radius); box-shadow:0 1px 4px rgba(0,0,0,.25); margin-bottom:20px; overflow:hidden; }
 .section-card-head { padding:16px 20px; border-bottom:1px solid var(--gray-100); display:flex; align-items:center; justify-content:space-between; }
 .section-card-head h3 { font-size:13px; font-weight:700; color:var(--gray-700); margin:0; text-transform:uppercase; letter-spacing:.5px; }
 .section-card-body { padding:0; }
@@ -138,7 +138,7 @@ superadminHead('Empresa: ' . $company['name'], 'companies.php');
             <a href="company-edit.php?id=<?= $id ?>" class="btn btn-xs ghost" style="font-size:13px;padding:7px 14px">
                 <i class="fa-solid fa-pen"></i> Editar
             </a>
-            <a href="impersonate.php?company_id=<?= $id ?>" class="btn btn-xs" style="background:#e9d5ff;color:#6b21a8;font-size:13px;padding:7px 14px">
+            <a href="impersonate.php?company_id=<?= $id ?>" class="btn btn-xs" style="background:rgba(168,85,247,.18);color:#d8b4fe;font-size:13px;padding:7px 14px">
                 <i class="fa-solid fa-user-secret"></i> Impersonar
             </a>
             <?php if ($company['status'] === 'active'): ?>
@@ -163,7 +163,7 @@ superadminHead('Empresa: ' . $company['name'], 'companies.php');
                 <div class="lbl">Quizzes</div>
             </div>
             <div class="stat-cell">
-                <div class="num" style="color:#166534"><?= (int)$quizStats['active_q'] ?></div>
+                <div class="num" style="color:#86efac"><?= (int)$quizStats['active_q'] ?></div>
                 <div class="lbl">Ativos</div>
             </div>
             <div class="stat-cell">
@@ -257,9 +257,9 @@ superadminHead('Empresa: ' . $company['name'], 'companies.php');
                     <td style="font-variant-numeric:tabular-nums"><?= (int)$q['participants'] ?></td>
                     <td>
                         <?php if ($q['active']): ?>
-                        <span style="padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:#dcfce7;color:#166534">Ativo</span>
+                        <span style="padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(34,197,94,.15);color:#86efac">Ativo</span>
                         <?php else: ?>
-                        <span style="padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:#fee2e2;color:#991b1b">Inativo</span>
+                        <span style="padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(239,68,68,.15);color:#fca5a5">Inativo</span>
                         <?php endif; ?>
                     </td>
                     <td style="font-size:12px;color:var(--gray-400)"><?= date('d/m/Y', strtotime($q['created_at'])) ?></td>

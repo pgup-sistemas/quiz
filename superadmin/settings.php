@@ -91,7 +91,7 @@ superadminHead('Configurações', 'settings.php');
     </div>
     <?php endif; ?>
     <?php if ($error): ?>
-    <div class="alert" style="background:#fee2e2;color:#991b1b;border-radius:8px;padding:12px 16px;margin-bottom:16px">
+    <div class="alert" style="background:rgba(239,68,68,.15);color:#fca5a5;border-radius:8px;padding:12px 16px;margin-bottom:16px">
         <i class="fa-solid fa-circle-exclamation"></i> <?= htmlspecialchars($error) ?>
     </div>
     <?php endif; ?>
@@ -148,7 +148,7 @@ superadminHead('Configurações', 'settings.php');
                 <i class="fa-solid fa-envelope" style="color:var(--pacific)"></i> E-mail Transacional
             </h3>
             <?php $hasResend = !empty($settings['resend_api_key']['value']); ?>
-            <div style="background:<?= $hasResend ? '#f0fff4' : '#fffbeb' ?>;border:1px solid <?= $hasResend ? '#9ae6b4' : '#fbbf24' ?>;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:<?= $hasResend ? '#276749' : '#92400e' ?>">
+            <div style="background:<?= $hasResend ? '#f0fff4' : 'rgba(251,191,36,.10)' ?>;border:1px solid <?= $hasResend ? '#9ae6b4' : 'rgba(251,191,36,.5)' ?>;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:<?= $hasResend ? '#276749' : '#fcd34d' ?>">
                 <i class="fa-solid fa-<?= $hasResend ? 'circle-check' : 'triangle-exclamation' ?>"></i>
                 <?= $hasResend ? 'Resend configurado — e-mails serão enviados via API.' : 'API Resend não configurada — e-mails serão enviados via PHP mail() (requer SMTP no servidor).' ?>
             </div>
@@ -198,7 +198,7 @@ superadminHead('Configurações', 'settings.php');
             $hasClientId = !empty($settings['efi_client_id']['value']);
             ?>
             <?php if (!$hasClientId): ?>
-            <div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#92400e">
+            <div style="background:rgba(251,191,36,.10);border:1px solid rgba(251,191,36,.5);border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#fcd34d">
                 <i class="fa-solid fa-triangle-exclamation"></i>
                 Credenciais EFI não configuradas. Pagamentos estarão desabilitados até que você preencha os campos abaixo.
             </div>
@@ -263,7 +263,7 @@ superadminHead('Configurações', 'settings.php');
                     <?php
                     $certPath = __DIR__ . '/../' . ltrim($settings['efi_cert_path']['value'] ?? '', '/');
                     ?>
-                    <div style="font-size:11px;margin-top:4px;color:<?= file_exists($certPath) ? '#166534' : '#991b1b' ?>">
+                    <div style="font-size:11px;margin-top:4px;color:<?= file_exists($certPath) ? '#86efac' : '#fca5a5' ?>">
                         <?= file_exists($certPath) ? '<i class="fa-solid fa-circle-check"></i> Certificado encontrado' : '<i class="fa-solid fa-circle-xmark"></i> Certificado não encontrado neste caminho' ?>
                     </div>
                 </div>

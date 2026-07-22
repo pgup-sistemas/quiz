@@ -62,15 +62,15 @@ superadminHead('Gerar Link de Pagamento', 'payments.php');
     </div>
     <?php endif; ?>
     <?php if ($error): ?>
-    <div class="alert" style="background:#fee2e2;color:#991b1b;border-radius:8px;padding:12px 16px;margin-bottom:16px">
+    <div class="alert" style="background:rgba(239,68,68,.15);color:#fca5a5;border-radius:8px;padding:12px 16px;margin-bottom:16px">
         <i class="fa-solid fa-circle-exclamation"></i> <?= htmlspecialchars($error) ?>
     </div>
     <?php endif; ?>
 
     <?php if ($linkResult && !empty($linkResult['url'])): ?>
-    <div class="card" style="border-radius:var(--radius);padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px;background:#f0fdf4;border:2px solid #86efac">
-        <div style="font-weight:700;color:#166534;margin-bottom:12px"><i class="fa-solid fa-link"></i> Link gerado com sucesso!</div>
-        <div style="background:#fff;border:1px solid #86efac;border-radius:8px;padding:12px;word-break:break-all;font-size:13px;margin-bottom:12px">
+    <div class="card" style="border-radius:var(--radius);padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px;background:rgba(34,197,94,.10);border:2px solid rgba(34,197,94,.4)">
+        <div style="font-weight:700;color:#86efac;margin-bottom:12px"><i class="fa-solid fa-link"></i> Link gerado com sucesso!</div>
+        <div style="background:rgba(0,0,0,.15);color:var(--gray-700);border:1px solid rgba(34,197,94,.4);border-radius:8px;padding:12px;word-break:break-all;font-size:13px;margin-bottom:12px">
             <?= htmlspecialchars($linkResult['url']) ?>
         </div>
         <div style="display:flex;gap:10px">
@@ -82,7 +82,7 @@ superadminHead('Gerar Link de Pagamento', 'payments.php');
                 <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir
             </a>
         </div>
-        <div style="margin-top:12px;font-size:12px;color:#166534">
+        <div style="margin-top:12px;font-size:12px;color:#86efac">
             Quando o cliente pagar, o Pro da empresa <strong><?= htmlspecialchars($company['name'] ?? '') ?></strong> será ativado automaticamente via webhook.
         </div>
     </div>

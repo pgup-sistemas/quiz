@@ -133,7 +133,7 @@ superadminHead($isEdit ? 'Editar Empresa' : 'Nova Empresa', 'companies.php');
     <?php endif; ?>
 
     <?php if ($resetPass): ?>
-    <div class="alert alert-success shadow-sm" style="margin-bottom:20px;background:#fefce8;border:1.5px solid #fbbf24;color:#78350f">
+    <div class="alert alert-success shadow-sm" style="margin-bottom:20px;background:#fefce8;border:1.5px solid rgba(251,191,36,.5);color:#fcd34d">
         <i class="fa-solid fa-key"></i>
         Nova senha temporária do admin: &nbsp;
         <code style="background:rgba(0,0,0,.08);padding:2px 10px;border-radius:4px;font-size:15px;font-weight:700"><?= htmlspecialchars($resetPass) ?></code>
@@ -142,7 +142,7 @@ superadminHead($isEdit ? 'Editar Empresa' : 'Nova Empresa', 'companies.php');
     <?php endif; ?>
 
     <?php if ($errors): ?>
-    <div class="alert" style="background:#fee2e2;color:#991b1b;border-radius:8px;padding:12px 16px;margin-bottom:16px">
+    <div class="alert" style="background:rgba(239,68,68,.15);color:#fca5a5;border-radius:8px;padding:12px 16px;margin-bottom:16px">
         <?php foreach ($errors as $e): ?><div><i class="fa-solid fa-circle-exclamation"></i> <?= htmlspecialchars($e) ?></div><?php endforeach; ?>
     </div>
     <?php endif; ?>
@@ -152,7 +152,7 @@ superadminHead($isEdit ? 'Editar Empresa' : 'Nova Empresa', 'companies.php');
         <a href="company-detail.php?id=<?= $id ?>" class="btn" style="background:var(--gray-100);color:var(--gray-700);font-size:13px">
             <i class="fa-solid fa-chart-bar"></i> Ver detalhes
         </a>
-        <a href="impersonate.php?company_id=<?= $id ?>" class="btn" style="background:#e9d5ff;color:#6b21a8;font-size:13px">
+        <a href="impersonate.php?company_id=<?= $id ?>" class="btn" style="background:rgba(168,85,247,.18);color:#d8b4fe;font-size:13px">
             <i class="fa-solid fa-user-secret"></i> Impersonar
         </a>
     </div>
@@ -223,11 +223,11 @@ superadminHead($isEdit ? 'Editar Empresa' : 'Nova Empresa', 'companies.php');
 
     <?php if ($isEdit): ?>
     <?php $adminRow = dbRow("SELECT id, username, name FROM admins WHERE company_id=? ORDER BY id ASC LIMIT 1", [$id]); ?>
-    <div class="card" style="border-radius:var(--radius);padding:24px 28px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-top:0;border-top:3px solid #fbbf24">
+    <div class="card" style="border-radius:var(--radius);padding:24px 28px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-top:0;border-top:3px solid rgba(251,191,36,.5)">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
             <div>
                 <div style="font-size:13px;font-weight:700;color:var(--gray-700);margin-bottom:4px">
-                    <i class="fa-solid fa-key" style="color:#d97706"></i> &nbsp;Redefinir senha do administrador
+                    <i class="fa-solid fa-key" style="color:#fcd34d"></i> &nbsp;Redefinir senha do administrador
                 </div>
                 <?php if ($adminRow): ?>
                 <div style="font-size:12px;color:var(--gray-500)">
@@ -235,13 +235,13 @@ superadminHead($isEdit ? 'Editar Empresa' : 'Nova Empresa', 'companies.php');
                     &nbsp;·&nbsp; <?= htmlspecialchars($adminRow['username']) ?>
                 </div>
                 <?php else: ?>
-                <div style="font-size:12px;color:#991b1b">Nenhum admin cadastrado para esta empresa.</div>
+                <div style="font-size:12px;color:#fca5a5">Nenhum admin cadastrado para esta empresa.</div>
                 <?php endif; ?>
             </div>
             <?php if ($adminRow): ?>
             <form method="POST" onsubmit="return confirm('Gerar nova senha temporária para <?= htmlspecialchars(addslashes($adminRow['name'])) ?>?')">
                 <input type="hidden" name="action" value="reset_password"/>
-                <button type="submit" class="btn" style="background:#fef3c7;color:#92400e;font-weight:700;border:1.5px solid #fbbf24">
+                <button type="submit" class="btn" style="background:rgba(251,191,36,.15);color:#fcd34d;font-weight:700;border:1.5px solid rgba(251,191,36,.5)">
                     <i class="fa-solid fa-rotate-right"></i> Gerar nova senha temporária
                 </button>
             </form>
@@ -258,7 +258,7 @@ superadminHead($isEdit ? 'Editar Empresa' : 'Nova Empresa', 'companies.php');
             E-mail atual: <strong><?= htmlspecialchars($adminRow['username']) ?></strong>
         </div>
         <?php if (!empty($errors)): ?>
-        <div style="background:#fee2e2;color:#991b1b;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px">
+        <div style="background:rgba(239,68,68,.15);color:#fca5a5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px">
             <?php foreach ($errors as $e): ?><div><i class="fa-solid fa-circle-exclamation"></i> <?= htmlspecialchars($e) ?></div><?php endforeach; ?>
         </div>
         <?php endif; ?>
@@ -319,11 +319,11 @@ superadminHead($isEdit ? 'Editar Empresa' : 'Nova Empresa', 'companies.php');
         if (raw.length === 0) {
             fb.textContent = ''; fb.style.color='';
         } else if (raw.length < 14) {
-            fb.textContent = 'Digite todos os 14 dígitos.'; fb.style.color='#92400e';
+            fb.textContent = 'Digite todos os 14 dígitos.'; fb.style.color='#fcd34d';
         } else if (validCnpj(raw)) {
-            fb.textContent = '✓ CNPJ válido'; fb.style.color='#166534';
+            fb.textContent = '✓ CNPJ válido'; fb.style.color='#86efac';
         } else {
-            fb.textContent = '✗ CNPJ inválido'; fb.style.color='#991b1b';
+            fb.textContent = '✗ CNPJ inválido'; fb.style.color='#fca5a5';
         }
     });
 
