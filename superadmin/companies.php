@@ -268,6 +268,10 @@ superadminHead('Empresas', 'companies.php');
                             </button>
                         </form>
                         <?php endif; ?>
+
+                        <a href="company-delete.php?id=<?= $c['id'] ?>" class="btn-xs danger" title="Excluir empresa (permanente)">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </a>
                     </div>
                 </td>
             </tr>
