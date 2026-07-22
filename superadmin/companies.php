@@ -164,11 +164,22 @@ superadminHead('Empresas', 'companies.php');
         <?php endif; ?>
     </form>
 
+    <div id="bulk-bar" style="display:none;align-items:center;gap:12px;background:#fff5f5;border:1.5px solid #fecaca;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px">
+        <span id="bulk-count" style="font-size:13px;font-weight:700;color:#991b1b"></span>
+        <button type="button" class="btn btn-xs" style="background:#ef4444;color:#fff;font-weight:700" onclick="bulkDeleteGo()">
+            <i class="fa-solid fa-trash-can"></i> Excluir selecionadas
+        </button>
+        <button type="button" class="btn btn-xs" style="background:var(--gray-100);color:var(--gray-700)" onclick="bulkClear()">
+            Limpar seleção
+        </button>
+    </div>
+
     <div class="card" style="border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
         <div style="overflow-x:auto">
         <table class="tbl">
             <thead>
                 <tr>
+                    <th style="width:32px"><input type="checkbox" id="chk-all" onclick="bulkToggleAll(this)"/></th>
                     <th>Empresa</th>
                     <th>Plano</th>
                     <th>Status</th>
@@ -180,13 +191,14 @@ superadminHead('Empresas', 'companies.php');
             </thead>
             <tbody>
             <?php if (empty($companies)): ?>
-            <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-400)">
+            <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--gray-400)">
                 <i class="fa-solid fa-building" style="font-size:32px;margin-bottom:8px;display:block;opacity:.3"></i>
                 Nenhuma empresa encontrada.
             </td></tr>
             <?php endif; ?>
             <?php foreach ($companies as $c): ?>
             <tr>
+                <td><input type="checkbox" class="chk-company" value="<?= $c['id'] ?>" onclick="bulkUpdate()"/></td>
                 <td>
                     <div style="font-weight:600;color:var(--prussian)"><?= htmlspecialchars($c['name']) ?></div>
                     <div style="font-size:11px;color:var(--gray-400)"><?= htmlspecialchars($c['slug']) ?> &nbsp;·&nbsp; <?= htmlspecialchars($c['email']) ?></div>
@@ -303,6 +315,37 @@ function approveProSubmit(form, defaultPriceCents, companyName) {
     form.querySelector('input[name="amount"]').value = amount;
     form.querySelector('input[name="note"]').value = note;
     return confirm('Confirma ativação do Pro para "' + companyName + '" por R$ ' + (amount || defaultReais) + '?');
+}
+
+function bulkUpdate() {
+    const checked = document.querySelectorAll('.chk-company:checked');
+    const bar     = document.getElementById('bulk-bar');
+    const count   = document.getElementById('bulk-count');
+    if (checked.length > 0) {
+        bar.style.display = 'flex';
+        count.textContent = checked.length + ' empresa' + (checked.length > 1 ? 's' : '') + ' selecionada' + (checked.length > 1 ? 's' : '');
+    } else {
+        bar.style.display = 'none';
+    }
+    const all = document.querySelectorAll('.chk-company');
+    document.getElementById('chk-all').checked = all.length > 0 && checked.length === all.length;
+}
+
+function bulkToggleAll(master) {
+    document.querySelectorAll('.chk-company').forEach(chk => chk.checked = master.checked);
+    bulkUpdate();
+}
+
+function bulkClear() {
+    document.querySelectorAll('.chk-company').forEach(chk => chk.checked = false);
+    document.getElementById('chk-all').checked = false;
+    bulkUpdate();
+}
+
+function bulkDeleteGo() {
+    const ids = Array.from(document.querySelectorAll('.chk-company:checked')).map(c => c.value);
+    if (ids.length === 0) return;
+    window.location = 'company-bulk-delete.php?ids=' + ids.join(',');
 }
 </script>
 <?php superadminFoot(); ?>
