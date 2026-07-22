@@ -244,5 +244,6 @@ table.cookie-table tr:hover td{background:#fafcfe}
     <p><a href="verify.php" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:12px"><i class="fa-solid fa-shield-halved"></i> Verificar certificado</a></p>
   </div>
 </footer>
+<?php include __DIR__ . '/includes/cookie-banner.php'; ?>
 </body>
 </html>

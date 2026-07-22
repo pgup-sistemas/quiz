@@ -291,5 +291,6 @@ if ($participant && $quiz) {
     <p>PageUp Sistemas &nbsp;·&nbsp; <?= date('Y') ?></p>
 </footer>
 
+<?php include __DIR__ . '/includes/cookie-banner.php'; ?>
 </body>
 </html>

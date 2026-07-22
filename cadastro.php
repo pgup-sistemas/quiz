@@ -319,5 +319,6 @@ h2 { font-family:var(--font-heading,'Syne',sans-serif); font-size:20px; color:va
     }
 })();
 </script>
+<?php include __DIR__ . '/includes/cookie-banner.php'; ?>
 </body>
 </html>

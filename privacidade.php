@@ -262,5 +262,6 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
     <p><a href="verify.php" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:12px"><i class="fa-solid fa-shield-halved"></i> Verificar certificado</a></p>
   </div>
 </footer>
+<?php include __DIR__ . '/includes/cookie-banner.php'; ?>
 </body>
 </html>

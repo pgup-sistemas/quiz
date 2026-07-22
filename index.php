@@ -876,5 +876,6 @@ const revealObs = new IntersectionObserver((entries) => {
 }, {threshold: .12, rootMargin: '0px 0px -40px 0px'});
 document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 </script>
+<?php include __DIR__ . '/includes/cookie-banner.php'; ?>
 </body>
 </html>
