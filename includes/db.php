@@ -105,6 +105,11 @@ function initDB(PDO $db): void {
         $db->exec("ALTER TABLE subscriptions ADD COLUMN notes VARCHAR(255) DEFAULT NULL AFTER payment_link_url");
     }
 
+    // Migração incremental: dispensar checklist de primeiros passos no dashboard
+    if (!columnExists($db, 'companies', 'onboarding_dismissed')) {
+        $db->exec("ALTER TABLE companies ADD COLUMN onboarding_dismissed TINYINT(1) NOT NULL DEFAULT 0 AFTER allow_self_register");
+    }
+
     // Seeds: empresa base (Alphaclin = id 1)
     $db->exec("INSERT IGNORE INTO companies (id, name, slug, email, plan, status)
                VALUES (1, 'Alphaclin', 'alphaclin', 'comunicacao@alphaclin.net.br', 'pro', 'active')");

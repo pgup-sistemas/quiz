@@ -7,11 +7,32 @@ requireLogin();
 $cid     = adminCompanyId();
 $company = dbRow("SELECT * FROM companies WHERE id=?", [$cid]);
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'dismiss_onboarding') {
+    requireCsrf();
+    dbExec("UPDATE companies SET onboarding_dismissed=1 WHERE id=?", [$cid]);
+    header('Location: index.php'); exit;
+}
+
 $totalQuizzes      = dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE company_id=?", [$cid])['c'];
 $activeQuizzes     = dbRow("SELECT COUNT(*) AS c FROM quizzes WHERE active=1 AND company_id=?", [$cid])['c'];
 $totalParticipants = dbRow("SELECT COUNT(*) AS c FROM participants p JOIN quizzes q ON q.id=p.quiz_id WHERE q.company_id=?", [$cid])['c'];
 $passCount         = dbRow("SELECT COUNT(*) AS c FROM participants p JOIN quizzes q ON q.id=p.quiz_id WHERE p.passed=1 AND q.company_id=?", [$cid])['c'];
 $passRate  = $totalParticipants > 0 ? round(($passCount / $totalParticipants) * 100) : 0;
+
+// ── Checklist "Primeiros Passos" ────────────────────────────────────────
+$obSectors = (int)dbRow("SELECT COUNT(*) AS c FROM sectors WHERE company_id=?", [$cid])['c'];
+$obUsers   = (int)dbRow(
+    "SELECT (SELECT COUNT(*) FROM users WHERE company_id=?) + (SELECT COUNT(*) FROM invites WHERE company_id=?) AS c",
+    [$cid, $cid]
+)['c'];
+$obSteps = [
+    ['done' => $obSectors > 0,        'label' => 'Criar um setor',                    'desc' => 'Organize seus quizzes e colaboradores por área.', 'href' => 'sectors.php',  'icon' => 'fa-sitemap'],
+    ['done' => (int)$totalQuizzes > 0,'label' => 'Criar seu primeiro quiz',            'desc' => 'Monte as questões e defina a nota mínima.',        'href' => 'quiz-edit.php','icon' => 'fa-list-check'],
+    ['done' => $obUsers > 0,          'label' => 'Cadastrar ou convidar colaboradores','desc' => 'Adicione diretamente ou gere um link de convite.', 'href' => 'users.php',    'icon' => 'fa-users'],
+    ['done' => (int)$totalParticipants > 0, 'label' => 'Compartilhar o link de acesso','desc' => 'Link e QR code ficam na aba "Acesso & Compartilhar" abaixo.', 'href' => '#panel-acesso', 'icon' => 'fa-qrcode'],
+];
+$obDone = count(array_filter($obSteps, fn($s) => $s['done']));
+$showOnboarding = !$company['onboarding_dismissed'] && $obDone < count($obSteps);
 
 $recentResults = dbRows("
     SELECT p.*, q.title AS quiz_title
@@ -197,6 +218,49 @@ adminHead('Dashboard', 'index.php');
         </a>
     </div>
 </div>
+
+<?php if ($showOnboarding): ?>
+<div class="card" style="margin-bottom:24px;border:1.5px solid #dce8ef;background:linear-gradient(135deg,#f0f9ff 0%,#fff 60%)">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+        <div>
+            <h2 style="display:flex;align-items:center;gap:8px;font-size:16px">
+                <i class="fa-solid fa-flag-checkered" style="color:var(--pacific)"></i> Primeiros Passos
+            </h2>
+            <p style="font-size:12px;color:var(--gray-400);margin:4px 0 0">
+                <?= $obDone ?> de <?= count($obSteps) ?> concluídos — configure sua plataforma em poucos minutos.
+            </p>
+        </div>
+        <form method="POST" onsubmit="return confirm('Esconder este checklist? Você pode continuar configurando pelas telas normais.')">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="dismiss_onboarding"/>
+            <button type="submit" class="btn btn-outline" style="font-size:12px;padding:6px 12px">
+                <i class="fa-solid fa-xmark"></i> Dispensar
+            </button>
+        </form>
+    </div>
+    <div style="height:6px;background:var(--gray-100);border-radius:4px;overflow:hidden;margin-bottom:20px">
+        <div style="height:100%;background:var(--pacific);width:<?= round($obDone / count($obSteps) * 100) ?>%;border-radius:4px;transition:width .3s"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+        <?php foreach ($obSteps as $s): ?>
+        <?php $isAnchor = str_starts_with($s['href'], '#panel-'); ?>
+        <a href="<?= $isAnchor ? '#' : e($s['href']) ?>"
+           <?= $isAnchor ? 'onclick="switchTab(\'' . substr($s['href'], 7) . '\');return false"' : '' ?>
+           style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:12px;text-decoration:none;
+                  background:<?= $s['done'] ? '#f0fdf4' : '#fff' ?>;border:1.5px solid <?= $s['done'] ? '#bbf7d0' : 'var(--gray-100)' ?>;transition:.15s">
+            <div style="width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+                        background:<?= $s['done'] ? 'var(--green)' : '#e0f2fe' ?>;color:<?= $s['done'] ? '#fff' : 'var(--pacific)' ?>;font-size:13px">
+                <i class="fa-solid <?= $s['done'] ? 'fa-check' : $s['icon'] ?>"></i>
+            </div>
+            <div style="min-width:0">
+                <div style="font-size:13px;font-weight:700;color:<?= $s['done'] ? '#166534' : 'var(--navy)' ?>"><?= e($s['label']) ?></div>
+                <div style="font-size:11px;color:var(--gray-400);margin-top:2px;line-height:1.5"><?= e($s['desc']) ?></div>
+            </div>
+        </a>
+        <?php endforeach; ?>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- KPIs — sempre visíveis -->
 <div class="stats-grid">
