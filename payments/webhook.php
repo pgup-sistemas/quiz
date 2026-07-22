@@ -2,8 +2,13 @@
 /**
  * Endpoint de webhooks EFI Bank.
  * Aceita apenas POST. Sem sessão. Sem HTML.
- * URL configurada na EFI: https://seudominio.com/payments/webhook.php
+ * URL configurada na EFI: https://quiz.pageup.net.br/payments/webhook.php?ignorar=
+ * (o mTLS mútuo exigido pela EFI é validado no Apache, não aqui — ver certs/README.md)
  */
+
+// IPs oficiais da EFI Bank para notificacoes de webhook.
+// https://dev.efipay.com.br/docs/api-pix/webhooks
+const EFI_WEBHOOK_IPS = ['34.193.116.226'];
 
 // Somente POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -15,6 +20,20 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/efi.php';
 
 header('Content-Type: application/json');
+
+// Aceita apenas requisicoes vindas dos IPs oficiais da EFI.
+$remoteIp = $_SERVER['REMOTE_ADDR'] ?? '';
+if (!in_array($remoteIp, EFI_WEBHOOK_IPS, true)) {
+    try {
+        dbExec(
+            "INSERT IGNORE INTO payment_events (efi_notification_id, event_type, raw_payload, processed) VALUES (?,?,?,2)",
+            ['ip_rejected_' . time(), 'webhook_ip_rejected', json_encode(['ip' => $remoteIp])]
+        );
+    } catch (Throwable $ignored) {}
+    http_response_code(403);
+    echo json_encode(['error' => 'forbidden']);
+    exit;
+}
 
 $rawPayload = file_get_contents('php://input');
 
