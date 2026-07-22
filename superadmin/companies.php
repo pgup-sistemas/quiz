@@ -80,8 +80,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($act === 'approve_pro') {
         $co = dbRow("SELECT * FROM companies WHERE id=?", [$cid]);
         if ($co) {
+            $defaultPrice = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='pro_price_monthly'")['value'] ?? 4990);
+            $cents = (int)round((float)str_replace(',', '.', $_POST['amount'] ?? '0') * 100);
+            if ($cents <= 0) $cents = $defaultPrice;
+            $note = trim($_POST['note'] ?? '');
+
             dbExec("UPDATE companies SET plan='pro', status='active', updated_at=NOW() WHERE id=?", [$cid]);
-            logAudit('approve_pro', $cid, json_encode(['prev_status' => $co['status']]));
+            dbExec(
+                "INSERT INTO subscriptions (company_id, type, status, amount, notes) VALUES (?,?,?,?,?)",
+                [$cid, 'manual', 'active', $cents, $note ?: null]
+            );
+            logAudit('approve_pro', $cid, json_encode(['prev_status' => $co['status'], 'amount' => $cents, 'note' => $note]));
             $msg = 'Plano Pro ativado com sucesso!';
         }
     } elseif ($act === 'downgrade_free') {
@@ -103,7 +112,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if (isset($_GET['_msg'])) $msg = $_GET['_msg'];
 
-$freeLimit = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
+$freeLimit      = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
+$defaultProPrice = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='pro_price_monthly'")['value'] ?? 4990);
 
 superadminHead('Empresas', 'companies.php');
 ?>
@@ -214,13 +224,14 @@ superadminHead('Empresas', 'companies.php');
                         <a href="impersonate.php?company_id=<?= $c['id'] ?>" class="btn-xs primary" title="Entrar como admin"><i class="fa-solid fa-user-secret"></i></a>
 
                         <?php if ($c['status'] === 'pending_payment'): ?>
-                        <form method="POST" style="display:inline">
+                        <form method="POST" style="display:inline" onsubmit="return approveProSubmit(this, <?= (int)$defaultProPrice ?>, <?= htmlspecialchars(json_encode($c['name']), ENT_QUOTES) ?>)">
                             <?= csrfField() ?>
                             <input type="hidden" name="action" value="approve_pro"/>
                             <input type="hidden" name="company_id" value="<?= $c['id'] ?>"/>
                             <input type="hidden" name="q" value="<?= htmlspecialchars($search) ?>"/>
-                            <button type="submit" class="btn-xs success" title="Ativar Pro"
-                                    onclick="return confirm('Ativar plano Pro para <?= htmlspecialchars(addslashes($c['name'])) ?>?')">
+                            <input type="hidden" name="amount" value=""/>
+                            <input type="hidden" name="note" value=""/>
+                            <button type="submit" class="btn-xs success" title="Ativar Pro manualmente">
                                 <i class="fa-solid fa-star"></i> Ativar Pro
                             </button>
                         </form>
@@ -278,4 +289,16 @@ superadminHead('Empresas', 'companies.php');
         <?php endif; ?>
     </div>
 </div>
+<script>
+function approveProSubmit(form, defaultPriceCents, companyName) {
+    const defaultReais = (defaultPriceCents / 100).toFixed(2).replace('.', ',');
+    const amount = prompt('Ativar Pro para "' + companyName + '".\n\nValor cobrado (R$):', defaultReais);
+    if (amount === null) return false;
+    const note = prompt('Observação (opcional) — ex: forma de pagamento combinada:', '');
+    if (note === null) return false;
+    form.querySelector('input[name="amount"]').value = amount;
+    form.querySelector('input[name="note"]').value = note;
+    return confirm('Confirma ativação do Pro para "' + companyName + '" por R$ ' + (amount || defaultReais) + '?');
+}
+</script>
 <?php superadminFoot(); ?>

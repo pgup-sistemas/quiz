@@ -100,6 +100,11 @@ function initDB(PDO $db): void {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
 
+    // Migração incremental: nota da ativação manual de Pro (approve_pro)
+    if (!columnExists($db, 'subscriptions', 'notes')) {
+        $db->exec("ALTER TABLE subscriptions ADD COLUMN notes VARCHAR(255) DEFAULT NULL AFTER payment_link_url");
+    }
+
     // Seeds: empresa base (Alphaclin = id 1)
     $db->exec("INSERT IGNORE INTO companies (id, name, slug, email, plan, status)
                VALUES (1, 'Alphaclin', 'alphaclin', 'comunicacao@alphaclin.net.br', 'pro', 'active')");
