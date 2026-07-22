@@ -7,6 +7,7 @@ require_once __DIR__ . '/../includes/superadmin-auth.php';
 requireSuperAdmin();
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/efi.php';
 require_once __DIR__ . '/layout.php';
 
 $msg   = '';
@@ -279,7 +280,7 @@ superadminHead('Configurações', 'settings.php');
                 <i class="fa-solid fa-circle-info"></i>
                 <strong>URL do Webhook:</strong>
                 <code style="background:rgba(0,0,0,.06);padding:2px 6px;border-radius:4px">
-                    https://seudominio.com/payments/webhook.php
+                    <?= htmlspecialchars(efiWebhookUrl()) ?>
                 </code>
                 — configure esta URL no painel EFI Bank → API → Webhooks (PIX e cobranças).
             </div>
