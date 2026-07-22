@@ -19,18 +19,21 @@ function checkAndApplyDowngrades(): void {
     $freeLimit = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
     $now       = date('Y-m-d H:i:s');
 
-    // Empresas Pro com next_billing_at no passado e sem grace period ativo
+    // Empresa Pro sem nenhuma assinatura que ainda garanta acesso:
+    // - 'active' com next_billing_at no futuro (ou NULL, por compatibilidade legada), ou
+    // - 'overdue' ainda dentro do periodo de carencia (grace_until no futuro)
+    // Cobre tanto assinatura recorrente vencida quanto pagamento avulso expirado (30 dias).
     $expired = dbRows("
-        SELECT DISTINCT s.company_id
-        FROM subscriptions s
-        JOIN companies c ON c.id = s.company_id
-        WHERE c.plan = 'pro'
-          AND c.status = 'active'
-          AND s.status IN ('overdue','cancelled','expired')
-          AND (s.grace_until IS NULL OR s.grace_until < ?)
-          AND s.company_id NOT IN (
-              SELECT company_id FROM subscriptions
-              WHERE status = 'active' AND (next_billing_at IS NULL OR next_billing_at >= ?)
+        SELECT c.id AS company_id
+        FROM companies c
+        WHERE c.plan = 'pro' AND c.status = 'active'
+          AND NOT EXISTS (
+              SELECT 1 FROM subscriptions s
+              WHERE s.company_id = c.id
+                AND (
+                    (s.status = 'active'  AND (s.next_billing_at IS NULL OR s.next_billing_at >= ?))
+                    OR (s.status = 'overdue' AND s.grace_until IS NOT NULL AND s.grace_until >= ?)
+                )
           )
     ", [$now, $now]);
 

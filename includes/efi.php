@@ -291,12 +291,12 @@ function efiProcessWebhook(string $rawPayload): array {
     }
 
     // Cobrança de cartão / assinatura
-    if (isset($data['notification_id'])) {
+    if (isset($data['charge_id']) || isset($data['data']['charge_id']) || isset($data['notification_id'])) {
         return efiHandleChargeWebhook($data, $notifId, $rawPayload);
     }
 
     // Salvar evento não reconhecido para análise
-    dbExec("INSERT OR IGNORE INTO payment_events (efi_notification_id, event_type, raw_payload, processed) VALUES (?,?,?,2)",
+    dbExec("INSERT IGNORE INTO payment_events (efi_notification_id, event_type, raw_payload, processed) VALUES (?,?,?,2)",
            [$notifId, 'unknown', $rawPayload]);
 
     return ['event_type' => 'unknown'];
@@ -321,7 +321,7 @@ function efiHandlePixWebhook(array $data, string $notifId, string $raw): array {
         }
 
         dbExec(
-            "INSERT OR IGNORE INTO payment_events (company_id, subscription_id, efi_notification_id, event_type, raw_payload, processed) VALUES (?,?,?,?,?,?)",
+            "INSERT IGNORE INTO payment_events (company_id, subscription_id, efi_notification_id, event_type, raw_payload, processed) VALUES (?,?,?,?,?,?)",
             [$sub['company_id'], $sub['id'], $notifId . '_' . $txid, $eventType, $raw, $processed]
         );
         $results[] = ['event_type' => $eventType, 'txid' => $txid];
@@ -337,6 +337,23 @@ function efiHandleChargeWebhook(array $data, string $notifId, string $raw): arra
         ? dbRow("SELECT * FROM subscriptions WHERE efi_charge_id=?", [$chargeId])
         : null;
 
+    // Fallback: pagamentos via link (superadmin/payment-link.php) nao tem efi_charge_id
+    // gravado no momento da criacao -- casa pelo metadata.custom_id ("company_{id}")
+    // que foi enviado na criacao do link, e vincula o charge_id retroativamente.
+    if (!$sub) {
+        $customId = $data['metadata']['custom_id'] ?? $data['data']['metadata']['custom_id'] ?? '';
+        if ($customId && preg_match('/^company_(\d+)$/', $customId, $m)) {
+            $linkCompanyId = (int)$m[1];
+            $sub = dbRow(
+                "SELECT * FROM subscriptions WHERE company_id=? AND type='payment_link' AND status='pending' ORDER BY created_at DESC LIMIT 1",
+                [$linkCompanyId]
+            );
+            if ($sub && $chargeId) {
+                dbExec("UPDATE subscriptions SET efi_charge_id=? WHERE id=?", [$chargeId, $sub['id']]);
+            }
+        }
+    }
+
     $companyId = $sub ? (int)$sub['company_id'] : 0;
     $subId     = $sub ? (int)$sub['id']         : 0;
 
@@ -349,7 +366,7 @@ function efiHandleChargeWebhook(array $data, string $notifId, string $raw): arra
     };
 
     dbExec(
-        "INSERT OR IGNORE INTO payment_events (company_id, subscription_id, efi_notification_id, event_type, raw_payload, processed) VALUES (?,?,?,?,?,?)",
+        "INSERT IGNORE INTO payment_events (company_id, subscription_id, efi_notification_id, event_type, raw_payload, processed) VALUES (?,?,?,?,?,?)",
         [$companyId, $subId, $notifId, $eventType, $raw, 0]
     );
     $eventId = (int)dbLastId();
@@ -371,9 +388,11 @@ function efiHandleChargeWebhook(array $data, string $notifId, string $raw): arra
 
 function efiActivatePro(int $companyId, int $subscriptionId, string $type): void {
     $now          = date('Y-m-d H:i:s');
+    // Pagamentos avulsos (pix/card_once/manual/payment_link) valem por 30 dias corridos;
+    // assinaturas recorrentes renovam a cada cobranca bem-sucedida via webhook.
     $nextBilling  = $type === 'card_recurring'
         ? date('Y-m-d H:i:s', strtotime('+1 month'))
-        : null;
+        : date('Y-m-d H:i:s', strtotime('+30 days'));
 
     dbExec("UPDATE subscriptions SET status='active', next_billing_at=?, updated_at=? WHERE id=?",
            [$nextBilling, $now, $subscriptionId]);

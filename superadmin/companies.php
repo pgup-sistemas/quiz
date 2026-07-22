@@ -80,18 +80,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($act === 'approve_pro') {
         $co = dbRow("SELECT * FROM companies WHERE id=?", [$cid]);
         if ($co) {
-            $defaultPrice = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='pro_price_monthly'")['value'] ?? 4990);
-            $cents = (int)round((float)str_replace(',', '.', $_POST['amount'] ?? '0') * 100);
-            if ($cents <= 0) $cents = $defaultPrice;
-            $note = trim($_POST['note'] ?? '');
-
-            dbExec("UPDATE companies SET plan='pro', status='active', updated_at=NOW() WHERE id=?", [$cid]);
-            dbExec(
-                "INSERT INTO subscriptions (company_id, type, status, amount, notes) VALUES (?,?,?,?,?)",
-                [$cid, 'manual', 'active', $cents, $note ?: null]
+            $now = date('Y-m-d H:i:s');
+            // Ja existe uma assinatura ainda valida (nao expirada) garantindo o Pro?
+            // Evita duplicar cobranca/registro se clicarem "Ativar Pro" duas vezes.
+            $validSub = dbRow(
+                "SELECT id FROM subscriptions WHERE company_id=? AND status='active'
+                 AND (next_billing_at IS NULL OR next_billing_at >= ?) LIMIT 1",
+                [$cid, $now]
             );
-            logAudit('approve_pro', $cid, json_encode(['prev_status' => $co['status'], 'amount' => $cents, 'note' => $note]));
-            $msg = 'Plano Pro ativado com sucesso!';
+
+            if ($validSub) {
+                $msg = 'Empresa já possui uma assinatura Pro ativa e válida — nenhuma ação foi feita para evitar duplicidade.';
+            } else {
+                $defaultPrice = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='pro_price_monthly'")['value'] ?? 4990);
+                $cents = (int)round((float)str_replace(',', '.', $_POST['amount'] ?? '0') * 100);
+                if ($cents <= 0) $cents = $defaultPrice;
+                $note = trim($_POST['note'] ?? '');
+                $nextBilling = date('Y-m-d H:i:s', strtotime('+30 days'));
+
+                dbExec("UPDATE companies SET plan='pro', status='active', updated_at=NOW() WHERE id=?", [$cid]);
+                dbExec(
+                    "INSERT INTO subscriptions (company_id, type, status, amount, notes, next_billing_at) VALUES (?,?,?,?,?,?)",
+                    [$cid, 'manual', 'active', $cents, $note ?: null, $nextBilling]
+                );
+                logAudit('approve_pro', $cid, json_encode(['prev_status' => $co['status'], 'amount' => $cents, 'note' => $note]));
+                $msg = 'Plano Pro ativado com sucesso!';
+            }
         }
     } elseif ($act === 'downgrade_free') {
         $freeLimit = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
