@@ -3,7 +3,10 @@ require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/user-auth.php';
 userSessionStart();
 $currentUser = currentUser();
-$updated = '09/07/2025';
+$updated = '22/07/2026';
+$proPrice = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='pro_price_monthly'")['value'] ?? 4990);
+$proPriceStr = 'R$ ' . number_format($proPrice / 100, 2, ',', '.');
+$freeLimit = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -11,7 +14,7 @@ $updated = '09/07/2025';
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <meta name="theme-color" content="#023047"/>
-<title>Política de Privacidade · PageQuiz</title>
+<title>Termos de Uso · PageQuiz</title>
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,6 +57,8 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
 .doc-section strong{color:#1e293b}
 .info-box{background:#f0f7fa;border-left:4px solid var(--pacific);border-radius:0 12px 12px 0;padding:16px 20px;margin:20px 0}
 .info-box p{margin:0;font-size:14px;color:#334155;line-height:1.7}
+.warn-box{background:#fffbeb;border-left:4px solid var(--yellow);border-radius:0 12px 12px 0;padding:16px 20px;margin:20px 0}
+.warn-box p{margin:0;font-size:14px;color:#78350f;line-height:1.7}
 .doc-updated{font-size:12px;color:#94a3b8;background:#f8fafc;border:1px solid #e2ecf1;border-radius:8px;padding:10px 16px;display:inline-flex;align-items:center;gap:8px;margin-bottom:32px}
 .doc-nav{background:#f8fafc;border:1px solid #e2ecf1;border-radius:14px;padding:20px 24px;margin-bottom:40px}
 .doc-nav h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin:0 0 12px}
@@ -103,16 +108,16 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
 </nav>
 
 <div class="page-hero">
-  <div class="page-hero-badge"><i class="fa-solid fa-lock"></i> Privacidade</div>
-  <h1>Política de Privacidade</h1>
-  <p>Entenda como coletamos, utilizamos e protegemos suas informações pessoais no PageQuiz</p>
+  <div class="page-hero-badge"><i class="fa-solid fa-file-contract"></i> Termos</div>
+  <h1>Termos de Uso</h1>
+  <p>Condições que regem o uso da plataforma PageQuiz, incluindo planos, cobrança e responsabilidades</p>
 </div>
 
 <div class="page-content">
   <nav class="page-breadcrumb" aria-label="Caminho de navegação">
     <a href="index.php"><i class="fa-solid fa-house"></i> Início</a>
     <i class="fa-solid fa-chevron-right"></i>
-    <span>Política de Privacidade</span>
+    <span>Termos de Uso</span>
   </nav>
 
   <div class="doc-updated">
@@ -123,114 +128,115 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
   <div class="doc-nav">
     <h3>Sumário</h3>
     <ol>
-      <li><a href="#s1">Quem somos</a></li>
-      <li><a href="#s2">Dados que coletamos</a></li>
-      <li><a href="#s3">Como usamos seus dados</a></li>
-      <li><a href="#s4">Compartilhamento de informações</a></li>
-      <li><a href="#s5">Segurança</a></li>
-      <li><a href="#s6">Seus direitos</a></li>
-      <li><a href="#s7">Crianças e adolescentes</a></li>
-      <li><a href="#s8">Links externos</a></li>
-      <li><a href="#s9">Alterações nesta política</a></li>
-      <li><a href="#s10">Contato</a></li>
+      <li><a href="#s1">Aceitação dos termos</a></li>
+      <li><a href="#s2">Descrição do serviço</a></li>
+      <li><a href="#s3">Cadastro e conta</a></li>
+      <li><a href="#s4">Planos, preços e pagamento</a></li>
+      <li><a href="#s5">Cancelamento e reembolso</a></li>
+      <li><a href="#s6">Uso aceitável</a></li>
+      <li><a href="#s7">Propriedade intelectual e conteúdo</a></li>
+      <li><a href="#s8">Disponibilidade e limitação de responsabilidade</a></li>
+      <li><a href="#s9">Suspensão e encerramento de conta</a></li>
+      <li><a href="#s10">Alterações nestes termos</a></li>
+      <li><a href="#s11">Lei aplicável e foro</a></li>
+      <li><a href="#s12">Contato</a></li>
     </ol>
   </div>
 
   <div class="doc-section" id="s1">
-    <h2><span class="sec-num">1</span> Quem somos</h2>
-    <p>O <strong>PageQuiz</strong> é uma plataforma de treinamento e avaliação corporativa desenvolvida e operada pela <strong>PageUp Sistemas</strong>, com sede em Rondônia, Brasil.</p>
-    <p>Esta Política de Privacidade descreve como tratamos seus dados pessoais quando você utiliza nossa plataforma, em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).</p>
-    <div class="info-box">
-      <p><strong>Controlador:</strong> PageUp Sistemas &nbsp;·&nbsp; <strong>DPO:</strong> <a href="mailto:privacidade@pageup.net.br" style="color:var(--pacific)">privacidade@pageup.net.br</a></p>
-    </div>
+    <h2><span class="sec-num">1</span> Aceitação dos termos</h2>
+    <p>Estes Termos de Uso ("Termos") regem o acesso e uso da plataforma <strong>PageQuiz</strong>, operada pela <strong>PageUp Sistemas</strong>. Ao criar uma conta, contratar um plano ou utilizar a plataforma de qualquer forma, você declara que leu, compreendeu e concorda integralmente com estes Termos.</p>
+    <p>Se você está aceitando estes Termos em nome de uma empresa, declara ter poderes para vinculá-la a este contrato.</p>
   </div>
 
   <div class="doc-section" id="s2">
-    <h2><span class="sec-num">2</span> Dados que coletamos</h2>
-    <p><strong>Dados fornecidos por você:</strong></p>
-    <ul>
-      <li>Nome completo e endereço de e-mail (ao criar uma conta);</li>
-      <li>Setor profissional (opcional, para segmentação de treinamentos);</li>
-      <li>Respostas aos quizzes e resultados de avaliações.</li>
-    </ul>
-    <p><strong>Dados coletados automaticamente:</strong></p>
-    <ul>
-      <li>Endereço IP e informações do dispositivo e navegador;</li>
-      <li>Data e hora de acesso, páginas visitadas e ações realizadas;</li>
-      <li>Cookies essenciais para funcionamento da sessão (veja nossa <a href="cookies.php" style="color:var(--pacific)">Política de Cookies</a>).</li>
-    </ul>
+    <h2><span class="sec-num">2</span> Descrição do serviço</h2>
+    <p>O PageQuiz é uma plataforma SaaS (Software as a Service) de treinamento e avaliação corporativa via quizzes, com emissão de certificados verificáveis. Cada empresa contratante ("Empresa", "Cliente") possui um espaço isolado de quizzes, usuários e resultados.</p>
+    <p>A plataforma é fornecida "como está" e pode ser atualizada, modificada ou ter funcionalidades adicionadas/removidas a qualquer momento, visando sua melhoria contínua.</p>
   </div>
 
   <div class="doc-section" id="s3">
-    <h2><span class="sec-num">3</span> Como usamos seus dados</h2>
-    <p>Utilizamos seus dados para:</p>
+    <h2><span class="sec-num">3</span> Cadastro e conta</h2>
+    <p>Para usar o PageQuiz é necessário criar uma conta, fornecendo informações verdadeiras, completas e atualizadas. Você é responsável por:</p>
     <ul>
-      <li>Criar e manter sua conta na plataforma;</li>
-      <li>Processar sua participação nos quizzes e registrar seus resultados;</li>
-      <li>Emitir certificados de aprovação verificáveis;</li>
-      <li>Enviar notificações relacionadas à plataforma (resultado, certificado, senha);</li>
-      <li>Analisar o desempenho agregado para melhoria dos treinamentos;</li>
-      <li>Garantir a segurança e prevenir uso indevido da plataforma;</li>
-      <li>Cumprir obrigações legais e regulatórias.</li>
+      <li>Manter a confidencialidade da sua senha de acesso;</li>
+      <li>Todas as atividades realizadas na sua conta;</li>
+      <li>Notificar-nos imediatamente sobre qualquer uso não autorizado.</li>
     </ul>
+    <p>Contas de gestores/administradores de empresa podem convidar e gerenciar colaboradores dentro do espaço da própria Empresa. Colaboradores acessam via cadastro próprio, convite ou credenciais fornecidas pelo gestor.</p>
   </div>
 
   <div class="doc-section" id="s4">
-    <h2><span class="sec-num">4</span> Compartilhamento de informações</h2>
-    <p>Seus dados pessoais podem ser compartilhados somente nas seguintes situações:</p>
+    <h2><span class="sec-num">4</span> Planos, preços e pagamento</h2>
+    <p>O PageQuiz oferece os seguintes planos:</p>
     <ul>
-      <li><strong>Gestores e administradores da plataforma:</strong> responsáveis pelo treinamento corporativo têm acesso aos resultados individuais dos participantes;</li>
-      <li><strong>Prestadores de serviço:</strong> empresas que nos auxiliam na operação (hospedagem, envio de e-mails), sempre sob contrato e obrigações de confidencialidade;</li>
-      <li><strong>Exigências legais:</strong> quando determinado por autoridade competente ou para cumprimento de obrigação legal.</li>
+      <li><strong>Free:</strong> gratuito, com limite de até <?= $freeLimit ?> quizzes ativos simultâneos, usuários ilimitados e certificado padrão da plataforma.</li>
+      <li><strong>Pro:</strong> <?= htmlspecialchars($proPriceStr) ?>/mês (valor sujeito a alteração mediante aviso prévio), com quizzes ilimitados, certificado personalizado (logo e cores da Empresa) e demais recursos avançados.</li>
     </ul>
-    <p><strong>Não vendemos, alugamos nem comercializamos seus dados pessoais.</strong></p>
+    <p>Os pagamentos do plano Pro são processados por meio da <strong>EFI Bank</strong>, instituição de pagamentos parceira, via PIX, cartão de crédito (cobrança única ou assinatura recorrente) ou link de pagamento. O PageQuiz não armazena dados completos de cartão de crédito — a tokenização é feita diretamente pelo provedor de pagamentos.</p>
+    <div class="info-box">
+      <p><strong>Ativação manual:</strong> em determinadas situações (negociações específicas, cortesias, ou período de transição), a ativação do plano Pro pode ser feita manualmente pela equipe PageUp mediante combinação prévia com o Cliente.</p>
+    </div>
   </div>
 
   <div class="doc-section" id="s5">
-    <h2><span class="sec-num">5</span> Segurança</h2>
-    <p>Adotamos medidas técnicas e administrativas para proteger seus dados, incluindo:</p>
-    <ul>
-      <li>Senhas armazenadas com hash criptográfico (bcrypt);</li>
-      <li>Comunicações protegidas por HTTPS com TLS;</li>
-      <li>Acesso restrito por perfil e autenticação de sessão;</li>
-      <li>Backups regulares com verificação de integridade.</li>
-    </ul>
-    <p>Embora nos esforcemos para proteger seus dados, nenhum sistema é 100% seguro. Em caso de incidente de segurança que possa afetar seus dados, notificaremos você e a ANPD dentro dos prazos legais.</p>
+    <h2><span class="sec-num">5</span> Cancelamento e reembolso</h2>
+    <p>Assinaturas recorrentes podem ser canceladas a qualquer momento pelo próprio painel administrativo, sem multa. Pagamentos avulsos (PIX, cartão de cobrança única ou link) concedem acesso ao plano Pro por 30 dias corridos, sem renovação automática.</p>
+    <p>As regras completas de cancelamento, reembolso e direito de arrependimento estão detalhadas na nossa <a href="cancelamento.php" style="color:var(--pacific);font-weight:600">Política de Cancelamento e Reembolso</a>, que é parte integrante destes Termos.</p>
   </div>
 
   <div class="doc-section" id="s6">
-    <h2><span class="sec-num">6</span> Seus direitos</h2>
-    <p>Como titular de dados, você tem direito a:</p>
+    <h2><span class="sec-num">6</span> Uso aceitável</h2>
+    <p>Ao usar o PageQuiz, você concorda em não:</p>
     <ul>
-      <li>Confirmar se tratamos seus dados e acessá-los;</li>
-      <li>Corrigir dados incorretos ou desatualizados;</li>
-      <li>Solicitar a anonimização, bloqueio ou eliminação de dados desnecessários;</li>
-      <li>Revogar o consentimento a qualquer momento (sem afetar tratamentos anteriores);</li>
-      <li>Solicitar a portabilidade dos seus dados.</li>
+      <li>Utilizar a plataforma para fins ilegais, fraudulentos ou não autorizados;</li>
+      <li>Tentar acessar dados de outras Empresas ou contornar o isolamento multi-tenant da plataforma;</li>
+      <li>Realizar engenharia reversa, copiar ou explorar comercialmente o código-fonte ou a estrutura da plataforma sem autorização;</li>
+      <li>Sobrecarregar, atacar ou comprometer a infraestrutura, segurança ou disponibilidade do serviço;</li>
+      <li>Inserir conteúdo ofensivo, discriminatório, difamatório ou que viole direitos de terceiros nos quizzes ou mensagens da plataforma;</li>
+      <li>Compartilhar credenciais de acesso com pessoas não autorizadas.</li>
     </ul>
-    <p>Para exercer seus direitos, acesse o <a href="contato.php" style="color:var(--pacific)">formulário de contato</a> ou envie e-mail para <a href="mailto:privacidade@pageup.net.br" style="color:var(--pacific)">privacidade@pageup.net.br</a>. Consulte também nossa página sobre <a href="lgpd.php" style="color:var(--pacific)">LGPD</a>.</p>
+    <p>O descumprimento destas regras pode resultar em suspensão ou encerramento da conta, conforme a Seção 9.</p>
   </div>
 
   <div class="doc-section" id="s7">
-    <h2><span class="sec-num">7</span> Crianças e adolescentes</h2>
-    <p>O PageQuiz é destinado a pessoas com 18 anos ou mais, ou a menores de 18 anos mediante autorização expressa dos pais ou responsáveis legais, conforme o Art. 14 da LGPD. Não coletamos intencionalmente dados de crianças sem o devido consentimento.</p>
+    <h2><span class="sec-num">7</span> Propriedade intelectual e conteúdo</h2>
+    <p>A marca PageQuiz, o software, o design e todo o código-fonte da plataforma são de propriedade exclusiva da PageUp Sistemas, protegidos por leis de propriedade intelectual.</p>
+    <p>O conteúdo inserido pela Empresa (quizzes, questões, respostas, dados de colaboradores, logo e cores personalizadas) permanece de propriedade da Empresa. Ao inserir esse conteúdo, você concede à PageUp Sistemas uma licença limitada, não exclusiva, para armazená-lo e processá-lo exclusivamente com a finalidade de fornecer o serviço contratado.</p>
   </div>
 
   <div class="doc-section" id="s8">
-    <h2><span class="sec-num">8</span> Links externos</h2>
-    <p>Nossa plataforma pode conter links para sites de terceiros. Esta Política de Privacidade aplica-se exclusivamente ao PageQuiz. Não nos responsabilizamos pelas práticas de privacidade de outros sites.</p>
+    <h2><span class="sec-num">8</span> Disponibilidade e limitação de responsabilidade</h2>
+    <p>Empregamos esforços razoáveis para manter a plataforma disponível e funcionando corretamente, mas não garantimos disponibilidade ininterrupta. Podem ocorrer interrupções para manutenção, atualizações ou por motivos fora do nosso controle (falhas de provedores de infraestrutura, internet, força maior).</p>
+    <p>Na máxima extensão permitida pela lei, a PageUp Sistemas não se responsabiliza por danos indiretos, lucros cessantes ou perda de dados decorrentes do uso ou da impossibilidade de uso da plataforma, exceto nos casos de dolo ou culpa grave comprovados.</p>
   </div>
 
   <div class="doc-section" id="s9">
-    <h2><span class="sec-num">9</span> Alterações nesta política</h2>
-    <p>Podemos atualizar esta política periodicamente. Quando houver alterações relevantes, notificaremos você por e-mail ou mediante aviso na plataforma. A data da última atualização é sempre indicada no topo do documento.</p>
+    <h2><span class="sec-num">9</span> Suspensão e encerramento de conta</h2>
+    <p>Podemos suspender ou encerrar o acesso de uma Empresa em caso de:</p>
+    <ul>
+      <li>Inadimplência não regularizada após o período de carência informado na cobrança;</li>
+      <li>Violação destes Termos ou uso indevido da plataforma;</li>
+      <li>Solicitação da própria Empresa.</li>
+    </ul>
+    <p>A exclusão definitiva de uma conta e seus dados (quizzes, participantes, certificados, usuários) é uma ação irreversível, disponível mediante solicitação. Após a exclusão, os dados não podem ser recuperados.</p>
   </div>
 
   <div class="doc-section" id="s10">
-    <h2><span class="sec-num">10</span> Contato</h2>
-    <p>Dúvidas, solicitações ou reclamações sobre privacidade:</p>
+    <h2><span class="sec-num">10</span> Alterações nestes termos</h2>
+    <p>Podemos atualizar estes Termos periodicamente para refletir mudanças na plataforma, na legislação ou nas práticas de mercado. Alterações relevantes serão comunicadas por e-mail ou aviso na plataforma, com antecedência razoável quando aplicável. O uso continuado do PageQuiz após a alteração constitui aceite dos novos Termos.</p>
+  </div>
+
+  <div class="doc-section" id="s11">
+    <h2><span class="sec-num">11</span> Lei aplicável e foro</h2>
+    <p>Estes Termos são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro da comarca de domicílio da PageUp Sistemas, em Rondônia, para dirimir quaisquer controvérsias decorrentes destes Termos, com renúncia expressa a qualquer outro, por mais privilegiado que seja, ressalvadas as disposições de foro do Código de Defesa do Consumidor quando aplicáveis.</p>
+  </div>
+
+  <div class="doc-section" id="s12">
+    <h2><span class="sec-num">12</span> Contato</h2>
+    <p>Dúvidas sobre estes Termos de Uso podem ser enviadas para:</p>
     <ul>
-      <li><strong>E-mail:</strong> <a href="mailto:privacidade@pageup.net.br" style="color:var(--pacific)">privacidade@pageup.net.br</a></li>
+      <li><strong>E-mail:</strong> <a href="mailto:contato@pageup.net.br" style="color:var(--pacific)">contato@pageup.net.br</a></li>
       <li><strong>Formulário:</strong> <a href="contato.php" style="color:var(--pacific)">Fale Conosco</a></li>
     </ul>
   </div>

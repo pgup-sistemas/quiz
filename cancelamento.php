@@ -3,7 +3,9 @@ require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/user-auth.php';
 userSessionStart();
 $currentUser = currentUser();
-$updated = '09/07/2025';
+$updated = '22/07/2026';
+$proPrice = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='pro_price_monthly'")['value'] ?? 4990);
+$proPriceStr = 'R$ ' . number_format($proPrice / 100, 2, ',', '.');
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -11,7 +13,7 @@ $updated = '09/07/2025';
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <meta name="theme-color" content="#023047"/>
-<title>Política de Privacidade · PageQuiz</title>
+<title>Cancelamento e Reembolso · PageQuiz</title>
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,6 +56,8 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
 .doc-section strong{color:#1e293b}
 .info-box{background:#f0f7fa;border-left:4px solid var(--pacific);border-radius:0 12px 12px 0;padding:16px 20px;margin:20px 0}
 .info-box p{margin:0;font-size:14px;color:#334155;line-height:1.7}
+.warn-box{background:#fffbeb;border-left:4px solid var(--yellow);border-radius:0 12px 12px 0;padding:16px 20px;margin:20px 0}
+.warn-box p{margin:0;font-size:14px;color:#78350f;line-height:1.7}
 .doc-updated{font-size:12px;color:#94a3b8;background:#f8fafc;border:1px solid #e2ecf1;border-radius:8px;padding:10px 16px;display:inline-flex;align-items:center;gap:8px;margin-bottom:32px}
 .doc-nav{background:#f8fafc;border:1px solid #e2ecf1;border-radius:14px;padding:20px 24px;margin-bottom:40px}
 .doc-nav h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin:0 0 12px}
@@ -61,6 +65,11 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
 .doc-nav ol li{margin-bottom:6px}
 .doc-nav ol li a{font-size:14px;color:var(--pacific);text-decoration:none;transition:.15s}
 .doc-nav ol li a:hover{color:var(--prussian)}
+.cookie-table-wrap{overflow-x:auto;margin:20px 0;border-radius:12px;border:1px solid #e2ecf1}
+table.cookie-table{width:100%;border-collapse:collapse;font-size:14px}
+table.cookie-table th{background:#f0f7fa;color:var(--prussian);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;padding:12px 16px;text-align:left;border-bottom:1px solid #dce8ef}
+table.cookie-table td{padding:12px 16px;color:#475569;border-bottom:1px solid #f0f4f7;vertical-align:top;line-height:1.6}
+table.cookie-table tr:last-child td{border-bottom:none}
 .lp-footer{background:var(--prussian);padding:48px 32px 32px}
 .footer-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:40px}
 .footer-brand p{font-size:13px;color:rgba(142,202,230,.7);line-height:1.7;margin-top:12px}
@@ -103,16 +112,16 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
 </nav>
 
 <div class="page-hero">
-  <div class="page-hero-badge"><i class="fa-solid fa-lock"></i> Privacidade</div>
-  <h1>Política de Privacidade</h1>
-  <p>Entenda como coletamos, utilizamos e protegemos suas informações pessoais no PageQuiz</p>
+  <div class="page-hero-badge"><i class="fa-solid fa-rotate-left"></i> Assinaturas</div>
+  <h1>Cancelamento e Reembolso</h1>
+  <p>Regras claras sobre como cancelar sua assinatura e quando você tem direito a reembolso</p>
 </div>
 
 <div class="page-content">
   <nav class="page-breadcrumb" aria-label="Caminho de navegação">
     <a href="index.php"><i class="fa-solid fa-house"></i> Início</a>
     <i class="fa-solid fa-chevron-right"></i>
-    <span>Política de Privacidade</span>
+    <span>Cancelamento e Reembolso</span>
   </nav>
 
   <div class="doc-updated">
@@ -123,116 +132,76 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
   <div class="doc-nav">
     <h3>Sumário</h3>
     <ol>
-      <li><a href="#s1">Quem somos</a></li>
-      <li><a href="#s2">Dados que coletamos</a></li>
-      <li><a href="#s3">Como usamos seus dados</a></li>
-      <li><a href="#s4">Compartilhamento de informações</a></li>
-      <li><a href="#s5">Segurança</a></li>
-      <li><a href="#s6">Seus direitos</a></li>
-      <li><a href="#s7">Crianças e adolescentes</a></li>
-      <li><a href="#s8">Links externos</a></li>
-      <li><a href="#s9">Alterações nesta política</a></li>
-      <li><a href="#s10">Contato</a></li>
+      <li><a href="#s1">Como cancelar</a></li>
+      <li><a href="#s2">O que acontece após o cancelamento</a></li>
+      <li><a href="#s3">Pagamentos avulsos (PIX, cartão único, link)</a></li>
+      <li><a href="#s4">Assinatura recorrente (cartão)</a></li>
+      <li><a href="#s5">Direito de arrependimento (7 dias)</a></li>
+      <li><a href="#s6">Reembolso após o uso</a></li>
+      <li><a href="#s7">Situações que não geram reembolso</a></li>
+      <li><a href="#s8">Como solicitar</a></li>
     </ol>
   </div>
 
   <div class="doc-section" id="s1">
-    <h2><span class="sec-num">1</span> Quem somos</h2>
-    <p>O <strong>PageQuiz</strong> é uma plataforma de treinamento e avaliação corporativa desenvolvida e operada pela <strong>PageUp Sistemas</strong>, com sede em Rondônia, Brasil.</p>
-    <p>Esta Política de Privacidade descreve como tratamos seus dados pessoais quando você utiliza nossa plataforma, em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).</p>
-    <div class="info-box">
-      <p><strong>Controlador:</strong> PageUp Sistemas &nbsp;·&nbsp; <strong>DPO:</strong> <a href="mailto:privacidade@pageup.net.br" style="color:var(--pacific)">privacidade@pageup.net.br</a></p>
-    </div>
+    <h2><span class="sec-num">1</span> Como cancelar</h2>
+    <p>Você pode cancelar sua assinatura recorrente a qualquer momento, diretamente pelo painel administrativo, em <strong>Cobrança → Cancelar assinatura</strong>. Não é necessário justificativa, ligação ou envio de documentos — o cancelamento é imediato na sua solicitação.</p>
+    <p>Se preferir, também pode solicitar o cancelamento pelo <a href="contato.php" style="color:var(--pacific)">formulário de contato</a> ou e-mail <a href="mailto:contato@pageup.net.br" style="color:var(--pacific)">contato@pageup.net.br</a>.</p>
   </div>
 
   <div class="doc-section" id="s2">
-    <h2><span class="sec-num">2</span> Dados que coletamos</h2>
-    <p><strong>Dados fornecidos por você:</strong></p>
-    <ul>
-      <li>Nome completo e endereço de e-mail (ao criar uma conta);</li>
-      <li>Setor profissional (opcional, para segmentação de treinamentos);</li>
-      <li>Respostas aos quizzes e resultados de avaliações.</li>
-    </ul>
-    <p><strong>Dados coletados automaticamente:</strong></p>
-    <ul>
-      <li>Endereço IP e informações do dispositivo e navegador;</li>
-      <li>Data e hora de acesso, páginas visitadas e ações realizadas;</li>
-      <li>Cookies essenciais para funcionamento da sessão (veja nossa <a href="cookies.php" style="color:var(--pacific)">Política de Cookies</a>).</li>
-    </ul>
+    <h2><span class="sec-num">2</span> O que acontece após o cancelamento</h2>
+    <p>Ao cancelar uma <strong>assinatura recorrente</strong>, nenhuma cobrança futura é realizada, mas o plano Pro permanece ativo até o fim do período já pago. Após essa data, a Empresa é automaticamente rebaixada para o plano Free, e quizzes ativos que excederem o limite do plano Free são desativados (não excluídos).</p>
+    <p>Seus dados (quizzes, participantes, certificados emitidos) não são apagados por causa do cancelamento — permanecem acessíveis no plano Free, respeitando os limites desse plano.</p>
   </div>
 
   <div class="doc-section" id="s3">
-    <h2><span class="sec-num">3</span> Como usamos seus dados</h2>
-    <p>Utilizamos seus dados para:</p>
-    <ul>
-      <li>Criar e manter sua conta na plataforma;</li>
-      <li>Processar sua participação nos quizzes e registrar seus resultados;</li>
-      <li>Emitir certificados de aprovação verificáveis;</li>
-      <li>Enviar notificações relacionadas à plataforma (resultado, certificado, senha);</li>
-      <li>Analisar o desempenho agregado para melhoria dos treinamentos;</li>
-      <li>Garantir a segurança e prevenir uso indevido da plataforma;</li>
-      <li>Cumprir obrigações legais e regulatórias.</li>
-    </ul>
+    <h2><span class="sec-num">3</span> Pagamentos avulsos (PIX, cartão único, link de pagamento)</h2>
+    <p>Pagamentos que não são assinatura recorrente concedem acesso ao plano Pro por <strong>30 dias corridos</strong> a partir da confirmação do pagamento, sem renovação automática. Ao final desse período, a Empresa retorna automaticamente ao plano Free, a menos que um novo pagamento seja realizado.</p>
+    <p>Não há cobrança recorrente nesses métodos — cada pagamento é único e não gera novas cobranças sem uma nova ação sua.</p>
   </div>
 
   <div class="doc-section" id="s4">
-    <h2><span class="sec-num">4</span> Compartilhamento de informações</h2>
-    <p>Seus dados pessoais podem ser compartilhados somente nas seguintes situações:</p>
-    <ul>
-      <li><strong>Gestores e administradores da plataforma:</strong> responsáveis pelo treinamento corporativo têm acesso aos resultados individuais dos participantes;</li>
-      <li><strong>Prestadores de serviço:</strong> empresas que nos auxiliam na operação (hospedagem, envio de e-mails), sempre sob contrato e obrigações de confidencialidade;</li>
-      <li><strong>Exigências legais:</strong> quando determinado por autoridade competente ou para cumprimento de obrigação legal.</li>
-    </ul>
-    <p><strong>Não vendemos, alugamos nem comercializamos seus dados pessoais.</strong></p>
+    <h2><span class="sec-num">4</span> Assinatura recorrente (cartão)</h2>
+    <p>Na assinatura recorrente, o valor de <?= htmlspecialchars($proPriceStr) ?>/mês é cobrado automaticamente no cartão cadastrado, a cada ciclo de 30 dias, até que você cancele. Caso uma cobrança falhe (cartão vencido, saldo insuficiente etc.), você tem um <strong>período de carência de 7 dias</strong> para regularizar o pagamento antes que o plano seja rebaixado para Free.</p>
   </div>
 
   <div class="doc-section" id="s5">
-    <h2><span class="sec-num">5</span> Segurança</h2>
-    <p>Adotamos medidas técnicas e administrativas para proteger seus dados, incluindo:</p>
-    <ul>
-      <li>Senhas armazenadas com hash criptográfico (bcrypt);</li>
-      <li>Comunicações protegidas por HTTPS com TLS;</li>
-      <li>Acesso restrito por perfil e autenticação de sessão;</li>
-      <li>Backups regulares com verificação de integridade.</li>
-    </ul>
-    <p>Embora nos esforcemos para proteger seus dados, nenhum sistema é 100% seguro. Em caso de incidente de segurança que possa afetar seus dados, notificaremos você e a ANPD dentro dos prazos legais.</p>
+    <h2><span class="sec-num">5</span> Direito de arrependimento (7 dias)</h2>
+    <div class="info-box">
+      <p>Nos termos do <strong>Art. 49 do Código de Defesa do Consumidor</strong>, por se tratar de contratação realizada fora do estabelecimento comercial (via internet), você tem o direito de desistir da contratação do plano Pro em até <strong>7 (sete) dias corridos</strong> a partir da data do pagamento, com direito a reembolso integral.</p>
+    </div>
+    <p>Para exercer esse direito, entre em contato dentro do prazo pelos canais informados na Seção 8. O reembolso será processado pelo mesmo meio de pagamento utilizado, em até 10 dias úteis após a confirmação, conforme prazos do meio de pagamento (PIX ou operadora de cartão via EFI Bank).</p>
   </div>
 
   <div class="doc-section" id="s6">
-    <h2><span class="sec-num">6</span> Seus direitos</h2>
-    <p>Como titular de dados, você tem direito a:</p>
-    <ul>
-      <li>Confirmar se tratamos seus dados e acessá-los;</li>
-      <li>Corrigir dados incorretos ou desatualizados;</li>
-      <li>Solicitar a anonimização, bloqueio ou eliminação de dados desnecessários;</li>
-      <li>Revogar o consentimento a qualquer momento (sem afetar tratamentos anteriores);</li>
-      <li>Solicitar a portabilidade dos seus dados.</li>
-    </ul>
-    <p>Para exercer seus direitos, acesse o <a href="contato.php" style="color:var(--pacific)">formulário de contato</a> ou envie e-mail para <a href="mailto:privacidade@pageup.net.br" style="color:var(--pacific)">privacidade@pageup.net.br</a>. Consulte também nossa página sobre <a href="lgpd.php" style="color:var(--pacific)">LGPD</a>.</p>
+    <h2><span class="sec-num">6</span> Reembolso após o uso</h2>
+    <p>Após o prazo de arrependimento de 7 dias, por se tratar de serviço digital de acesso imediato e uso contínuo, <strong>não há reembolso proporcional</strong> pelo tempo restante do período já pago em caso de cancelamento voluntário. Você mantém acesso ao plano Pro até o fim do ciclo vigente, conforme a Seção 2.</p>
+    <p>Exceções podem ser avaliadas caso a caso em situações de erro comprovado de cobrança (ex.: cobrança duplicada, valor incorreto) ou indisponibilidade prolongada e não programada da plataforma atribuível à PageUp Sistemas.</p>
   </div>
 
   <div class="doc-section" id="s7">
-    <h2><span class="sec-num">7</span> Crianças e adolescentes</h2>
-    <p>O PageQuiz é destinado a pessoas com 18 anos ou mais, ou a menores de 18 anos mediante autorização expressa dos pais ou responsáveis legais, conforme o Art. 14 da LGPD. Não coletamos intencionalmente dados de crianças sem o devido consentimento.</p>
+    <h2><span class="sec-num">7</span> Situações que não geram reembolso</h2>
+    <ul>
+      <li>Cancelamento por decisão própria após o prazo de arrependimento de 7 dias;</li>
+      <li>Suspensão da conta por violação dos <a href="termos.php" style="color:var(--pacific)">Termos de Uso</a>;</li>
+      <li>Não utilização voluntária da plataforma durante o período pago;</li>
+      <li>Ativações manuais/cortesias combinadas sem valor efetivamente cobrado.</li>
+    </ul>
+    <div class="warn-box">
+      <p><i class="fa-solid fa-triangle-exclamation"></i> Contestações de cobrança (chargeback) sem tentativa prévia de contato conosco podem resultar em suspensão imediata da conta até a regularização, sem prejuízo de outras medidas cabíveis.</p>
+    </div>
   </div>
 
   <div class="doc-section" id="s8">
-    <h2><span class="sec-num">8</span> Links externos</h2>
-    <p>Nossa plataforma pode conter links para sites de terceiros. Esta Política de Privacidade aplica-se exclusivamente ao PageQuiz. Não nos responsabilizamos pelas práticas de privacidade de outros sites.</p>
-  </div>
-
-  <div class="doc-section" id="s9">
-    <h2><span class="sec-num">9</span> Alterações nesta política</h2>
-    <p>Podemos atualizar esta política periodicamente. Quando houver alterações relevantes, notificaremos você por e-mail ou mediante aviso na plataforma. A data da última atualização é sempre indicada no topo do documento.</p>
-  </div>
-
-  <div class="doc-section" id="s10">
-    <h2><span class="sec-num">10</span> Contato</h2>
-    <p>Dúvidas, solicitações ou reclamações sobre privacidade:</p>
+    <h2><span class="sec-num">8</span> Como solicitar</h2>
+    <p>Para cancelar, solicitar reembolso ou tirar dúvidas sobre cobrança:</p>
     <ul>
-      <li><strong>E-mail:</strong> <a href="mailto:privacidade@pageup.net.br" style="color:var(--pacific)">privacidade@pageup.net.br</a></li>
+      <li><strong>Painel:</strong> Admin → Cobrança → Cancelar assinatura</li>
+      <li><strong>E-mail:</strong> <a href="mailto:contato@pageup.net.br" style="color:var(--pacific)">contato@pageup.net.br</a></li>
       <li><strong>Formulário:</strong> <a href="contato.php" style="color:var(--pacific)">Fale Conosco</a></li>
     </ul>
+    <p>Esta política complementa os nossos <a href="termos.php" style="color:var(--pacific)">Termos de Uso</a> e é parte integrante do contrato entre você e a PageUp Sistemas.</p>
   </div>
 </div>
 

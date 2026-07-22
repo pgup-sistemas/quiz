@@ -278,7 +278,8 @@ h2 { font-family:var(--font-heading,'Syne',sans-serif); font-size:20px; color:va
                    required/>
             <span style="font-size:13px;color:var(--gray-700,#374151);line-height:1.6">
                 Li e concordo com os
-                <a href="privacidade.php" target="_blank" style="color:var(--pacific,#219EBC);font-weight:600;text-decoration:none">Termos de Uso e Política de Privacidade</a>
+                <a href="termos.php" target="_blank" style="color:var(--pacific,#219EBC);font-weight:600;text-decoration:none">Termos de Uso</a>,
+                a <a href="privacidade.php" target="_blank" style="color:var(--pacific,#219EBC);font-weight:600;text-decoration:none">Política de Privacidade</a>
                 e com a
                 <a href="lgpd.php" target="_blank" style="color:var(--pacific,#219EBC);font-weight:600;text-decoration:none">Política de Proteção de Dados (LGPD)</a>
                 do PageQuiz.

@@ -330,6 +330,8 @@ textarea.form-control{resize:vertical;min-height:140px}
     </div>
     <div class="footer-col">
       <h4>Legal</h4>
+      <a href="termos.php">Termos de Uso</a>
+      <a href="cancelamento.php">Cancelamento e Reembolso</a>
       <a href="lgpd.php">LGPD</a>
       <a href="privacidade.php">Política de Privacidade</a>
       <a href="cookies.php">Política de Cookies</a>

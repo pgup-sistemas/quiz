@@ -233,6 +233,8 @@ table.cookie-table tr:hover td{background:#fafcfe}
     </div>
     <div class="footer-col">
       <h4>Legal</h4>
+      <a href="termos.php">Termos de Uso</a>
+      <a href="cancelamento.php">Cancelamento e Reembolso</a>
       <a href="lgpd.php">LGPD</a>
       <a href="privacidade.php">Política de Privacidade</a>
       <a href="cookies.php">Política de Cookies</a>

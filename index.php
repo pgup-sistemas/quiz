@@ -799,6 +799,8 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
     </div>
     <div class="footer-col">
       <h4>Legal</h4>
+      <a href="termos.php">Termos de Uso</a>
+      <a href="cancelamento.php">Cancelamento e Reembolso</a>
       <a href="lgpd.php">LGPD</a>
       <a href="privacidade.php">Privacidade</a>
       <a href="cookies.php">Cookies</a>

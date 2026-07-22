@@ -277,6 +277,8 @@ body{margin:0;font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff}
     </div>
     <div class="footer-col">
       <h4>Legal</h4>
+      <a href="termos.php">Termos de Uso</a>
+      <a href="cancelamento.php">Cancelamento e Reembolso</a>
       <a href="lgpd.php">LGPD</a>
       <a href="privacidade.php">Política de Privacidade</a>
       <a href="cookies.php">Política de Cookies</a>
