@@ -10,13 +10,12 @@ requireLogin();
 $companyId = adminCompanyId();
 $company   = dbRow("SELECT * FROM companies WHERE id=?", [$companyId]);
 
-$supportEmail = dbRow("SELECT value FROM system_settings WHERE `key`='support_email'")['value'] ?? 'contato@pageup.net.br';
-$freeLimit    = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
+$supportEmail  = dbRow("SELECT value FROM system_settings WHERE `key`='support_email'")['value'] ?? 'contato@pageup.net.br';
+$freeLimit     = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
 $efiConfigured = (bool)(efiConfig()['client_id'] ?? '');
 $priceStr      = efiProPriceFormatted();
 
-$msg   = '';
-$error = '';
+$msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     requireCsrf();
@@ -32,15 +31,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Recarregar
-$company = dbRow("SELECT * FROM companies WHERE id=?", [$companyId]);
+$company     = dbRow("SELECT * FROM companies WHERE id=?", [$companyId]);
+$canUpgrade  = $company['plan'] !== 'pro' && $company['status'] !== 'pending_payment';
 adminHead('Upgrade para Pro', 'upgrade.php');
 ?>
+<style>
+/* ── Upgrade / checkout ─────────────────────────────────────────────── */
+.upg-header      { margin-bottom: 24px; }
+.upg-header h2   { font-family: var(--font-heading); font-size: 22px; color: var(--prussian); margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+.upg-header p    { color: var(--gray-500); font-size: 14px; margin: 0; }
+
+/* Métodos de pagamento — mesmo peso visual, diferenciados só por ícone/label */
+.upg-pay-card    { border-radius: var(--radius); padding: 28px; box-shadow: 0 1px 4px rgba(0,0,0,.08); background: #fff; margin-bottom: 24px; }
+.upg-pay-card h3 { font-size: 16px; color: var(--prussian); margin: 0 0 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.upg-pay-price   { color: var(--pacific); font-weight: 800; }
+.upg-pay-sub     { font-size: 13px; color: var(--gray-500); margin: 0 0 20px; }
+.upg-method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.upg-method      {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    text-align: center; text-decoration: none;
+    padding: 22px 16px 18px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 14px;
+    color: var(--gray-700);
+    transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+.upg-method:hover { border-color: var(--pacific); box-shadow: 0 6px 18px rgba(33,158,188,.14); transform: translateY(-2px); }
+.upg-method i.upg-method-icon { font-size: 26px; color: var(--pacific); }
+.upg-method strong { font-size: 14px; color: var(--prussian); }
+.upg-method span.upg-method-desc { font-size: 12px; color: var(--gray-500); line-height: 1.4; }
+.upg-method-badge {
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    background: var(--yellow); color: var(--prussian);
+    font-size: 10px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+}
+
+/* Comparativo Free x Pro — referência secundária, abaixo da decisão de compra */
+.upg-compare-title { font-size: 13px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 12px; }
+.upg-compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+.upg-plan         { border: 1.5px solid var(--gray-200); border-radius: 12px; padding: 22px 24px; }
+.upg-plan-pro     { border-color: #f59e0b; background: #fffbeb; }
+.upg-plan-tag     { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-bottom: 12px; }
+.upg-plan-tag-free{ background: #e0f2fe; color: #0369a1; }
+.upg-plan-tag-pro { background: #fef3c7; color: #92400e; }
+.upg-plan ul      { margin: 0; padding-left: 20px; font-size: 14px; line-height: 2; color: var(--gray-600); }
+.upg-plan-pro ul  { color: #1e293b; }
+.upg-plan-pro strong { color: #1e293b; }
+.upg-plan-off     { color: var(--gray-300); }
+
+/* Alternativa manual — deliberadamente discreta, não compete com o CTA principal */
+.upg-fallback     { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 16px 4px; border-top: 1px solid var(--gray-100); font-size: 13px; color: var(--gray-500); }
+.upg-fallback form { margin: 0; }
+.upg-fallback .btn-link { background: none; border: none; padding: 0; color: var(--pacific); font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; text-decoration: underline; }
+
+@media (max-width: 720px) {
+    .upg-method-grid, .upg-compare-grid { grid-template-columns: 1fr; }
+}
+</style>
+
 <div class="admin-wrap">
-    <div style="margin-bottom:24px">
-        <h2 style="font-family:var(--font-heading);font-size:22px;color:var(--prussian);margin:0 0 4px">
-            <i class="fa-solid fa-star" style="color:#f59e0b"></i> Upgrade para o plano Pro
-        </h2>
-        <p style="color:var(--gray-500);font-size:14px;margin:0">Desbloqueie todos os recursos do PageQuiz para sua empresa.</p>
+    <div class="upg-header">
+        <h2><i class="fa-solid fa-star" style="color:#f59e0b"></i> Upgrade para o plano Pro</h2>
+        <p>Desbloqueie todos os recursos do PageQuiz para sua empresa.</p>
     </div>
 
     <?php if ($msg): ?>
@@ -60,82 +114,77 @@ adminHead('Upgrade para Pro', 'upgrade.php');
     </div>
     <?php endif; ?>
 
-    <!-- Comparativo -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px">
-        <div style="border:2px solid var(--gray-200);border-radius:12px;padding:24px">
-            <div style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#e0f2fe;color:#0369a1;margin-bottom:12px">Seu plano atual — Free</div>
-            <ul style="margin:0;padding-left:20px;font-size:14px;color:var(--gray-600);line-height:2">
-                <li>Até <?= $freeLimit ?> quizzes ativos</li>
-                <li>Usuários ilimitados</li>
-                <li>Certificado padrão</li>
-                <li>Subdomínio próprio</li>
-                <li style="color:var(--gray-300)"><s>Logo e cor da empresa</s></li>
-                <li style="color:var(--gray-300)"><s>Certificado personalizado</s></li>
-                <li style="color:var(--gray-300)"><s>Quizzes ilimitados</s></li>
-            </ul>
-        </div>
-        <div style="border:2px solid #f59e0b;border-radius:12px;padding:24px;background:#fffbeb;color:#1e293b">
-            <div style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#fef3c7;color:#92400e;margin-bottom:12px">
-                <i class="fa-solid fa-star"></i> Pro — Todos os recursos
+    <?php if ($canUpgrade): ?>
+
+        <?php if ($efiConfigured): ?>
+        <!-- 1) Decisão de compra — sempre primeiro, é o que a maioria veio fazer -->
+        <div class="upg-pay-card">
+            <h3><i class="fa-solid fa-star" style="color:#f59e0b"></i> Assinar plano Pro — <span class="upg-pay-price"><?= htmlspecialchars($priceStr) ?>/mês</span></h3>
+            <p class="upg-pay-sub">Pagamento processado com segurança pela EFI Bank. Ativação imediata após confirmação.</p>
+            <div class="upg-method-grid">
+                <a href="../payments/checkout.php?method=pix" class="upg-method">
+                    <i class="fa-brands fa-pix upg-method-icon"></i>
+                    <strong>PIX</strong>
+                    <span class="upg-method-desc">Aprovação instantânea</span>
+                </a>
+                <a href="../payments/checkout.php?method=card_once" class="upg-method">
+                    <i class="fa-solid fa-credit-card upg-method-icon"></i>
+                    <strong>Cartão</strong>
+                    <span class="upg-method-desc">Cobrança única — vale 1 mês</span>
+                </a>
+                <a href="../payments/checkout.php?method=card_recurring" class="upg-method">
+                    <span class="upg-method-badge">Recomendado</span>
+                    <i class="fa-solid fa-rotate upg-method-icon"></i>
+                    <strong>Assinatura</strong>
+                    <span class="upg-method-desc">Renova sozinha, cancele quando quiser</span>
+                </a>
             </div>
-            <ul style="margin:0;padding-left:20px;font-size:14px;color:#1e293b;line-height:2">
-                <li><strong style="color:#1e293b">Quizzes ilimitados</strong></li>
-                <li>Usuários ilimitados</li>
-                <li><strong style="color:#1e293b">Certificado personalizado</strong> (logo + cor)</li>
-                <li>Subdomínio próprio</li>
-                <li><strong style="color:#1e293b">Logo da empresa</strong> em todas as páginas</li>
-                <li><strong style="color:#1e293b">Cor primária</strong> da empresa</li>
-            </ul>
         </div>
-    </div>
+        <?php endif; ?>
 
-    <?php if ($company['plan'] !== 'pro' && $company['status'] !== 'pending_payment'): ?>
-
-    <?php if ($efiConfigured): ?>
-    <!-- Checkout real — PIX, cartão avulso ou assinatura recorrente -->
-    <div class="card" style="border-radius:var(--radius);padding:28px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px">
-        <h3 style="font-size:16px;color:var(--prussian);margin:0 0 8px">
-            <i class="fa-solid fa-star" style="color:#f59e0b"></i> Assinar plano Pro — <?= htmlspecialchars($priceStr) ?>/mês
-        </h3>
-        <p style="font-size:13px;color:var(--gray-500);margin:0 0 20px">
-            Pagamento processado com segurança pela EFI Bank. Escolha a forma de pagamento — ativação imediata após confirmação.
-        </p>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-            <a href="../payments/checkout.php?method=pix" class="btn" style="background:var(--pacific);color:#fff;font-weight:700;padding:14px;text-align:center">
-                <i class="fa-brands fa-pix"></i> Pagar com PIX
-            </a>
-            <a href="../payments/checkout.php?method=card_once" class="btn" style="background:var(--prussian);color:#fff;font-weight:700;padding:14px;text-align:center">
-                <i class="fa-solid fa-credit-card"></i> Cartão (1 mês)
-            </a>
-            <a href="../payments/checkout.php?method=card_recurring" class="btn" style="background:#f59e0b;color:#fff;font-weight:700;padding:14px;text-align:center">
-                <i class="fa-solid fa-rotate"></i> Assinatura recorrente
-            </a>
+        <!-- 2) Comparativo — referência de apoio para quem ainda está decidindo -->
+        <div class="upg-compare-title">O que muda no Pro</div>
+        <div class="upg-compare-grid">
+            <div class="upg-plan">
+                <div class="upg-plan-tag upg-plan-tag-free">Seu plano atual — Free</div>
+                <ul>
+                    <li>Até <?= $freeLimit ?> quizzes ativos</li>
+                    <li>Usuários ilimitados</li>
+                    <li>Certificado padrão</li>
+                    <li>Subdomínio próprio</li>
+                    <li class="upg-plan-off"><s>Logo e cor da empresa</s></li>
+                    <li class="upg-plan-off"><s>Certificado personalizado</s></li>
+                    <li class="upg-plan-off"><s>Quizzes ilimitados</s></li>
+                </ul>
+            </div>
+            <div class="upg-plan upg-plan-pro">
+                <div class="upg-plan-tag upg-plan-tag-pro"><i class="fa-solid fa-star"></i> Pro — Todos os recursos</div>
+                <ul>
+                    <li><strong>Quizzes ilimitados</strong></li>
+                    <li>Usuários ilimitados</li>
+                    <li><strong>Certificado personalizado</strong> (logo + cor)</li>
+                    <li>Subdomínio próprio</li>
+                    <li><strong>Logo da empresa</strong> em todas as páginas</li>
+                    <li><strong>Cor primária</strong> da empresa</li>
+                </ul>
+            </div>
         </div>
-    </div>
-    <?php endif; ?>
 
-    <!-- Solicitação manual (fallback) -->
-    <div class="card" style="border-radius:var(--radius);padding:28px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-        <h3 style="font-size:16px;color:var(--prussian);margin:0 0 8px">
-            <i class="fa-solid fa-paper-plane" style="color:var(--pacific)"></i>
-            <?= $efiConfigured ? 'Prefere combinar diretamente com a gente?' : 'Solicitar ativação do Pro' ?>
-        </h3>
-        <p style="font-size:13px;color:var(--gray-500);margin:0 0 20px">
-            <?= $efiConfigured
-                ? 'Envie uma solicitação manual e nossa equipe entra em contato para combinar a forma de pagamento (boleto, transferência, etc.).'
-                : 'A ativação é manual nesta fase. Nossa equipe confirmará os detalhes por e-mail e ativará o plano em até 1 dia útil.'
-            ?>
-        </p>
-        <form method="POST">
-            <?= csrfField() ?>
-            <button type="submit" class="btn" style="background:<?= $efiConfigured ? 'var(--gray-200)' : '#f59e0b' ?>;color:<?= $efiConfigured ? 'var(--gray-700)' : '#fff' ?>;font-weight:700;font-size:15px;padding:12px 28px">
-                <i class="fa-solid fa-star"></i> Solicitar plano Pro
-            </button>
-        </form>
-        <div style="margin-top:16px;font-size:13px;color:var(--gray-400)">
-            Ou entre em contato diretamente: <a href="mailto:<?= htmlspecialchars($supportEmail) ?>" style="color:var(--pacific)"><?= htmlspecialchars($supportEmail) ?></a>
+        <!-- 3) Alternativa manual — discreta de propósito, não é o caminho principal -->
+        <div class="upg-fallback">
+            <span>
+                <?= $efiConfigured
+                    ? 'Prefere combinar diretamente com a gente (boleto, transferência, etc.)?'
+                    : 'A ativação é manual nesta fase — nossa equipe confirma os detalhes por e-mail em até 1 dia útil.'
+                ?>
+                <a href="mailto:<?= htmlspecialchars($supportEmail) ?>"><?= htmlspecialchars($supportEmail) ?></a>
+            </span>
+            <form method="POST">
+                <?= csrfField() ?>
+                <button type="submit" class="btn-link">Solicitar ativação manual</button>
+            </form>
         </div>
-    </div>
+
     <?php endif; ?>
 </div>
 <?php adminFoot(); ?>
