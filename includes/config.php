@@ -20,6 +20,11 @@ define('SUPER_ADMIN_SESS', 'SUPER_ADMIN_SESS');
 define('DEFAULT_ADMIN_USER', getenv('PAGEQUIZ_ADMIN_USER') ?: 'admin');
 define('DEFAULT_ADMIN_PASS', getenv('PAGEQUIZ_ADMIN_PASS') ?: 'changeme_on_first_login');
 
+// Segredo para acionar jobs de cron via HTTP (quando o host não suporta cron de CLI
+// direto, ex.: "wget https://.../cron/check-downgrades.php?secret=..."). Vazio por
+// padrão = modo HTTP desabilitado; defina CRON_SECRET no .env/.env.production para habilitar.
+define('CRON_SECRET', getenv('CRON_SECRET') ?: '');
+
 // Quiz settings
 define('DEFAULT_TIMER',      30);
 define('DEFAULT_PASS_PCT',   70);

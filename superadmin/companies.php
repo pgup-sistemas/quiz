@@ -7,6 +7,7 @@ require_once __DIR__ . '/../includes/superadmin-auth.php';
 requireSuperAdmin();
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/mailer.php';
 require_once __DIR__ . '/layout.php';
 
 // Exportação CSV
@@ -104,6 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     [$cid, 'manual', 'active', $cents, $note ?: null, $nextBilling]
                 );
                 logAudit('approve_pro', $cid, json_encode(['prev_status' => $co['status'], 'amount' => $cents, 'note' => $note]));
+                notifyPaymentConfirmed($co['name'], $co['email'], 'manual');
                 $msg = 'Plano Pro ativado com sucesso!';
             }
         }

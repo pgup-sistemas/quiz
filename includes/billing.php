@@ -6,6 +6,10 @@ require_once __DIR__ . '/mailer.php';
  * Verifica e aplica downgrade automático para empresas Pro cujo período de assinatura expirou.
  * Chamado no adminHead() — executa no máximo uma vez por hora por processo PHP (via cache na sessão).
  *
+ * IMPORTANTE: isso só roda quando alguém abre uma página do admin. Empresas Pro que
+ * pararam de logar depois de vencer a assinatura NUNCA são verificadas por aqui —
+ * use o cron real em cron/check-downgrades.php para cobrir esse caso.
+ *
  * T29: detecta assinaturas expiradas/vencidas → rebaixa plano para 'free'
  * T30: inativa quizzes excedentes ao limite free_quiz_limit
  */
@@ -17,6 +21,16 @@ function checkAndApplyDowngrades(): void {
     }
     $_SESSION[$key] = time();
 
+    runDowngradeSweep();
+}
+
+/**
+ * Varredura de downgrade em si, sem depender de sessão HTTP — chamável tanto pelo
+ * throttle acima (uso via admin) quanto diretamente por um cron de linha de comando
+ * (cron/check-downgrades.php), que é o único jeito de cobrir empresas que não logam mais.
+ * Retorna o número de empresas rebaixadas nesta execução.
+ */
+function runDowngradeSweep(): int {
     $freeLimit = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
     $now       = date('Y-m-d H:i:s');
 
@@ -38,12 +52,11 @@ function checkAndApplyDowngrades(): void {
           )
     ", [$now, $now]);
 
-    if (empty($expired)) return;
-
     foreach ($expired as $row) {
-        $cid = (int)$row['company_id'];
-        _applyDowngrade($cid, $freeLimit);
+        _applyDowngrade((int)$row['company_id'], $freeLimit);
     }
+
+    return count($expired);
 }
 
 /**
