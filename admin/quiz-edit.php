@@ -71,7 +71,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['full_csv']) && $isNe
         }
     }
 
-    if (!$quizRow || !trim($quizRow[0] ?? '')) {
+    // Fallback: arquivo "plano" (sem seções [QUIZ]/[QUESTOES]) -- mesmo formato
+    // usado em import.php para adicionar questões a um quiz já existente.
+    // Trata o arquivo inteiro como lista de questões e usa o título informado no formulário.
+    if (!$quizRow) {
+        $flatTitle = trim($_POST['quiz_title'] ?? '');
+        if (!$flatTitle) {
+            flash('Este arquivo não tem a seção [QUIZ]. Preencha o campo "Título do quiz" abaixo do upload para criar o quiz com essas questões, ou baixe o modelo completo.', 'error');
+            redirect('quiz-edit.php');
+        }
+        $qRows = [];
+        foreach ($allRows as $i => $row) {
+            $first = trim(str_replace("\xEF\xBB\xBF", '', $row[0] ?? ''));
+            if ($i === 0 && mb_strtolower($first) === 'pergunta') continue; // pula cabeçalho
+            if ($first === '' || $first[0] === '#') continue;
+            $qRows[] = $row;
+        }
+        $quizRow = [$flatTitle, '', 'Geral', 30, 70];
+    }
+
+    if (!trim($quizRow[0] ?? '')) {
         flash('Arquivo inválido: seção [QUIZ] com título ausente. Baixe o modelo e tente novamente.', 'error');
         redirect('quiz-edit.php');
     }
@@ -442,6 +461,12 @@ adminHead($isNew ? 'Novo Quiz' : 'Configurações: '.($quiz['title'] ?? ''), 'qu
                     <span style="color:var(--gray-400);font-weight:400"> — separador <code>;</code> ou <code>,</code> · encoding UTF-8 · máx. 2 MB</span>
                 </label>
                 <input class="form-control" type="file" name="full_csv" accept=".csv,.txt" required/>
+            </div>
+            <div class="form-group" style="flex:1;min-width:220px;margin-bottom:0">
+                <label class="form-label">Título do quiz
+                    <span style="color:var(--gray-400);font-weight:400"> — só é usado se o arquivo não tiver a seção [QUIZ]</span>
+                </label>
+                <input class="form-control" type="text" name="quiz_title" maxlength="255" placeholder="Ex: Segurança no Trabalho"/>
             </div>
             <button type="submit" class="btn btn-primary" style="white-space:nowrap;margin-bottom:1px">
                 <i class="fa-solid fa-rocket"></i> Criar Quiz e Importar Questões
