@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/mailer.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Efi\EfiPay;
@@ -379,6 +380,8 @@ function efiHandleChargeWebhook(array $data, string $notifId, string $raw): arra
         $graceUntil = date('Y-m-d H:i:s', strtotime('+7 days'));
         dbExec("UPDATE subscriptions SET status='overdue', grace_until=? WHERE id=?", [$graceUntil, $subId]);
         dbExec("UPDATE payment_events SET processed=1 WHERE id=?", [$eventId]);
+        $company = dbRow("SELECT name, email FROM companies WHERE id=?", [$companyId]);
+        if ($company) notifyPaymentOverdue($company['name'], $company['email'], $graceUntil);
     }
 
     return ['event_type' => $eventType, 'charge_id' => $chargeId, 'status' => $status];
@@ -404,6 +407,11 @@ function efiActivatePro(int $companyId, int $subscriptionId, string $type): void
     dbExec("INSERT INTO audit_log (actor_type, actor_id, action, target_company_id, detail) VALUES (?,?,?,?,?)",
            ['system', 0, 'payment_confirmed', $companyId,
             json_encode(['subscription_id' => $subscriptionId, 'type' => $type])]);
+
+    $company = dbRow("SELECT name, email FROM companies WHERE id=?", [$companyId]);
+    if ($company) {
+        notifyPaymentConfirmed($company['name'], $company['email'], $type);
+    }
 }
 
 /* ─── Utilitários ───────────────────────────────────────────────────────── */

@@ -276,8 +276,8 @@ if (!empty($_SESSION['impersonating_company_id'])): ?>
 </div>
 <?php endif; ?>
 
-<?php // Banner Pro Solicitado (pending_payment)
-if ($company && $company['status'] === 'pending_payment'): ?>
+<?php // Banner Pro Solicitado (pending_payment) — oculto na própria upgrade.php, que já mostra o mesmo aviso inline
+if ($company && $company['status'] === 'pending_payment' && $activeNav !== 'upgrade.php'): ?>
 <div style="background:#fef3c7;color:#92400e;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;font-size:13px">
     <span><i class="fa-solid fa-hourglass-half"></i> Sua solicitação de <strong>plano Pro</strong> está sendo processada. Entraremos em contato em breve.</span>
     <a href="upgrade.php" style="color:#92400e;font-weight:700;text-decoration:none">Ver detalhes →</a>
@@ -288,7 +288,7 @@ if ($company && $company['status'] === 'pending_payment'): ?>
 if ($plan === 'free' && $lastDowngrade && $quizInativos > 0):
     $ddetail = json_decode($lastDowngrade['detail'] ?? '{}', true) ?: [];
     $ninativados = (int)($ddetail['inactivated'] ?? 0);
-    if ($ninativados > 0): ?>
+    if ($ninativados > 0 && $activeNav !== 'quizzes.php'): ?>
 <div style="background:#fef3c7;color:#92400e;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;font-size:13px">
     <span><i class="fa-solid fa-circle-exclamation"></i> Sua assinatura <strong>Pro</strong> expirou e <strong><?= $ninativados ?> quiz<?= $ninativados > 1 ? 'zes foram desativados' : ' foi desativado' ?></strong> por exceder o limite do plano Free. Faça upgrade para reativá-los.</span>
     <a href="quizzes.php" style="color:#92400e;font-weight:700;text-decoration:none">Ver quizzes desativados →</a>
@@ -296,7 +296,7 @@ if ($plan === 'free' && $lastDowngrade && $quizInativos > 0):
 <?php endif; endif; ?>
 
 <?php // Banner de uso (≥80% do limite Free)
-if ($plan === 'free' && $quizPct >= 80): ?>
+if ($plan === 'free' && $quizPct >= 80 && $activeNav !== 'upgrade.php'): ?>
 <div style="background:<?= $quizPct >= 100 ? '#fee2e2' : '#fef3c7' ?>;color:<?= $quizPct >= 100 ? '#991b1b' : '#92400e' ?>;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;font-size:13px">
     <?php if ($quizPct >= 100): ?>
     <span><i class="fa-solid fa-ban"></i> Você atingiu o limite de <strong><?= $freeLimit ?> quizzes</strong> do plano Free. Crie mais com o <strong>Pro</strong>.</span>

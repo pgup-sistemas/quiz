@@ -6,6 +6,7 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/efi.php';
 
 requireLogin();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') requireCsrf();
 
 $companyId = adminCompanyId();
 $company   = dbRow("SELECT * FROM companies WHERE id=?", [$companyId]);
@@ -29,7 +30,16 @@ $method  = $_GET['method'] ?? 'pix';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $method = $_POST['method'] ?? 'pix';
 
-    if ($method === 'pix') {
+    // Guarda simples contra duplo-clique/duplo-submit: ignora nova tentativa do
+    // mesmo método se já existe uma cobrança 'pending' criada há menos de 15s.
+    $recentDup = dbRow(
+        "SELECT id FROM subscriptions WHERE company_id=? AND type=? AND status='pending'
+         AND created_at >= DATE_SUB(NOW(), INTERVAL 15 SECOND) ORDER BY created_at DESC LIMIT 1",
+        [$companyId, $method === 'card_once' || $method === 'card_recurring' ? $method : 'pix']
+    );
+    if ($recentDup) {
+        $errors[] = 'Já existe uma tentativa de pagamento em andamento. Aguarde alguns segundos e recarregue a página.';
+    } elseif ($method === 'pix') {
         try {
             $txid    = 'PQ' . strtoupper(bin2hex(random_bytes(11)));
             $pixData = efiCreatePixCharge(
@@ -300,6 +310,7 @@ html,body { min-height:100vh; background:#f0f4f8; margin:0; font-family:var(--fo
             <div style="font-weight:600;color:var(--prussian);font-size:18px;margin-bottom:6px">PIX instantâneo</div>
             <div style="color:var(--gray-500);font-size:14px;margin-bottom:24px">Pague <?= htmlspecialchars($priceStr) ?> e ative o Pro imediatamente após confirmação.</div>
             <form method="POST">
+                <?= csrfField() ?>
                 <input type="hidden" name="method" value="pix"/>
                 <button type="submit" class="btn-pay">
                     <i class="fa-brands fa-pix"></i> Gerar QR Code PIX — <?= htmlspecialchars($priceStr) ?>
@@ -317,6 +328,7 @@ html,body { min-height:100vh; background:#f0f4f8; margin:0; font-family:var(--fo
         <div class="alert-err">Credenciais EFI Bank não configuradas. Configure em <a href="../superadmin/settings.php">Super Admin → Configurações</a>.</div>
         <?php else: ?>
         <form id="form-card" method="POST">
+            <?= csrfField() ?>
             <input type="hidden" name="method" value="card_once"/>
             <input type="hidden" name="payment_token" id="payment_token"/>
 
@@ -364,6 +376,7 @@ html,body { min-height:100vh; background:#f0f4f8; margin:0; font-family:var(--fo
         <div class="alert-err">Credenciais EFI Bank não configuradas. Configure em <a href="../superadmin/settings.php">Super Admin → Configurações</a>.</div>
         <?php else: ?>
         <form id="form-card-rec" method="POST">
+            <?= csrfField() ?>
             <input type="hidden" name="method" value="card_recurring"/>
             <input type="hidden" name="payment_token" id="payment_token_rec"/>
 

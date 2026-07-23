@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/mailer.php';
+require_once __DIR__ . '/../includes/efi.php';
 require_once __DIR__ . '/../admin/layout.php';
 sessionStart();
 requireLogin();
@@ -11,6 +12,8 @@ $company   = dbRow("SELECT * FROM companies WHERE id=?", [$companyId]);
 
 $supportEmail = dbRow("SELECT value FROM system_settings WHERE `key`='support_email'")['value'] ?? 'contato@pageup.net.br';
 $freeLimit    = (int)(dbRow("SELECT value FROM system_settings WHERE `key`='free_quiz_limit'")['value'] ?? 12);
+$efiConfigured = (bool)(efiConfig()['client_id'] ?? '');
+$priceStr      = efiProPriceFormatted();
 
 $msg   = '';
 $error = '';
@@ -23,39 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $msg = 'Sua solicitação Pro já está sendo processada. Aguarde o contato da equipe PageUp.';
     } else {
         dbExec("UPDATE companies SET status='pending_payment', updated_at=NOW() WHERE id=?", [$companyId]);
-
-        // Dispara notificação para a equipe PageUp e confirmação para o solicitante.
-        // Falha no envio de e-mail não deve impedir o registro da solicitação — o
-        // status já persistido em companies é a fonte de verdade (visível no superadmin).
-        $adminUrl = absoluteUrl('superadmin/companies.php?status=pending_payment');
-        try {
-            sendMail(
-                $supportEmail,
-                'Nova solicitação de plano Pro — ' . $company['name'],
-                mailTemplate(
-                    'Nova solicitação de upgrade Pro',
-                    '<p><strong>Empresa:</strong> ' . e($company['name']) . '</p>'
-                  . '<p><strong>E-mail de contato:</strong> ' . e($company['email']) . '</p>'
-                  . '<p>Acesse o painel de superadmin para aprovar a ativação.</p>'
-                  . mailBtnHtml($adminUrl, 'Ver solicitação')
-                )
-            );
-            if (!empty($company['email'])) {
-                sendMail(
-                    $company['email'],
-                    'Recebemos sua solicitação do plano Pro — PageQuiz',
-                    mailTemplate(
-                        'Solicitação recebida!',
-                        '<p>Olá, ' . e($company['name']) . '!</p>'
-                      . '<p>Recebemos sua solicitação de upgrade para o plano <strong>Pro</strong>. Nossa equipe vai confirmar os detalhes e ativar o plano em até 1 dia útil.</p>'
-                    ),
-                    $company['name']
-                );
-            }
-        } catch (\Throwable $e) {
-            error_log('[upgrade.php] Falha ao enviar e-mail de solicitação Pro: ' . $e->getMessage());
-        }
-
+        notifyProRequest($company['name'], $company['email'], $supportEmail);
         $msg = 'Solicitação enviada! Entraremos em contato em breve para ativar o plano Pro.';
     }
 }
@@ -118,18 +89,46 @@ adminHead('Upgrade para Pro', 'upgrade.php');
         </div>
     </div>
 
-    <!-- Formulário de solicitação -->
     <?php if ($company['plan'] !== 'pro' && $company['status'] !== 'pending_payment'): ?>
-    <div class="card" style="border-radius:var(--radius);padding:28px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+
+    <?php if ($efiConfigured): ?>
+    <!-- Checkout real — PIX, cartão avulso ou assinatura recorrente -->
+    <div class="card" style="border-radius:var(--radius);padding:28px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px">
         <h3 style="font-size:16px;color:var(--prussian);margin:0 0 8px">
-            <i class="fa-solid fa-paper-plane" style="color:var(--pacific)"></i> Solicitar ativação do Pro
+            <i class="fa-solid fa-star" style="color:#f59e0b"></i> Assinar plano Pro — <?= htmlspecialchars($priceStr) ?>/mês
         </h3>
         <p style="font-size:13px;color:var(--gray-500);margin:0 0 20px">
-            A ativação é manual e gratuita nesta fase. Nossa equipe confirmará os detalhes por e-mail e ativará o plano em até 1 dia útil.
+            Pagamento processado com segurança pela EFI Bank. Escolha a forma de pagamento — ativação imediata após confirmação.
+        </p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+            <a href="../payments/checkout.php?method=pix" class="btn" style="background:var(--pacific);color:#fff;font-weight:700;padding:14px;text-align:center">
+                <i class="fa-brands fa-pix"></i> Pagar com PIX
+            </a>
+            <a href="../payments/checkout.php?method=card_once" class="btn" style="background:var(--prussian);color:#fff;font-weight:700;padding:14px;text-align:center">
+                <i class="fa-solid fa-credit-card"></i> Cartão (1 mês)
+            </a>
+            <a href="../payments/checkout.php?method=card_recurring" class="btn" style="background:#f59e0b;color:#fff;font-weight:700;padding:14px;text-align:center">
+                <i class="fa-solid fa-rotate"></i> Assinatura recorrente
+            </a>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Solicitação manual (fallback) -->
+    <div class="card" style="border-radius:var(--radius);padding:28px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+        <h3 style="font-size:16px;color:var(--prussian);margin:0 0 8px">
+            <i class="fa-solid fa-paper-plane" style="color:var(--pacific)"></i>
+            <?= $efiConfigured ? 'Prefere combinar diretamente com a gente?' : 'Solicitar ativação do Pro' ?>
+        </h3>
+        <p style="font-size:13px;color:var(--gray-500);margin:0 0 20px">
+            <?= $efiConfigured
+                ? 'Envie uma solicitação manual e nossa equipe entra em contato para combinar a forma de pagamento (boleto, transferência, etc.).'
+                : 'A ativação é manual nesta fase. Nossa equipe confirmará os detalhes por e-mail e ativará o plano em até 1 dia útil.'
+            ?>
         </p>
         <form method="POST">
             <?= csrfField() ?>
-            <button type="submit" class="btn" style="background:#f59e0b;color:#fff;font-weight:700;font-size:15px;padding:12px 28px">
+            <button type="submit" class="btn" style="background:<?= $efiConfigured ? 'var(--gray-200)' : '#f59e0b' ?>;color:<?= $efiConfigured ? 'var(--gray-700)' : '#fff' ?>;font-weight:700;font-size:15px;padding:12px 28px">
                 <i class="fa-solid fa-star"></i> Solicitar plano Pro
             </button>
         </form>

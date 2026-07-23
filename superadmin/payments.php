@@ -86,6 +86,13 @@ $failedEvents = (int)dbRow("SELECT COUNT(*) AS c FROM payment_events WHERE proce
 
 $companies = dbRows("SELECT id, name FROM companies ORDER BY name");
 
+// Solicitações manuais de Pro (cadastro.php / admin/upgrade.php) não passam pelo
+// gateway de pagamento — não geram linha em `subscriptions`, então ficam
+// invisíveis nesta tela se não forem listadas explicitamente aqui.
+$pendingProRequests = dbRows(
+    "SELECT id, name, email, updated_at FROM companies WHERE status='pending_payment' ORDER BY updated_at DESC"
+);
+
 $failedEventRows = dbRows(
     "SELECT pe.*, c.name AS company_name
      FROM payment_events pe
@@ -136,6 +143,44 @@ superadminHead('Pagamentos', 'payments.php');
             </a>
         </div>
     </div>
+
+    <?php if (!empty($pendingProRequests)): ?>
+    <div style="margin-bottom:24px">
+        <div class="page-header" style="margin-bottom:16px">
+            <div>
+                <h2 style="font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px">
+                    <i class="fa-solid fa-hourglass-half" style="color:var(--yellow)"></i>
+                    Solicitações Pro pendentes (sem pagamento registrado)
+                    <span style="background:rgba(252,211,77,.2);color:#fcd34d;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px"><?= count($pendingProRequests) ?></span>
+                </h2>
+                <div class="sub">Vieram do cadastro ou do upgrade manual — não aparecem na tabela abaixo pois não geram cobrança automática.</div>
+            </div>
+        </div>
+        <div class="card" style="border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+            <div style="overflow-x:auto">
+            <table class="tbl">
+                <thead>
+                    <tr><th>Empresa</th><th>E-mail</th><th>Solicitado em</th><th>Ação</th></tr>
+                </thead>
+                <tbody>
+                <?php foreach ($pendingProRequests as $p): ?>
+                <tr>
+                    <td style="font-size:13px;font-weight:600;color:var(--prussian)"><?= htmlspecialchars($p['name']) ?></td>
+                    <td style="font-size:13px"><?= htmlspecialchars($p['email']) ?></td>
+                    <td style="font-size:12px;color:var(--gray-500);white-space:nowrap"><?= substr($p['updated_at'],0,16) ?></td>
+                    <td>
+                        <a href="company-edit.php?id=<?= $p['id'] ?>" class="btn-xs primary" title="Analisar e aprovar">
+                            <i class="fa-solid fa-arrow-right"></i> Analisar
+                        </a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <div class="stat-cards">
         <div class="stat-card">

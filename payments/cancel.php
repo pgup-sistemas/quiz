@@ -9,6 +9,7 @@ requireLogin();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../admin/billing.php'); exit;
 }
+requireCsrf();
 
 $companyId = adminCompanyId();
 $subId     = (int)($_POST['sub_id'] ?? 0);
@@ -28,5 +29,6 @@ try {
 
     header('Location: ../admin/billing.php?cancelled=1'); exit;
 } catch (Throwable $e) {
-    header('Location: ../admin/billing.php?error=' . urlencode($e->getMessage())); exit;
+    error_log('[payments/cancel.php] Falha ao cancelar assinatura ' . $subId . ': ' . $e->getMessage());
+    header('Location: ../admin/billing.php?error=' . urlencode('Não foi possível cancelar agora. Tente novamente ou contate o suporte.')); exit;
 }

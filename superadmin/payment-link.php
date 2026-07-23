@@ -6,6 +6,7 @@ if (session_name() !== 'SUPER_ADMIN_SESS') {
 require_once __DIR__ . '/../includes/superadmin-auth.php';
 requireSuperAdmin();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/efi.php';
 require_once __DIR__ . '/layout.php';
 
@@ -17,6 +18,7 @@ $error      = '';
 $linkResult = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrf();
     $cid    = (int)($_POST['company_id'] ?? 0);
     $cents  = (int)round((float)str_replace(',', '.', $_POST['amount'] ?? '0') * 100);
     $desc   = trim($_POST['description'] ?? 'PageQuiz Pro');
@@ -51,7 +53,7 @@ superadminHead('Gerar Link de Pagamento', 'payments.php');
     <div class="page-header">
         <div>
             <h1><i class="fa-solid fa-link" style="color:var(--yellow)"></i> Link de Pagamento</h1>
-            <div class="sub">Gera um link EFI Bank para enviar ao cliente (aceita PIX e cartão)</div>
+            <div class="sub">Gera um link EFI Bank para enviar ao cliente (boleto e cartão — o produto "Link de Pagamento" da EFI não aceita PIX; para PIX use o checkout do próprio tenant em Admin → Cobrança)</div>
         </div>
         <a href="companies.php" style="color:var(--gray-400);font-size:13px">← Voltar para empresas</a>
     </div>
@@ -83,13 +85,14 @@ superadminHead('Gerar Link de Pagamento', 'payments.php');
             </a>
         </div>
         <div style="margin-top:12px;font-size:12px;color:#86efac">
-            Quando o cliente pagar, o Pro da empresa <strong><?= htmlspecialchars($company['name'] ?? '') ?></strong> será ativado automaticamente via webhook.
+            Quando o cliente pagar, o Pro da empresa <strong><?= htmlspecialchars($company['name'] ?? '') ?></strong> será ativado automaticamente via webhook (avulso — vale por 30 dias, não é recorrente).
         </div>
     </div>
     <?php endif; ?>
 
     <div class="card" style="border-radius:var(--radius);padding:28px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
         <form method="POST">
+            <?= csrfField() ?>
             <div style="margin-bottom:16px">
                 <label style="font-size:13px;font-weight:600;color:var(--gray-700);display:block;margin-bottom:6px">Empresa</label>
                 <select name="company_id" required style="width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:14px;background:#fff">

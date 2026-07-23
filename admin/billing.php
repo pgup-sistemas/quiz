@@ -105,6 +105,7 @@ adminHead('Cobrança e Assinatura', 'billing.php');
             </a>
             <?php elseif ($activeSub && $activeSub['type'] === 'card_recurring' && $activeSub['status'] === 'active'): ?>
             <form method="POST" action="../payments/cancel.php" onsubmit="return confirm('Cancelar assinatura recorrente? Seu Pro ficará ativo até o fim do período pago.')">
+                <?= csrfField() ?>
                 <input type="hidden" name="sub_id" value="<?= $activeSub['id'] ?>"/>
                 <button type="submit" class="btn btn-outline">
                     <i class="fa-solid fa-xmark"></i> Cancelar assinatura
@@ -136,6 +137,7 @@ adminHead('Cobrança e Assinatura', 'billing.php');
                     <th style="text-align:left;font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;padding:10px 16px;border-bottom:2px solid var(--gray-100)">Método</th>
                     <th style="text-align:left;font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;padding:10px 16px;border-bottom:2px solid var(--gray-100)">Valor</th>
                     <th style="text-align:left;font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;padding:10px 16px;border-bottom:2px solid var(--gray-100)">Status</th>
+                    <th style="text-align:left;font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;padding:10px 16px;border-bottom:2px solid var(--gray-100)"></th>
                 </tr>
             </thead>
             <tbody>
@@ -149,6 +151,13 @@ adminHead('Cobrança e Assinatura', 'billing.php');
                     <span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;background:<?= $bg ?>;color:<?= $col ?>">
                         <?= htmlspecialchars($label) ?>
                     </span>
+                </td>
+                <td style="padding:11px 16px">
+                    <?php if (in_array($h['status'], ['active', 'paid'], true)): ?>
+                    <a href="receipt.php?id=<?= (int)$h['id'] ?>" style="font-size:12px;color:var(--pacific);text-decoration:none;white-space:nowrap">
+                        <i class="fa-solid fa-receipt"></i> Recibo
+                    </a>
+                    <?php endif; ?>
                 </td>
             </tr>
             <?php endforeach; ?>

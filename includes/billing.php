@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/mailer.php';
 
 /**
  * Verifica e aplica downgrade automático para empresas Pro cujo período de assinatura expirou.
@@ -71,6 +72,11 @@ function _applyDowngrade(int $companyId, int $freeLimit): int {
          VALUES ('system', 0, 'auto_downgrade', ?, '', ?)",
         [$companyId, json_encode(['inactivated' => $inactivated, 'limit' => $freeLimit])]
     );
+
+    $company = dbRow("SELECT name, email FROM companies WHERE id=?", [$companyId]);
+    if ($company) {
+        notifyDowngradeApplied($company['name'], $company['email'], $inactivated);
+    }
 
     return $inactivated;
 }
@@ -150,6 +156,11 @@ function processEfiWebhookEvent(array $payload): void {
              VALUES ('system', 0, 'subscription_overdue', ?, '', ?)",
             [$companyId, json_encode(['event' => $eventType, 'grace_until' => $graceUntil])]
         );
+
+        $company = dbRow("SELECT name, email FROM companies WHERE id=?", [$companyId]);
+        if ($company) {
+            notifyPaymentOverdue($company['name'], $company['email'], $graceUntil);
+        }
     }
 
     dbExec("UPDATE payment_events SET processed = 1 WHERE id = ?", [$peId]);
@@ -171,16 +182,19 @@ function reprocessPaymentEvent(int $eventId): bool {
     $now       = date('Y-m-d H:i:s');
 
     if ($companyId && $sub) {
+        $company = dbRow("SELECT name, email FROM companies WHERE id=?", [$companyId]);
         if (in_array($eventType, ['charge.paid','subscription.renewed','pix.paid','payment.created'])) {
             $nextBilling = date('Y-m-d H:i:s', strtotime('+1 month'));
             dbExec("UPDATE subscriptions SET status='active', next_billing_at=?, updated_at=? WHERE id=?",
                    [$nextBilling, $now, $sub['id']]);
             dbExec("UPDATE companies SET plan='pro', status='active', updated_at=? WHERE id=?",
                    [$now, $companyId]);
+            if ($company) notifyPaymentConfirmed($company['name'], $company['email'], $sub['type'] ?? 'manual');
         } elseif (in_array($eventType, ['subscription.cancelled','charge.cancelled','charge.expired','subscription.overdue'])) {
             $graceUntil = date('Y-m-d H:i:s', strtotime('+7 days'));
             dbExec("UPDATE subscriptions SET status='overdue', grace_until=?, updated_at=? WHERE id=?",
                    [$graceUntil, $now, $sub['id']]);
+            if ($company) notifyPaymentOverdue($company['name'], $company['email'], $graceUntil);
         }
     }
 

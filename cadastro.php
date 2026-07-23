@@ -3,6 +3,7 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/tenant.php';
+require_once __DIR__ . '/includes/mailer.php';
 
 // Usa a sessão do portal admin para que o login automático persista
 sessionStart();
@@ -106,6 +107,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($plan === 'pro') {
             $pending  = true;
             $tempInfo = ['name' => $companyName, 'slug' => $slug, 'email' => $email];
+            $supportEmailNotify = dbRow("SELECT value FROM system_settings WHERE `key`='support_email'")['value'] ?? 'contato@pageup.net.br';
+            notifyProRequest($companyName, $email, $supportEmailNotify);
         } else {
             header('Location: admin/onboarding.php');
             exit;
