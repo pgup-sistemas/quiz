@@ -32,7 +32,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Recarregar
 $company     = dbRow("SELECT * FROM companies WHERE id=?", [$companyId]);
-$canUpgrade  = $company['plan'] !== 'pro' && $company['status'] !== 'pending_payment';
+// Pagar diretamente (PIX/cartão) deve continuar disponível mesmo com uma
+// solicitação manual pendente — pagar agora é mais rápido que esperar
+// contato manual, e o webhook ativa o Pro independente do status atual.
+$canUpgrade      = $company['plan'] !== 'pro';
+$canRequestManual = $canUpgrade && $company['status'] !== 'pending_payment';
 adminHead('Upgrade para Pro', 'upgrade.php');
 ?>
 <style>
@@ -170,7 +174,10 @@ adminHead('Upgrade para Pro', 'upgrade.php');
             </div>
         </div>
 
-        <!-- 3) Alternativa manual — discreta de propósito, não é o caminho principal -->
+        <!-- 3) Alternativa manual — discreta de propósito, não é o caminho principal.
+             Some quando já há uma solicitação pendente (a mensagem acima já cobre isso),
+             mas os cards de pagamento acima continuam disponíveis para quem quiser pagar agora. -->
+        <?php if ($canRequestManual): ?>
         <div class="upg-fallback">
             <span>
                 <?= $efiConfigured
@@ -184,6 +191,7 @@ adminHead('Upgrade para Pro', 'upgrade.php');
                 <button type="submit" class="btn-link">Solicitar ativação manual</button>
             </form>
         </div>
+        <?php endif; ?>
 
     <?php endif; ?>
 </div>
