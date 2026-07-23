@@ -284,6 +284,69 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
 .footer-col a:hover{color:#fff}
 .footer-bottom{max-width:1100px;margin:32px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
+/* ── Comparativo ── */
+.lp-compare{padding:80px 32px;background:#fff;border-top:1px solid #e8f0f5}
+.compare-table-wrap{overflow-x:auto;border-radius:18px;border:1.5px solid #e8f0f5;box-shadow:0 8px 30px rgba(2,48,71,.05)}
+.compare-table{width:100%;border-collapse:collapse;min-width:720px;font-size:13.5px}
+.compare-table th,.compare-table td{padding:14px 16px;text-align:center;border-bottom:1px solid #eef2f6}
+.compare-table thead th{background:#f8fafc;font-weight:700;color:var(--prussian);font-size:12.5px;text-transform:uppercase;letter-spacing:.4px}
+.compare-table td:first-child,.compare-table th:first-child{text-align:left;font-weight:600;color:#334155;position:sticky;left:0;background:#fff}
+.compare-table thead th:first-child{background:#f8fafc}
+.compare-table th.compare-us,.compare-table td.compare-us{background:#f0f7fa}
+.compare-table thead th.compare-us{background:#e0f0f6;color:var(--pacific)}
+.compare-table tbody tr:last-child td{border-bottom:none}
+.compare-yes{color:#16a34a;font-size:16px}
+.compare-partial{color:#f59e0b;font-size:14px}
+.compare-no{color:#cbd5e1;font-size:16px}
+.compare-note{font-size:12px;color:#94a3b8;text-align:center;margin-top:16px}
+
+/* ── Certificado / QR ── */
+.lp-certflow{padding:80px 32px;background:linear-gradient(180deg,#f8fafc 0%,#fff 100%);border-top:1px solid #e8f0f5}
+.certflow-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.certflow-left h2{font-family:'Syne',sans-serif;font-size:clamp(22px,3vw,36px);font-weight:800;color:var(--prussian);line-height:1.2;margin-bottom:14px}
+.certflow-left p{font-size:16px;color:#64748b;line-height:1.75;margin-bottom:28px}
+.certflow-list{display:flex;flex-direction:column;gap:16px}
+.certflow-item{display:flex;align-items:flex-start;gap:14px}
+.certflow-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#e8f5fa,#d0eaf4);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--pacific);flex-shrink:0}
+.certflow-item strong{display:block;font-size:14.5px;font-weight:700;color:var(--prussian);margin-bottom:2px}
+.certflow-item span{font-size:13.5px;color:#64748b;line-height:1.55}
+.cert-mockup{background:#fff;border-radius:20px;border:1.5px solid #e8f0f5;box-shadow:0 20px 50px rgba(2,48,71,.1);padding:28px;position:relative}
+.cert-mockup-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid var(--prussian)}
+.cert-mockup-head strong{font-family:'Syne',sans-serif;color:var(--prussian);font-size:15px}
+.cert-mockup-body{text-align:center;padding:12px 0}
+.cert-mockup-body .cert-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--prussian);margin:10px 0 4px}
+.cert-mockup-body .cert-quiz{font-size:13px;color:#64748b;margin-bottom:18px}
+.cert-mockup-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:16px;border-top:1px dashed #dce8ef}
+.cert-qr{width:64px;height:64px;background:repeating-conic-gradient(#023047 0% 25%,#fff 0% 50%) 0 0/16px 16px;border-radius:8px;border:1px solid #e2ecf1;flex-shrink:0}
+.cert-code{font-size:11px;color:#94a3b8;font-family:monospace;line-height:1.6}
+.cert-seal{position:absolute;top:-14px;right:24px;background:#FFB703;color:#023047;font-size:11px;font-weight:800;padding:8px 14px;border-radius:20px;box-shadow:0 6px 16px rgba(255,183,3,.4);display:flex;align-items:center;gap:6px}
+
+/* ── Painel ao vivo ── */
+.lp-live{padding:80px 32px;background:#fff;border-top:1px solid #e8f0f5}
+.live-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.live-mockup{background:linear-gradient(145deg,#023047,#034a6b);border-radius:22px;padding:26px;position:relative;overflow:hidden}
+.live-mockup-head{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;animation:pulse 1.6s ease-in-out infinite}
+.live-mockup-head span{font-size:12px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.5px}
+.live-row{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.live-avatar{width:32px;height:32px;border-radius:50%;background:var(--pacific);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.live-row-name{font-size:13px;font-weight:700;color:#fff}
+.live-row-sub{font-size:11.5px;color:rgba(255,255,255,.5)}
+.live-progress-track{flex:1;height:6px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden;margin:0 4px}
+.live-progress-fill{height:100%;background:linear-gradient(90deg,var(--pacific),#8ECAE6);border-radius:4px}
+.live-pct{font-size:12px;font-weight:700;color:#8ECAE6;width:36px;text-align:right;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ── Trust / Auditoria ── */
+.lp-trust{padding:64px 32px;background:linear-gradient(180deg,#f8fafc 0%,#fff 100%);border-top:1px solid #e8f0f5}
+.trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;max-width:1000px;margin:0 auto}
+.trust-item{text-align:center;padding:24px 16px}
+.trust-item i{font-size:28px;color:var(--pacific);margin-bottom:12px;display:block}
+.trust-item strong{display:block;font-size:14px;font-weight:700;color:var(--prussian);margin-bottom:4px}
+.trust-item span{font-size:12.5px;color:#64748b;line-height:1.5}
+.trust-badge-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:36px;flex-wrap:wrap}
+.trust-flag{display:inline-flex;align-items:center;gap:8px;background:#f0f7fa;border:1px solid #dce8ef;border-radius:24px;padding:9px 18px;font-size:13px;font-weight:600;color:var(--prussian)}
+
 /* ── Empty state ── */
 .empty-quizzes{text-align:center;padding:64px 24px;color:#94a3b8;grid-column:1/-1}
 .empty-quizzes i{font-size:52px;display:block;margin-bottom:16px;color:#cbd5e1}
@@ -300,6 +363,9 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
   .steps-grid::before{display:none}
   .managers-grid{grid-template-columns:1fr}
   .managers-right{display:none}
+  .certflow-grid{grid-template-columns:1fr}
+  .live-grid{grid-template-columns:1fr}
+  .trust-grid{grid-template-columns:1fr 1fr}
 }
 @media(max-width:768px){
   .lp-nav-links{display:none}
@@ -313,7 +379,8 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
   .lp-nav{padding:0 14px;gap:10px}
   .lp-nav-auth{gap:6px}
   .btn-ghost,.btn-cta{padding:8px 12px;font-size:13px;gap:5px}
-  .lp-features,.lp-howitworks,.lp-managers,.lp-quizzes,.lp-cta{padding:56px 20px}
+  .lp-features,.lp-howitworks,.lp-managers,.lp-quizzes,.lp-cta,.lp-compare,.lp-certflow,.lp-live,.lp-trust{padding:56px 20px}
+  .trust-grid{grid-template-columns:1fr 1fr}
   .lp-footer{padding:48px 20px 24px}
   .section-sub{margin-bottom:36px}
   .footer-brand p{max-width:none}
@@ -341,6 +408,7 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
   </a>
   <div class="lp-nav-links">
     <a href="#features">Recursos</a>
+    <?php if (!$tenant): ?><a href="#comparativo">Comparativo</a><?php endif; ?>
     <?php if ($tenant): ?><a href="#quizzes">Quizzes</a><?php endif; ?>
     <?php if ($currentUser && !$tenant): ?><a href="user/dashboard.php">Meus treinamentos</a><?php endif; ?>
     <a href="verify.php">Verificar Certificado</a>
@@ -654,6 +722,268 @@ body{font-family:'DM Sans',sans-serif;color:#1e293b;background:#fff;overflow-x:h
     </div>
   </div>
 </section>
+
+<!-- ══ COMPARATIVO COM O MERCADO (apenas na landing institucional) ══ -->
+<?php if (!$tenant): ?>
+<section class="lp-compare" id="comparativo" aria-labelledby="compare-title">
+  <div class="section-inner section-center">
+    <div class="section-label reveal">Comparativo</div>
+    <h2 class="section-title reveal reveal-delay-1" id="compare-title">Mais do que um formulário de perguntas</h2>
+    <p class="section-sub reveal reveal-delay-2" style="margin:0 auto 40px">Veja como o PageQuiz se compara às ferramentas mais usadas para treinamento e avaliação.</p>
+    <div class="compare-table-wrap reveal reveal-delay-3">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Funcionalidade</th>
+            <th class="compare-us">PageQuiz</th>
+            <th>Google Forms</th>
+            <th>Kahoot</th>
+            <th>Quizizz</th>
+            <th>Moodle</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Treinamento corporativo</td>
+            <td class="compare-us"><i class="fa-solid fa-circle-check compare-yes"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-minus compare-partial"></i></td>
+            <td><i class="fa-solid fa-circle-minus compare-partial"></i></td>
+            <td><i class="fa-solid fa-circle-check compare-yes"></i></td>
+          </tr>
+          <tr>
+            <td>Certificado automático</td>
+            <td class="compare-us"><i class="fa-solid fa-circle-check compare-yes"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-minus compare-partial"></i></td>
+            <td><i class="fa-solid fa-circle-minus compare-partial"></i></td>
+          </tr>
+          <tr>
+            <td>Certificado verificável por QR Code</td>
+            <td class="compare-us"><i class="fa-solid fa-circle-check compare-yes"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+          </tr>
+          <tr>
+            <td>Portal exclusivo por empresa</td>
+            <td class="compare-us"><i class="fa-solid fa-circle-check compare-yes"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-minus compare-partial"></i></td>
+          </tr>
+          <tr>
+            <td>Gestão por setores</td>
+            <td class="compare-us"><i class="fa-solid fa-circle-check compare-yes"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-minus compare-partial"></i></td>
+          </tr>
+          <tr>
+            <td>Sorteio de questões</td>
+            <td class="compare-us"><i class="fa-solid fa-circle-check compare-yes"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-minus compare-partial"></i></td>
+            <td><i class="fa-solid fa-circle-check compare-yes"></i></td>
+            <td><i class="fa-solid fa-circle-check compare-yes"></i></td>
+          </tr>
+          <tr>
+            <td>Importação em lote (CSV)</td>
+            <td class="compare-us"><i class="fa-solid fa-circle-check compare-yes"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-minus compare-partial"></i></td>
+          </tr>
+          <tr>
+            <td>Dashboard corporativo</td>
+            <td class="compare-us"><i class="fa-solid fa-circle-check compare-yes"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-minus compare-partial"></i></td>
+            <td><i class="fa-solid fa-circle-minus compare-partial"></i></td>
+            <td><i class="fa-solid fa-circle-check compare-yes"></i></td>
+          </tr>
+          <tr>
+            <td>Monitoramento ao vivo</td>
+            <td class="compare-us"><i class="fa-solid fa-circle-check compare-yes"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-minus compare-partial"></i></td>
+            <td><i class="fa-solid fa-circle-minus compare-partial"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+          </tr>
+          <tr>
+            <td>Exportação para auditoria</td>
+            <td class="compare-us"><i class="fa-solid fa-circle-check compare-yes"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-xmark compare-no"></i></td>
+            <td><i class="fa-solid fa-circle-minus compare-partial"></i></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="compare-note reveal reveal-delay-4"><i class="fa-solid fa-circle-check compare-yes"></i> Recurso nativo &nbsp;·&nbsp; <i class="fa-solid fa-circle-minus compare-partial"></i> Suporte parcial/limitado &nbsp;·&nbsp; <i class="fa-solid fa-circle-xmark compare-no"></i> Não disponível</p>
+  </div>
+</section>
+<?php endif; ?>
+
+<!-- ══ CERTIFICAÇÃO VERIFICÁVEL (apenas na landing institucional) ═══ -->
+<?php if (!$tenant): ?>
+<section class="lp-certflow" id="certificacao" aria-labelledby="certflow-title">
+  <div class="section-inner">
+    <div class="certflow-grid">
+      <div class="certflow-left reveal">
+        <div class="section-label">Certificação</div>
+        <h2 id="certflow-title">Certificados que qualquer pessoa pode verificar</h2>
+        <p>Ao ser aprovado, o participante recebe um certificado em PDF com validação pública — ideal para RH, compliance e auditorias externas.</p>
+        <div class="certflow-list">
+          <div class="certflow-item">
+            <div class="certflow-icon"><i class="fa-solid fa-fingerprint"></i></div>
+            <div><strong>Identificador único</strong><span>Cada certificado recebe um código exclusivo, impossível de duplicar.</span></div>
+          </div>
+          <div class="certflow-item">
+            <div class="certflow-icon"><i class="fa-solid fa-qrcode"></i></div>
+            <div><strong>QR Code de validação</strong><span>Basta escanear para conferir a autenticidade em segundos.</span></div>
+          </div>
+          <div class="certflow-item">
+            <div class="certflow-icon"><i class="fa-solid fa-globe"></i></div>
+            <div><strong>Página pública de verificação</strong><span>Qualquer terceiro pode confirmar o certificado sem precisar de login.</span></div>
+          </div>
+          <div class="certflow-item">
+            <div class="certflow-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+            <div><strong>Pronto para auditorias</strong><span>Atende processos ligados a ISO, ONA e programas internos de qualidade.</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="certflow-right reveal reveal-delay-2">
+        <div class="cert-mockup">
+          <div class="cert-seal"><i class="fa-solid fa-award"></i> Verificado</div>
+          <div class="cert-mockup-head">
+            <strong>Certificado de Conclusão</strong>
+            <img src="assets/logo.svg" alt="PageQuiz" height="20"/>
+          </div>
+          <div class="cert-mockup-body">
+            <i class="fa-solid fa-certificate" style="font-size:32px;color:#FFB703"></i>
+            <div class="cert-name">Maria da Silva</div>
+            <div class="cert-quiz">Concluiu "Segurança do Trabalho — NR-35" com 92% de aproveitamento</div>
+          </div>
+          <div class="cert-mockup-foot">
+            <div class="cert-qr" role="img" aria-label="QR Code de verificação"></div>
+            <div class="cert-code">
+              ID: PQ-8F42-91AC<br/>
+              Emitido em 23/07/2026<br/>
+              quiz.pageup.net.br/verify
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
+<!-- ══ PAINEL AO VIVO (apenas na landing institucional) ═════════════ -->
+<?php if (!$tenant): ?>
+<section class="lp-live" id="ao-vivo" aria-labelledby="live-title">
+  <div class="section-inner">
+    <div class="live-grid">
+      <div class="live-mockup reveal">
+        <div class="live-mockup-head">
+          <span class="live-dot"></span>
+          <span>Ao vivo · Segurança do Trabalho</span>
+        </div>
+        <div class="live-row">
+          <div class="live-avatar">JP</div>
+          <div style="flex:1;min-width:0">
+            <div class="live-row-name">João Pereira</div>
+            <div class="live-row-sub">Questão 8 de 20</div>
+          </div>
+          <div class="live-progress-track"><div class="live-progress-fill" style="width:40%"></div></div>
+          <div class="live-pct">40%</div>
+        </div>
+        <div class="live-row">
+          <div class="live-avatar">AC</div>
+          <div style="flex:1;min-width:0">
+            <div class="live-row-name">Ana Costa</div>
+            <div class="live-row-sub">Questão 15 de 20</div>
+          </div>
+          <div class="live-progress-track"><div class="live-progress-fill" style="width:75%"></div></div>
+          <div class="live-pct">75%</div>
+        </div>
+        <div class="live-row">
+          <div class="live-avatar">RL</div>
+          <div style="flex:1;min-width:0">
+            <div class="live-row-name">Rafael Lima</div>
+            <div class="live-row-sub">Concluído — Aprovado</div>
+          </div>
+          <div class="live-progress-track"><div class="live-progress-fill" style="width:100%"></div></div>
+          <div class="live-pct">100%</div>
+        </div>
+      </div>
+      <div class="certflow-left reveal reveal-delay-2">
+        <div class="section-label">Monitoramento</div>
+        <h2>Acompanhe cada participante em tempo real</h2>
+        <p>Sem precisar atualizar a página: veja quem está respondendo, em qual questão está e o progresso individual — ótimo para treinamentos presenciais ou remotos em grupo.</p>
+        <div class="certflow-list">
+          <div class="certflow-item">
+            <div class="certflow-icon"><i class="fa-solid fa-eye"></i></div>
+            <div><strong>Progresso individual</strong><span>Veja em qual questão cada participante está agora.</span></div>
+          </div>
+          <div class="certflow-item">
+            <div class="certflow-icon"><i class="fa-solid fa-bolt"></i></div>
+            <div><strong>Atualização automática</strong><span>Os dados são atualizados sem precisar recarregar a página.</span></div>
+          </div>
+          <div class="certflow-item">
+            <div class="certflow-icon"><i class="fa-solid fa-user-group"></i></div>
+            <div><strong>Ideal para capacitações em grupo</strong><span>Perfeito para treinamentos presenciais com dezenas de colaboradores simultâneos.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
+<!-- ══ AUDITORIA / CONFIANÇA (apenas na landing institucional) ══════ -->
+<?php if (!$tenant): ?>
+<section class="lp-trust" aria-labelledby="trust-title">
+  <div class="section-inner section-center">
+    <div class="section-label reveal">Confiança e conformidade</div>
+    <h2 class="section-title reveal reveal-delay-1" id="trust-title">Preparado para auditorias reais</h2>
+    <p class="section-sub reveal reveal-delay-2" style="margin:0 auto 40px">Hospitais, clínicas, indústrias e empresas certificadas usam o PageQuiz para comprovar treinamentos realizados.</p>
+    <div class="trust-grid">
+      <div class="trust-item reveal reveal-delay-1">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        <strong>Histórico completo</strong>
+        <span>Todas as tentativas e resultados ficam registrados por participante.</span>
+      </div>
+      <div class="trust-item reveal reveal-delay-2">
+        <i class="fa-solid fa-file-export"></i>
+        <strong>Relatórios exportáveis</strong>
+        <span>Exporte resultados e listas de aprovados em CSV/Excel.</span>
+      </div>
+      <div class="trust-item reveal reveal-delay-3">
+        <i class="fa-solid fa-certificate"></i>
+        <strong>Certificados verificáveis</strong>
+        <span>Validação pública por QR Code, sem necessidade de login.</span>
+      </div>
+      <div class="trust-item reveal reveal-delay-4">
+        <i class="fa-solid fa-shield-halved"></i>
+        <strong>Evidências digitais</strong>
+        <span>Dados prontos para apresentar em processos de ISO, ONA e compliance.</span>
+      </div>
+    </div>
+    <div class="trust-badge-row reveal reveal-delay-5">
+      <span class="trust-flag"><i class="fa-solid fa-map-location-dot" style="color:var(--pacific)"></i> Desenvolvido em Rondônia, para todo o Brasil</span>
+      <span class="trust-flag"><i class="fa-solid fa-building-shield" style="color:var(--pacific)"></i> PageUp Sistemas</span>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
 
 <!-- ══ QUIZ CARDS (apenas no portal da empresa) ═════════════════════ -->
 <?php if ($tenant): ?>

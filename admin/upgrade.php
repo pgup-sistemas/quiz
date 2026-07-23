@@ -68,17 +68,17 @@ adminHead('Upgrade para Pro', 'upgrade.php');
                 <li style="color:var(--gray-300)"><s>Quizzes ilimitados</s></li>
             </ul>
         </div>
-        <div style="border:2px solid #f59e0b;border-radius:12px;padding:24px;background:#fffbeb">
+        <div style="border:2px solid #f59e0b;border-radius:12px;padding:24px;background:#fffbeb;color:#1e293b">
             <div style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#fef3c7;color:#92400e;margin-bottom:12px">
                 <i class="fa-solid fa-star"></i> Pro — Todos os recursos
             </div>
-            <ul style="margin:0;padding-left:20px;font-size:14px;color:var(--gray-700);line-height:2">
-                <li><strong>Quizzes ilimitados</strong></li>
+            <ul style="margin:0;padding-left:20px;font-size:14px;color:#1e293b;line-height:2">
+                <li><strong style="color:#1e293b">Quizzes ilimitados</strong></li>
                 <li>Usuários ilimitados</li>
-                <li><strong>Certificado personalizado</strong> (logo + cor)</li>
+                <li><strong style="color:#1e293b">Certificado personalizado</strong> (logo + cor)</li>
                 <li>Subdomínio próprio</li>
-                <li><strong>Logo da empresa</strong> em todas as páginas</li>
-                <li><strong>Cor primária</strong> da empresa</li>
+                <li><strong style="color:#1e293b">Logo da empresa</strong> em todas as páginas</li>
+                <li><strong style="color:#1e293b">Cor primária</strong> da empresa</li>
             </ul>
         </div>
     </div>
