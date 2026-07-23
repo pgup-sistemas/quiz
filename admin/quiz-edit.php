@@ -23,91 +23,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['full_csv']) && $isNe
         redirect('quiz-edit.php');
     }
 
+    $title = trim($_POST['quiz_title'] ?? '');
+    if (!$title) {
+        flash('Preencha o "Título do quiz" antes de importar.', 'error');
+        redirect('quiz-edit.php');
+    }
+
     $handle = fopen($file['tmp_name'], 'r');
     if (!$handle) {
         flash('Não foi possível ler o arquivo.', 'error');
         redirect('quiz-edit.php');
     }
 
-    // Auto-detect delimiter: scan the full file (a section header like [QUIZ] has neither ; nor ,)
-    $rawContent = stream_get_contents($handle);
-    $delim      = substr_count($rawContent, ';') >= substr_count($rawContent, ',') ? ';' : ',';
+    // Mesmo formato/parser do admin/import.php: cabeçalho + uma questão por linha.
+    $bom = fread($handle, 3);
+    if ($bom !== "\xEF\xBB\xBF") rewind($handle);
+    $firstLine = fgets($handle);
+    $delim     = substr_count($firstLine, ';') >= substr_count($firstLine, ',') ? ';' : ',';
     rewind($handle);
+    if ($bom === "\xEF\xBB\xBF") fread($handle, 3);
+    fgetcsv($handle, 0, $delim, '"', ''); // pula cabeçalho
 
-    // Lê todas as linhas
-    $allRows = [];
+    $qRows = [];
     while (($row = fgetcsv($handle, 0, $delim, '"', '')) !== false) {
-        $allRows[] = $row;
+        $qRows[] = $row;
     }
     fclose($handle);
 
-    // Parseamento em seções [QUIZ] e [QUESTOES]
-    $quizRow    = null;
-    $qRows      = [];
-    $section    = null;
-    $skipNext   = false;   // pula a linha de cabeçalho de cada seção
-
-    foreach ($allRows as $row) {
-        // Strip UTF-8 BOM que o Excel adiciona ao primeiro campo do arquivo
-        $first = trim(str_replace("\xEF\xBB\xBF", '', $row[0] ?? ''));
-
-        if ($first === '[QUIZ]') {
-            $section  = 'quiz';
-            $skipNext = true;   // próxima linha é o cabeçalho da seção
-            continue;
-        }
-        if ($first === '[QUESTOES]') {
-            $section  = 'questoes';
-            $skipNext = true;
-            continue;
-        }
-        if ($skipNext) { $skipNext = false; continue; }   // pula cabeçalho
-        if ($first === '' || $first[0] === '#') continue; // linha vazia ou comentário
-
-        if ($section === 'quiz' && $quizRow === null) {
-            $quizRow = $row;
-        } elseif ($section === 'questoes') {
-            $qRows[] = $row;
-        }
-    }
-
-    // Fallback: arquivo "plano" (sem seções [QUIZ]/[QUESTOES]) -- mesmo formato
-    // usado em import.php para adicionar questões a um quiz já existente.
-    // Trata o arquivo inteiro como lista de questões e usa o título informado no formulário.
-    if (!$quizRow) {
-        $flatTitle = trim($_POST['quiz_title'] ?? '');
-        if (!$flatTitle) {
-            flash('Este arquivo não tem a seção [QUIZ]. Preencha o campo "Título do quiz" abaixo do upload para criar o quiz com essas questões, ou baixe o modelo completo.', 'error');
-            redirect('quiz-edit.php');
-        }
-        $qRows = [];
-        foreach ($allRows as $i => $row) {
-            $first = trim(str_replace("\xEF\xBB\xBF", '', $row[0] ?? ''));
-            if ($i === 0 && mb_strtolower($first) === 'pergunta') continue; // pula cabeçalho
-            if ($first === '' || $first[0] === '#') continue;
-            $qRows[] = $row;
-        }
-        $quizRow = [$flatTitle, '', 'Geral', 30, 70];
-    }
-
-    if (!trim($quizRow[0] ?? '')) {
-        flash('Arquivo inválido: seção [QUIZ] com título ausente. Baixe o modelo e tente novamente.', 'error');
-        redirect('quiz-edit.php');
-    }
-
-    // Extrai configuração do quiz
-    $title   = trim($quizRow[0] ?? '');
-    $desc    = trim($quizRow[1] ?? '');
-    $sector  = trim($quizRow[2] ?? 'Geral') ?: 'Geral';
-    $timer   = max(5, min(300, (int)($quizRow[3] ?? 30)));
-    $passPct = max(0, min(100, (int)($quizRow[4] ?? 70)));
-
-    // Cria o quiz
+    // Cria o quiz (setor/tempo/nota mínima com os valores padrão da plataforma)
     dbExec("INSERT INTO quizzes
                 (title,description,sector,created_by,time_per_question,pass_percentage,
                  show_feedback,has_certificate,randomize,allow_retake,active,visibility,company_id)
             VALUES (?,?,?,?,?,?,1,1,0,1,1,'all',?)",
-        [$title, $desc, $sector, adminName(), $timer, $passPct, $cid]);
+        [$title, '', 'Geral', adminName(), 30, 70, $cid]);
     $newQuizId = (int)dbLastId();
 
     // Importa as questões
@@ -416,57 +364,42 @@ adminHead($isNew ? 'Novo Quiz' : 'Configurações: '.($quiz['title'] ?? ''), 'qu
                 <span class="badge badge-blue" style="font-size:11px">Opção B</span>
             </div>
             <p style="font-size:13px;color:var(--gray-500);margin:0;line-height:1.5">
-                Baixe o modelo, preencha no Excel e importe — o quiz e todas as questões são criados de uma vez.
+                Baixe o modelo, preencha no Excel e importe — o quiz é criado com esse arquivo de questões.
+                Mesmo modelo usado para adicionar questões a um quiz existente.
             </p>
         </div>
-        <a href="csv-template-quiz.php" class="btn btn-outline" style="white-space:nowrap;flex-shrink:0">
+        <a href="csv-template.php" class="btn btn-outline" style="white-space:nowrap;flex-shrink:0">
             <i class="fa-solid fa-download"></i> Baixar Modelo CSV
         </a>
     </div>
 
     <!-- Resumo do formato esperado -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px">
-        <div style="background:#fff;border:1px solid var(--gray-100);border-radius:10px;padding:14px 16px">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--pacific);margin-bottom:10px">
-                <i class="fa-solid fa-gear"></i> Seção [QUIZ] — linha de dados
-            </div>
-            <div style="font-size:12px;color:var(--gray-600);line-height:1.8">
-                <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">titulo</code> <span style="color:var(--red)">*</span></div>
-                <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">descricao</code></div>
-                <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">setor</code></div>
-                <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">tempo_seg</code> <span style="color:var(--gray-400);font-size:11px">padrão 30</span></div>
-                <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">aprovacao_pct</code> <span style="color:var(--gray-400);font-size:11px">padrão 70</span></div>
-            </div>
+    <div style="background:#fff;border:1px solid var(--gray-100);border-radius:10px;padding:14px 16px;margin-bottom:22px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--pacific);margin-bottom:10px">
+            <i class="fa-solid fa-list-ol"></i> Uma questão por linha
         </div>
-        <div style="background:#fff;border:1px solid var(--gray-100);border-radius:10px;padding:14px 16px">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--green);margin-bottom:10px">
-                <i class="fa-solid fa-list-ol"></i> Seção [QUESTOES] — uma questão por linha
-            </div>
-            <div style="font-size:12px;color:var(--gray-600);line-height:1.8">
-                <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">pergunta</code> <span style="color:var(--red)">*</span></div>
-                <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">categoria</code></div>
-                <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">opcao_a, opcao_b</code> <span style="color:var(--red)">*</span></div>
-                <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">opcao_c, opcao_d</code></div>
-                <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">resposta_correta</code> <span style="color:var(--red)">*</span> <span style="color:var(--gray-400);font-size:11px">A, B, C ou D</span></div>
-                <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">explicacao</code></div>
-            </div>
+        <div style="font-size:12px;color:var(--gray-600);line-height:1.8">
+            <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">Pergunta</code> <span style="color:var(--red)">*</span></div>
+            <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">Categoria</code></div>
+            <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">Opcao_A, Opcao_B</code> <span style="color:var(--red)">*</span></div>
+            <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">Opcao_C, Opcao_D</code></div>
+            <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">Correta_(A/B/C/D)</code> <span style="color:var(--red)">*</span></div>
+            <div><code style="background:var(--gray-100);padding:1px 6px;border-radius:3px">Explicacao</code></div>
         </div>
     </div>
 
     <form method="post" enctype="multipart/form-data">
         <input type="hidden" name="full_import" value="1"/>
         <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+            <div class="form-group" style="flex:1;min-width:220px;margin-bottom:0">
+                <label class="form-label">Título do quiz *</label>
+                <input class="form-control" type="text" name="quiz_title" maxlength="255" placeholder="Ex: Segurança no Trabalho" required/>
+            </div>
             <div class="form-group" style="flex:1;min-width:240px;margin-bottom:0">
                 <label class="form-label">Arquivo CSV *
                     <span style="color:var(--gray-400);font-weight:400"> — separador <code>;</code> ou <code>,</code> · encoding UTF-8 · máx. 2 MB</span>
                 </label>
                 <input class="form-control" type="file" name="full_csv" accept=".csv,.txt" required/>
-            </div>
-            <div class="form-group" style="flex:1;min-width:220px;margin-bottom:0">
-                <label class="form-label">Título do quiz
-                    <span style="color:var(--gray-400);font-weight:400"> — só é usado se o arquivo não tiver a seção [QUIZ]</span>
-                </label>
-                <input class="form-control" type="text" name="quiz_title" maxlength="255" placeholder="Ex: Segurança no Trabalho"/>
             </div>
             <button type="submit" class="btn btn-primary" style="white-space:nowrap;margin-bottom:1px">
                 <i class="fa-solid fa-rocket"></i> Criar Quiz e Importar Questões
