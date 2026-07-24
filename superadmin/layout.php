@@ -4,6 +4,7 @@ function superadminHead(string $title, string $active = ''): void {
         'index.php'     => ['fa-table-columns',    'Dashboard',  'index.php'],
         'companies.php' => ['fa-building',          'Empresas',   'companies.php'],
         'payments.php'  => ['fa-money-bill-wave',   'Pagamentos', 'payments.php'],
+        'plan-changes.php' => ['fa-arrow-right-arrow-left', 'Mudanças de Plano', 'plan-changes.php'],
         'settings.php'  => ['fa-sliders',           'Config',     'settings.php'],
         'users.php'     => ['fa-users',              'Colaboradores','users.php'],
         'admins.php'    => ['fa-shield-halved',      'S-Admins',    'admins.php'],
